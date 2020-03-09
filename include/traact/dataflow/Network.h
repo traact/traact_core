@@ -29,39 +29,42 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#include <map>
+#ifndef TRAACT_INCLUDE_TRAACT_DATAFLOW_NETWORK_H_
+#define TRAACT_INCLUDE_TRAACT_DATAFLOW_NETWORK_H_
+
 #include <memory>
-#include <traact/pattern/instance/PatternInstance.h>
+#include <map>
+#include <traact/buffer/GenericFactoryObject.h>
+#include <traact/component/ComponentGraph.h>
+
 #include <traact_core_export.h>
-namespace traact::pattern::instance {
-struct TRAACT_CORE_EXPORT GraphInstance {
+
+namespace traact::dataflow::intern {
+class NetworkGraph;
+}
+
+namespace traact::dataflow {
+
+class TRAACT_CORE_EXPORT Network {
  public:
-  typedef typename std::shared_ptr<GraphInstance> Ptr;
-  GraphInstance();
-  GraphInstance(const std::string &name);
+  typedef typename std::shared_ptr<Network> Ptr;
+  typedef typename component::ComponentGraph::Ptr ComponentGraphPtr;
 
-  PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern);
+  explicit Network(std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
 
-  PatternInstance::Ptr getPattern(const std::string &pattern_id) const;
+  void addComponentGraph(ComponentGraphPtr component_graph);
 
-  std::set<PatternInstance::Ptr> getAll() const;
+  void start();
 
-  bool connect(std::string source_component,
-               std::string producer_port,
-               std::string sink_component,
-               std::string consumer_port);
+  void stop();
+ private:
+  typedef typename std::shared_ptr<intern::NetworkGraph> NetworkGraphPtr;
 
-  traact::pattern::instance::PortInstance::ConstPtr getPort(const ComponentID_PortName &id) const;
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr(const ComponentID_PortName &id) const;
-
-  std::string name;
-  std::map<std::string, PatternInstance::Ptr> pattern_instances;
-
-  void initializeGraphConnections();
+  std::set<ComponentGraphPtr> component_graphs_;
+  std::set<NetworkGraphPtr> network_graphs_;
+  std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
 
 };
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
+#endif //TRAACT_INCLUDE_TRAACT_DATAFLOW_NETWORK_H_

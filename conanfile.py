@@ -4,14 +4,14 @@ from conans import ConanFile, CMake, tools
 
 
 class Traact(ConanFile):
-    name = "Traact"
+    name = "traact_core"
     version = "0.0.1"
-    default_user = "testuser"
+    default_user = "camposs"
     default_channel = "stable"
 
-    description = "Traact library for realtime tracking frameworks"
+    description = "Convenience wrapper around tbb for realtime tracking in heterogeneous, distributed sensor environments"
     url = ""
-    license = ""
+    license = "BSD 3-Clause"
     author = "Frieder Pankratz"
 
     short_paths = True
@@ -21,28 +21,24 @@ class Traact(ConanFile):
     compiler = "cppstd"
     options = {
         "shared": [True, False],
+        "workspaceBuild": [True, False],
         "with_tests": [True, False]
     }
 
     default_options = {
         "shared": True,
+        "workspaceBuild": False,
         "with_tests": True
     }
 
-    exports_sources = "include/*", "src/*", "util/*", "test/*", "CMakeLists.txt"
+    exports_sources = "include/*", "src/*", "util/*", "tests/*", "CMakeLists.txt"
 
     def requirements(self):
         if self.options.with_tests:
             self.requires("gtest/1.10.0")
-        # self.requires("opencv/4.1.1@conan/stable")
-        # self.requires("eigen/3.3.7@conan/stable")
-        self.requires("TBB/2019_U9@conan/stable")
-        self.requires("eigen/3.3.7@camposs/stable")
-        self.requires("rttr/0.9.7-dev@camposs/stable")
-        self.requires("opencv/3.4.8@camposs/stable")
-        self.requires("spdlog/1.4.2@camposs/stable")
-        self.requires("Boost/1.70.0@camposs/stable")
         self.requires("nlohmann_json/3.7.3")
+        self.requires("TBB/2019_U9@conan/stable")
+        self.requires("spdlog/1.4.2@camposs/stable")
 
     def _configure_cmake(self):
         cmake = CMake(self)
@@ -61,9 +57,9 @@ class Traact(ConanFile):
         return cmake
 
     def configure(self):
-        self.options['opencv'].shared = self.options.shared
+        if self.options.with_tests:
+            self.options['gtest'].shared = self.options.shared
         self.options['TBB'].shared = self.options.shared
-        self.options['gtest'].shared = self.options.shared
         self.options['Boost'].shared = self.options.shared
 
     def build(self):
@@ -75,4 +71,5 @@ class Traact(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self)
+        self.cpp_info.libs = ["traact_core"]
+        # self.cpp_info.libs = tools.collect_libs(self)

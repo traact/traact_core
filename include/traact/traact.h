@@ -37,13 +37,11 @@
 #include <traact/pattern/Pattern.h>
 #include <traact/pattern/spatial/SpatialPattern.h>
 #include <traact/pattern/instance/GraphInstance.h>
-#include <traact/dataflow/TraactNetwork.h>
+#include <traact/dataflow/Network.h>
 #include <traact/buffer/TimeDomainManager.h>
 
 #include <traact/buffer/GenericComponentBuffer.h>
 #include <traact/buffer/GenericTimeDomainBuffer.h>
-#include <traact/facade/TraactPlugin.h>
-#include <traact/facade/Facade.h>
 
 namespace traact {
 
@@ -63,7 +61,7 @@ typedef typename pattern::instance::GraphInstance::Ptr DefaultInstanceGraphPtr;
 typedef typename pattern::instance::PatternInstance DefaultPatternInstance;
 typedef typename pattern::instance::PatternInstance::Ptr DefaultPatternInstancePtr;
 
-typedef typename dataflow::TraactNetwork DefaultTraactNetwork;
+typedef typename dataflow::Network DefaultTraactNetwork;
 }
 
 #endif //TRAACT_INCLUDE_TRAACT_TRAACT_H_

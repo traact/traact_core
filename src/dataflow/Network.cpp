@@ -29,39 +29,44 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#include <map>
-#include <memory>
-#include <traact/pattern/instance/PatternInstance.h>
-#include <traact_core_export.h>
-namespace traact::pattern::instance {
-struct TRAACT_CORE_EXPORT GraphInstance {
- public:
-  typedef typename std::shared_ptr<GraphInstance> Ptr;
-  GraphInstance();
-  GraphInstance(const std::string &name);
+#include <traact/dataflow/Network.h>
 
-  PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern);
+#include "dataflow/intern/NetworkGraph.h"
 
-  PatternInstance::Ptr getPattern(const std::string &pattern_id) const;
+namespace traact::dataflow {
 
-  std::set<PatternInstance::Ptr> getAll() const;
+Network::Network(std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects)
+    : generic_factory_objects_(std::move(generic_factory_objects)) {}
 
-  bool connect(std::string source_component,
-               std::string producer_port,
-               std::string sink_component,
-               std::string consumer_port);
-
-  traact::pattern::instance::PortInstance::ConstPtr getPort(const ComponentID_PortName &id) const;
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr(const ComponentID_PortName &id) const;
-
-  std::string name;
-  std::map<std::string, PatternInstance::Ptr> pattern_instances;
-
-  void initializeGraphConnections();
-
-};
+void Network::addComponentGraph(ComponentGraphPtr component_graph) {
+  component_graphs_.emplace(std::move(component_graph));
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
+void Network::start() {
+  network_graphs_.clear();
+
+  for (const ComponentGraphPtr &component_graph : component_graphs_) {
+    auto newGraph = std::make_shared<intern::NetworkGraph>(component_graph, 0, generic_factory_objects_);
+    network_graphs_.emplace(newGraph);
+  }
+
+  for (const auto &network_graph : network_graphs_) {
+    network_graph->init();
+  }
+
+  for (const auto &network_graph : network_graphs_) {
+    network_graph->start();
+  }
+}
+
+void Network::stop() {
+  for (const auto &network_graph : network_graphs_) {
+    network_graph->stop();
+  }
+
+  for (const auto &network_graph : network_graphs_) {
+    network_graph->teardown();
+  }
+}
+
+}

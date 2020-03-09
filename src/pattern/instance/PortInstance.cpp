@@ -29,39 +29,34 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#include <map>
-#include <memory>
-#include <traact/pattern/instance/PatternInstance.h>
-#include <traact_core_export.h>
-namespace traact::pattern::instance {
-struct TRAACT_CORE_EXPORT GraphInstance {
- public:
-  typedef typename std::shared_ptr<GraphInstance> Ptr;
-  GraphInstance();
-  GraphInstance(const std::string &name);
+#include <spdlog/spdlog.h>
+#include "traact/pattern/instance/PortInstance.h"
+#include "traact/pattern/instance/PatternInstance.h"
+#include <traact/pattern/instance/GraphInstance.h>
+traact::pattern::instance::PortInstance::PortInstance(traact::pattern::Port port,
+                                                      traact::pattern::instance::PatternInstance *pattern_instance)
+    : port(port), pattern_instance(pattern_instance) {
 
-  PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern);
-
-  PatternInstance::Ptr getPattern(const std::string &pattern_id) const;
-
-  std::set<PatternInstance::Ptr> getAll() const;
-
-  bool connect(std::string source_component,
-               std::string producer_port,
-               std::string sink_component,
-               std::string consumer_port);
-
-  traact::pattern::instance::PortInstance::ConstPtr getPort(const ComponentID_PortName &id) const;
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr(const ComponentID_PortName &id) const;
-
-  std::string name;
-  std::map<std::string, PatternInstance::Ptr> pattern_instances;
-
-  void initializeGraphConnections();
-
-};
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
+traact::pattern::instance::PortInstance::PortInstance() : port(), pattern_instance(nullptr) {
+
+}
+
+traact::pattern::instance::ComponentID_PortName traact::pattern::instance::PortInstance::getID() const {
+  return std::make_pair(pattern_instance->instance_id, getName());
+}
+
+const std::string &traact::pattern::instance::PortInstance::getName() const {
+  return port.name;
+}
+const std::string &traact::pattern::instance::PortInstance::getDataType() const {
+  return port.datatype;
+}
+int traact::pattern::instance::PortInstance::getPortIndex() const {
+  return port.port_index;
+}
+std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::instance::PortInstance::connectedToPtr() const {
+  return pattern_instance->parent_graph->connectedToPtr(getID());
+}
+

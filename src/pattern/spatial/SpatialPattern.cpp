@@ -29,39 +29,26 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#include <map>
-#include <memory>
-#include <traact/pattern/instance/PatternInstance.h>
-#include <traact_core_export.h>
-namespace traact::pattern::instance {
-struct TRAACT_CORE_EXPORT GraphInstance {
- public:
-  typedef typename std::shared_ptr<GraphInstance> Ptr;
-  GraphInstance();
-  GraphInstance(const std::string &name);
+#include "traact/pattern/spatial/SpatialPattern.h"
+traact::pattern::spatial::SpatialPattern::SpatialPattern(const std::string &name, size_t concurrency)
+    : Pattern(name, concurrency) {}
+traact::pattern::spatial::SpatialPattern::SpatialPattern(const traact::pattern::Pattern &value) : Pattern(value) {
 
-  PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern);
+}
+traact::pattern::spatial::SpatialPattern &traact::pattern::spatial::SpatialPattern::addCoordianteSystem(const std::string &name) {
+  CoordinateSystem newCoord(name);
+  coordinate_systems_.emplace(std::make_pair(name, std::move(newCoord)));
+  return *this;
+}
+traact::pattern::spatial::SpatialPattern &traact::pattern::spatial::SpatialPattern::addEdge(const std::string &source,
+                                                                                            const std::string &destination,
+                                                                                            const std::string &port) {
 
-  PatternInstance::Ptr getPattern(const std::string &pattern_id) const;
+  //TODO check for valid input
+  edges_.emplace(std::make_tuple(source, destination, port));
+  return *this;
+}
+traact::pattern::spatial::SpatialPattern::SpatialPattern() : Pattern("Invalid", -1) {
 
-  std::set<PatternInstance::Ptr> getAll() const;
-
-  bool connect(std::string source_component,
-               std::string producer_port,
-               std::string sink_component,
-               std::string consumer_port);
-
-  traact::pattern::instance::PortInstance::ConstPtr getPort(const ComponentID_PortName &id) const;
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr(const ComponentID_PortName &id) const;
-
-  std::string name;
-  std::map<std::string, PatternInstance::Ptr> pattern_instances;
-
-  void initializeGraphConnections();
-
-};
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_

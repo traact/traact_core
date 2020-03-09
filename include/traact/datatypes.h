@@ -72,6 +72,9 @@ enum class SourceMode {
   ImmediateReturn
 };
 
+// redefine tbb concurrency to avoid dependency just for this enum
+enum concurrency { unlimited = 0, serial = 1 };
+
 }
 
 #endif //TRAACT_INCLUDE_TRAACT_DATATYPES_H_

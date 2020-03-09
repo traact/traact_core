@@ -33,6 +33,7 @@
 #define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
 
 #include <traact/pattern/Port.h>
+#include <traact_core_export.h>
 namespace traact::pattern::instance {
 
 class PatternInstance;
@@ -40,7 +41,7 @@ class PatternInstance;
 //
 typedef typename std::pair<std::string, std::string> ComponentID_PortName;
 
-struct PortInstance {
+struct TRAACT_CORE_EXPORT PortInstance {
   typedef PortInstance *Ptr;
   typedef const PortInstance *ConstPtr;
 

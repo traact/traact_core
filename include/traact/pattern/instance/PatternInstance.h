@@ -33,11 +33,12 @@
 #define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPATTERN_H_
 #include <traact/pattern/Pattern.h>
 #include <traact/pattern/instance/PortInstance.h>
+#include <traact_core_export.h>
 namespace traact::pattern::instance {
 
 class GraphInstance;
 
-class PatternInstance {
+class TRAACT_CORE_EXPORT PatternInstance {
  public:
   typedef typename std::shared_ptr<PatternInstance> Ptr;
   PatternInstance();

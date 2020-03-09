@@ -41,12 +41,27 @@ enum class ComponentType {
   /**
    * asynchronous data source component. use this for any component that provides data from some external source
    * e.g. camera, file, network to the traact dataflow network.
+   *
+   * Forcing the network to receive the data with AsyncSource can be done by running the component graph with SourceMode::WaitForBuffer
+   *
    * Use:
-   * request_callback_( timestamp ) : request buffer, if succeed next:
+   * request_callback_( timestamp ) : request buffer, if fail discard data and try with next timestamp, if succeed next:
    * auto &buffer = acquire_callback_ : get buffer, fill with data, next:
    * commit_callback_( timestamp ) : start processing
    */
   AsyncSource,
+  /**
+   * synchronous data source component.
+   * Using this component would mean that the dataflow network would request
+   * data for a specific timestamp (like a pull_function( timestamp ) ).
+   * That would greatly hinder the dataflow and should not be used.
+   * Requirements like the pull (e.g. buffer, linear interpolation, kalman filtering with different sync modes)
+   * call are handled through a functional component with one arbitrary input.
+   * The functional component will be called at the right moment with no valid input and valid output to retrieve the data.
+   *
+   * Forcing the network to receive the data with AsyncSource can be done by running the component graph with SourceMode::WaitForBuffer
+   */
+  //SyncSource,
   /**
    * synchronous data sink component. use this for any component that provides data to programs outside of traact.
    * e.g. Redering of camera images and poses

@@ -39,14 +39,15 @@
 
 #include <traact/pattern/Port.h>
 #include <nlohmann/json.hpp>
-
+#include <traact_core_export.h>
 namespace traact::pattern {
 
 // TODO how to fix loss of method chaining: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern. But this would lead to a set of base classes, ...
-struct Pattern {
+struct TRAACT_CORE_EXPORT Pattern {
  public:
   typedef typename std::shared_ptr<Pattern> Ptr;
   Pattern();
+
   Pattern(std::string name, int concurrency);
   virtual ~Pattern();
 

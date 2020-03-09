@@ -33,13 +33,13 @@
 #define TRAACT_INCLUDE_TRAACT_PATTERN_DATAFLOW_DATAFLOWMETAPATTERN_H_
 
 #include <traact/pattern/Pattern.h>
-
+#include <traact_core_export.h>
 namespace traact::pattern {
 /**
  * Contains serveral interconnected patterns.
  * Exposes the final producer and consumer as new ports of itself
  */
-class MetaPattern : public Pattern {
+class TRAACT_CORE_EXPORT MetaPattern : public Pattern {
 
  public:
   MetaPattern(const std::string &name, int concurrency);

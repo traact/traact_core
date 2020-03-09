@@ -36,11 +36,14 @@
 #include <map>
 #include <traact/pattern/Pattern.h>
 #include <traact/pattern/spatial/CoordinateSystem.h>
+#include <traact_core_export.h>
 namespace traact::pattern::spatial {
-struct SpatialPattern : public Pattern {
+struct TRAACT_CORE_EXPORT SpatialPattern : public Pattern {
  public:
   typedef typename std::shared_ptr<SpatialPattern> Ptr;
   SpatialPattern(const std::string &name, size_t concurrency);
+  SpatialPattern(const Pattern &value);
+  SpatialPattern();
   /**
    * Add a node to spatial relationship graph
    * @param name name of node

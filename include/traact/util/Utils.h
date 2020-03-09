@@ -34,7 +34,7 @@
 
 #include <set>
 #include <map>
-#include <boost/filesystem.hpp>
+
 #include <spdlog/spdlog.h>
 
 namespace traact::util {
@@ -95,8 +95,6 @@ T *vectorGetForName(std::vector<T> &vecOfElements, const std::string &name) {
 
   return &(*it);
 }
-
-std::vector<std::string> glob_files(const std::string &path);
 
 }
 

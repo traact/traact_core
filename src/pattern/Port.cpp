@@ -28,40 +28,32 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
+#include <spdlog/spdlog.h>
+#include "traact/pattern/Port.h"
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
-#include <map>
-#include <memory>
-#include <traact/pattern/instance/PatternInstance.h>
-#include <traact_core_export.h>
-namespace traact::pattern::instance {
-struct TRAACT_CORE_EXPORT GraphInstance {
- public:
-  typedef typename std::shared_ptr<GraphInstance> Ptr;
-  GraphInstance();
-  GraphInstance(const std::string &name);
+#include "traact/pattern/Pattern.h"
 
-  PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern);
+traact::pattern::Port::Port(std::string name,
+                            std::string datatype,
+                            PortType port_type,
+                            int port_index)
+    : name(std::move(name)),
+      datatype(std::move(datatype)),
+      porttype(port_type),
+      port_index(port_index) {
 
-  PatternInstance::Ptr getPattern(const std::string &pattern_id) const;
-
-  std::set<PatternInstance::Ptr> getAll() const;
-
-  bool connect(std::string source_component,
-               std::string producer_port,
-               std::string sink_component,
-               std::string consumer_port);
-
-  traact::pattern::instance::PortInstance::ConstPtr getPort(const ComponentID_PortName &id) const;
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr(const ComponentID_PortName &id) const;
-
-  std::string name;
-  std::map<std::string, PatternInstance::Ptr> pattern_instances;
-
-  void initializeGraphConnections();
-
-};
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_INSTANTIATEDGRAPH_H_
+traact::pattern::Port::Port() :
+    name("Invalid"),
+    datatype("Invalid"),
+    porttype(PortType::NONE),
+    port_index(-1) {
+
+}
+const std::string &traact::pattern::Port::getName() const {
+  return name;
+}
+
+
+
