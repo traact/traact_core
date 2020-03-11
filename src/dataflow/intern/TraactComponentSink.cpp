@@ -42,6 +42,7 @@ TraactComponentSink::TraactComponentSink(DefaultPatternPtr pattern_base,
                                                                                             network_graph) {
   node_ = nullptr;
   join_node_ = nullptr;
+  sequencer_node_ = nullptr;
 }
 
 bool TraactComponentSink::init() {
@@ -56,8 +57,29 @@ bool TraactComponentSink::init() {
   int count_input = this->pattern_base_->getConsumerPorts().size();
   if (count_input > 1) {
     join_node_ = new DynamicJoinNode(this->network_graph_->getTBBGraph(), count_input);
-    make_edge(join_node_->getSender(), *node_);
 
+  }
+
+  /*if (count_input > 1) {
+    make_edge(join_node_->getSender(), *node_);
+  }*/
+
+  if (pattern_base_->getConcurrency() != unlimited) {
+    sequencer_node_ =
+        new sequencer_node<TraactMessage>(network_graph_->getTBBGraph(), [](const TraactMessage &msg) -> size_t {
+          return msg.domain_measurement_index;
+        });
+
+    if (count_input > 1) {
+      make_edge(join_node_->getSender(), *sequencer_node_);
+    }
+
+    make_edge(*sequencer_node_, *node_);
+
+  } else {
+    if (count_input > 1) {
+      make_edge(join_node_->getSender(), *node_);
+    }
   }
 
   return true;
@@ -67,6 +89,8 @@ bool TraactComponentSink::teardown() {
   TraactComponentBase::teardown();
 
   delete node_;
+  delete join_node_;
+  delete sequencer_node_;
 
   return true;
 }
@@ -93,10 +117,25 @@ void TraactComponentSink::disconnect() {
 tbb::flow::receiver<TraactMessage> &TraactComponentSink::getReceiver(int index) {
   using namespace tbb::flow;
 
-  if (join_node_ == nullptr) {
+  /*if (join_node_ == nullptr) {
     return *node_;
   } else {
     return join_node_->getReceiver(index);
-  }
+  }*/
+
+  if (pattern_base_->getConcurrency() != unlimited) {
+    if (join_node_ == nullptr) {
+      return *sequencer_node_;
+    } else {
+      return join_node_->getReceiver(index);
+    }
+  } else {
+    if (join_node_ == nullptr) {
+      return *node_;
+    } else {
+      return join_node_->getReceiver(index);
+    }
+  };
+
 }
 }

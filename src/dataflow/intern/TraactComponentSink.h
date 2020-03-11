@@ -60,6 +60,7 @@ class TraactComponentSink : public TraactComponentBase {
 
   tbb::flow::function_node<TraactMessage> *node_;
   DynamicJoinNode *join_node_;
+  tbb::flow::sequencer_node<TraactMessage> *sequencer_node_;
 
 };
 

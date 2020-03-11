@@ -63,6 +63,7 @@ class TimeDomainManager {
 
   TimeDomainManager(size_t ringbuffer_size,
                     std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
+
   int requestBuffer(const TimestampType ts, const std::string &component_name);
 
   DefaultComponentBuffer &acquireBuffer(const TimestampType ts, const std::string &component_name);
@@ -73,12 +74,16 @@ class TimeDomainManager {
   SourceMode getSourceMode() const;
 
   void setSourceMode(SourceMode source_mode);
+
+  size_t GetDomainMeasurementIndex(TimestampType ts);
+
  private:
   std::size_t ringbuffer_size_;
   SourceMode source_mode_;
 
   //std::mutex buffer_lock_;
   mutable std::shared_mutex mutex_;
+  size_t domain_timestamp_index_;
 
   tbb::concurrent_queue<TimeDomainBufferPtr> free_buffers_;
   RunningBufferType running_buffers_;

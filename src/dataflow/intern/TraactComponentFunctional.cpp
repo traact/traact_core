@@ -77,8 +77,7 @@ bool TraactComponentFunctional::teardown() {
 }
 
 TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
-  TraactMessage result;
-  result.timestamp = in.timestamp;
+  TraactMessage result = in;
 
   DefaultComponentBuffer
       &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());

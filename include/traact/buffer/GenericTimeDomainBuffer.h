@@ -54,7 +54,8 @@ class GenericTimeDomainBuffer {
   GenericComponentBuffer &getComponentBuffer(const std::string &component_name);
   const TimestampType &getTimestamp() const;
   bool isFree() const;
-  void resetForTimestamp(TimestampType ts);
+  void resetForTimestamp(TimestampType ts, size_t measurement_index);
+  size_t GetCurrentMeasurementIndex() const;
   void decreaseUse();
   int getUseCount() const;
 
@@ -65,6 +66,7 @@ class GenericTimeDomainBuffer {
   int maximum_wait_count;
 
   TimestampType current_timestamp_;
+  size_t current_measurement_index_;
 
   std::map<std::string, std::shared_ptr<GenericComponentBuffer> > component_buffers_;
   BufferType buffer_data_;

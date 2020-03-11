@@ -119,9 +119,11 @@ const traact::TimestampType &traact::buffer::GenericTimeDomainBuffer::getTimesta
 bool traact::buffer::GenericTimeDomainBuffer::isFree() const {
   return current_wait_count_ == 0;
 }
-void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::TimestampType ts) {
+void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::TimestampType ts, size_t measurement_index) {
+  SPDLOG_TRACE("resetForTimestamp {0} {1}", ts.time_since_epoch().count(), measurement_index);
   current_timestamp_ = ts;
   current_wait_count_ = maximum_wait_count;
+  current_measurement_index_ = measurement_index;
 
 }
 void traact::buffer::GenericTimeDomainBuffer::decreaseUse() {
@@ -142,4 +144,7 @@ void traact::buffer::GenericTimeDomainBuffer::addBuffer(const std::string &buffe
   buffer_data_.emplace_back(newBuffer);
   types_of_buffer_.emplace_back(buffer_type);
 
+}
+size_t traact::buffer::GenericTimeDomainBuffer::GetCurrentMeasurementIndex() const {
+  return current_measurement_index_;
 }

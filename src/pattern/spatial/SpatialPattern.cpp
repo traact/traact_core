@@ -35,8 +35,8 @@ traact::pattern::spatial::SpatialPattern::SpatialPattern(const std::string &name
 traact::pattern::spatial::SpatialPattern::SpatialPattern(const traact::pattern::Pattern &value) : Pattern(value) {
 
 }
-traact::pattern::spatial::SpatialPattern &traact::pattern::spatial::SpatialPattern::addCoordianteSystem(const std::string &name) {
-  CoordinateSystem newCoord(name);
+traact::pattern::spatial::SpatialPattern &traact::pattern::spatial::SpatialPattern::addCoordianteSystem(const std::string &name, bool is_multi) {
+  CoordinateSystem newCoord(name, is_multi);
   coordinate_systems_.emplace(std::make_pair(name, std::move(newCoord)));
   return *this;
 }

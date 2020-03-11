@@ -81,6 +81,7 @@ enum class ComponentType {
    * Dataflow network calls: processTimePoint(Buffer& buffer)
    */
   Functional,
+  // not implemented yet
   /**
    * Same as Functional but for use cases where the data is not processed in real time (e.g. in a different thread).
    * e.g. bundle adjustment, any calibration
@@ -89,8 +90,7 @@ enum class ComponentType {
    * Dataflow network calls: processTimePoint(Buffer& buffer)
    */
   AsyncFunctional,
-  // not implemented yet
-  AsyncSink, //problem images: copy output? otherwise buffer can not be reused. might be a good idea if ringbuffer is bit enough. detach buffer elements?
+  AsyncSink, //problem images: copy output? otherwise buffer can not be reused. might be a good idea if ringbuffer is big enough. detach buffer elements?
   BufferedAsyncSink, // Buffer 1 timestamp (hold buffer until user retrieves), notify user of new data, have function to aquire buffer. use AsyncSource interface?
 
 };

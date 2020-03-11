@@ -33,6 +33,7 @@
 #define TRAACT_INCLUDE_TRAACT_DATATYPES_H_
 
 #include <chrono>
+#include <sstream>
 
 namespace traact {
 
@@ -58,12 +59,20 @@ enum class MessageDataMode {
   Static,
   Dynamic
 };
+
 struct TraactMessage {
-  TimestampType timestamp = TimestampType::min();
-  bool valid = false;
+  TimestampType timestamp= TimestampType::min();
+  bool valid = false;;
+  size_t domain_measurement_index = 0;
 
   uint64_t key() const {
     return timestamp.time_since_epoch().count();
+  }
+
+  std::string toString() {
+    std::stringstream ss;
+    ss << "TraactMessage TS: " << timestamp.time_since_epoch().count() << " MeaIndex: " << domain_measurement_index << " valid: " << valid << std::endl;
+    return ss.str();
   }
 };
 
@@ -72,7 +81,7 @@ enum class SourceMode {
   ImmediateReturn
 };
 
-// redefine tbb concurrency to avoid dependency just for this enum
+// redefine tbb concurrency to avoid dependency in components just for this enum
 enum concurrency { unlimited = 0, serial = 1 };
 
 }

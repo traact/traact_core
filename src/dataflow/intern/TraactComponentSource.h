@@ -60,7 +60,7 @@ class TraactComponentSource : public TraactComponentBase {
   typedef tbb::flow::async_node<tbb::flow::continue_msg, TraactMessage> async_source_node;
 
   tbb::flow::async_node<tbb::flow::continue_msg, TraactMessage> *node_;
-  tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
+  //tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
 
   int requestBuffer(TimestampType ts) {
     return this->buffer_manager_->requestBuffer(ts, this->component_base_->getName());
@@ -73,15 +73,20 @@ class TraactComponentSource : public TraactComponentBase {
     message.timestamp = ts;
     message.valid = true;
 
-    spdlog::trace("try sending data into network");
+    message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
+
+
+    SPDLOG_TRACE("try sending data into network");
+    SPDLOG_TRACE(message.toString());
     if (node_->gateway().try_put(message)) {
-      spdlog::trace("try put succeeded");
+      SPDLOG_TRACE("try put succeeded");
       this->buffer_manager_->commitBuffer(ts);
       return 0;
     }
 
+    SPDLOG_TRACE("try put failed");
     this->buffer_manager_->commitBuffer(ts);
-    spdlog::trace("try put failed");
+
 
     return -1;
   }

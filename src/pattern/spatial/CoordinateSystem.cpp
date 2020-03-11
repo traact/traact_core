@@ -30,7 +30,7 @@
 **/
 
 #include "traact/pattern/spatial/CoordinateSystem.h"
-traact::pattern::spatial::CoordinateSystem::CoordinateSystem(std::string name) : name(std::move(name)) {}
-traact::pattern::spatial::CoordinateSystem::CoordinateSystem() : name("Invalid") {
+traact::pattern::spatial::CoordinateSystem::CoordinateSystem(std::string name, bool is_multi) : name(std::move(name)), is_multi(is_multi) {}
+traact::pattern::spatial::CoordinateSystem::CoordinateSystem() : name("Invalid"), is_multi(false) {
 
 }

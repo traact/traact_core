@@ -119,11 +119,13 @@ void NetworkGraph::stop() {
     component->stop();
   }
 
+  graph_.wait_for_all();
+
   for (const auto &component : network_components_) {
     component->disconnect();
   }
 
-  graph_.wait_for_all();
+
 }
 void NetworkGraph::teardown() {
   for (const auto &component : network_components_) {

@@ -41,7 +41,7 @@ TraactComponentSource::TraactComponentSource(DefaultPatternPtr pattern_base,
                                                                                                 std::move(component_base),
                                                                                                 std::move(buffer_manager),
                                                                                                 network_graph), node_(
-    nullptr), broadcast_node_(nullptr) {
+    nullptr) {
 
   this->component_base_->setRequestCallback(std::bind(&TraactComponentSource::requestBuffer,
                                                       this,
@@ -67,9 +67,8 @@ bool TraactComponentSource::init() {
 
                                                                  });
 
-  broadcast_node_ = new broadcast_node<TraactMessage>(this->network_graph_->getTBBGraph());
-  make_edge(*node_, *broadcast_node_
-  );
+  //broadcast_node_ = new broadcast_node<TraactMessage>(this->network_graph_->getTBBGraph());
+  //make_edge(*node_, *broadcast_node_);
 
   return true;
 }
@@ -90,14 +89,14 @@ bool TraactComponentSource::teardown() {
 
   delete node_;
 
-  delete broadcast_node_;
+  //delete broadcast_node_;
 
   return true;
 }
 
 tbb::flow::sender<TraactMessage> &TraactComponentSource::getSender(int index) {
-  return *
-      broadcast_node_;
+  //return *broadcast_node_;
+  return *node_;
 }
 
 void TraactComponentSource::connect() {

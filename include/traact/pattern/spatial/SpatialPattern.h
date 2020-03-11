@@ -48,7 +48,7 @@ struct TRAACT_CORE_EXPORT SpatialPattern : public Pattern {
    * Add a node to spatial relationship graph
    * @param name name of node
    */
-  SpatialPattern &addCoordianteSystem(const std::string &name);
+  SpatialPattern &addCoordianteSystem(const std::string &name, bool is_multi = false);
 
   /**
    * Add edge between two coordinate systems.

@@ -39,9 +39,10 @@ namespace traact::pattern::spatial {
 struct TRAACT_CORE_EXPORT CoordinateSystem {
  public:
   CoordinateSystem();
-  explicit CoordinateSystem(std::string name);
+  explicit CoordinateSystem(std::string name, bool is_multi);
 
   std::string name;
+  bool is_multi;
 
 };
 }

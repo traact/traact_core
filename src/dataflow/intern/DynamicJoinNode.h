@@ -159,7 +159,7 @@ class DynamicJoinNode {
             auto *tmp =
                 static_cast<join_node<std::tuple<TraactMessage, TraactMessage, TraactMessage>,
                                       key_matching<uint64_t> > * >(join_node_);
-            return input_port<1>(*tmp);
+            return input_port<2>(*tmp);
           }
           default:throw std::invalid_argument("unsupported index for receiver of dynamic join node");
         }
@@ -172,14 +172,12 @@ class DynamicJoinNode {
 
   TraactMessage join2(const std::tuple<TraactMessage, TraactMessage> &in) {
     __TBB_ASSERT(std::get<0>(in).timestamp == std::get<1>(in).timestamp, "timestamps of sync input differ");
-    TraactMessage result;
-    result.timestamp = std::get<0>(in).timestamp;
+    TraactMessage result= std::get<0>(in);
     result.valid = std::get<0>(in).valid && std::get<1>(in).valid;
     return result;
   }
   TraactMessage join3(const std::tuple<TraactMessage, TraactMessage, TraactMessage> &in) {
-    TraactMessage result;
-    result.timestamp = std::get<0>(in).timestamp;
+    TraactMessage result = std::get<0>(in);
     result.valid = std::get<0>(in).valid && std::get<1>(in).valid && std::get<2>(in).valid;
     return result;
   }

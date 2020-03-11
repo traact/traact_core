@@ -66,7 +66,7 @@ class ComponentGraph {
     return patterns_;
   }
 
-  ComponentPtr getComponent(std::string id) {
+  ComponentPtr getComponent(const std::string& id) {
     for (const auto &item : patterns_) {
       if (item.first->instance_id == id)
         return item.second;

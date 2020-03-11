@@ -38,14 +38,14 @@ TimeDomainManager::TimeDomainManager(size_t
                                      std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects
 ) :
     ringbuffer_size_(
-        ringbuffer_size), generic_factory_objects_(std::move(generic_factory_objects)) {
+        ringbuffer_size), generic_factory_objects_(std::move(generic_factory_objects)), domain_timestamp_index_(0) {
 
 }
 int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &component_name) {
 
   while (true) {
 
-    //spdlog::info("trying to get buffer component: {0}, ts: {1}", component_name, ts.time_since_epoch().count());
+    SPDLOG_TRACE("trying to get buffer component: {0}, ts: {1}", component_name, ts.time_since_epoch().count());
     // tests existing running buffers, concurrent access possible here
     {
       typename RunningBufferType::const_accessor findResult;
@@ -62,7 +62,7 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
       // check map again because a different thread might have also waited for the lock and created the buffer
       typename RunningBufferType::const_accessor findResult;
       if (running_buffers_.find(findResult, ts)) {
-        //spdlog::info("in lock: buffer found in running buffers");
+        SPDLOG_TRACE("in lock: buffer found in running buffers");
         findResult.release();
         return 0;
       }
@@ -71,9 +71,10 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
         TimeDomainBufferPtr freeBuffer;
 
         if (free_buffers_.try_pop(freeBuffer)) {
-          //spdlog::info("in lock: new buffer for ts: {0}", ts.time_since_epoch().count());
-          freeBuffer->resetForTimestamp(ts);
+          SPDLOG_TRACE("in lock: new buffer for ts: {0}", ts.time_since_epoch().count());
+          freeBuffer->resetForTimestamp(ts, domain_timestamp_index_);
           running_buffers_.insert(std::make_pair(ts, freeBuffer));
+          ++domain_timestamp_index_;
           return 0;
         }
       }
@@ -81,32 +82,16 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
 
     switch (source_mode_) {
       case SourceMode::WaitForBuffer: {
-        //spdlog::info("no free buffer, yield");
+        SPDLOG_TRACE("no free buffer, yield");
         std::this_thread::yield();
         break;
       }
       case SourceMode::ImmediateReturn: {
-        //spdlog::info("no free buffer, return");
+        SPDLOG_TRACE("no free buffer, return");
         return -1;
       }
 
     }
-
-    /*spdlog::debug("not buffer found for ts:{0}", ts.time_since_epoch().count());
-    spdlog::debug("free buffer unsafe size {0} running buffers: ", free_buffers_.unsafe_size());
-    int i = 0;
-    for (const auto &running_buffer : running_buffers_) {
-
-      spdlog::debug("buffer state index: {0}, ts: {1}, useCount: {2}",
-                    i++,
-                    running_buffer.first.time_since_epoch().count(),
-                    running_buffer.second->getUseCount());
-    }*/
-
-
-    // if no buffer is found continue blocking the user thread and yield so othe threads have a chance
-    // change with different strageties later
-
   }
 };
 
@@ -161,6 +146,17 @@ SourceMode TimeDomainManager::getSourceMode() const {
 }
 void TimeDomainManager::setSourceMode(SourceMode source_mode) {
   source_mode_ = source_mode;
+}
+size_t TimeDomainManager::GetDomainMeasurementIndex(TimestampType ts) {
+  typename RunningBufferType::const_accessor findResult;
+  if (running_buffers_.find(findResult, ts)) {
+    std::shared_ptr<DefaultTimeDomainBuffer> foundBuffer = findResult->second;
+    findResult.release();
+
+    return foundBuffer->GetCurrentMeasurementIndex();
+
+  }
+  throw std::invalid_argument("no domain buffer found for timestamp");
 }
 
 }
