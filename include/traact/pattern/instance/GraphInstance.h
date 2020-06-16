@@ -36,7 +36,7 @@
 #include <traact/pattern/instance/PatternInstance.h>
 #include <traact/traact_export.h>
 namespace traact::pattern::instance {
-struct TRAACT_EXPORT GraphInstance {
+class TRAACT_EXPORT GraphInstance {
  public:
   typedef typename std::shared_ptr<GraphInstance> Ptr;
   GraphInstance();

@@ -105,6 +105,8 @@ class DynamicJoinNode {
   tbb::flow::sender<TraactMessage> &getSender() {
     using namespace tbb::flow;
     switch (num_inputs_) {
+	default:
+		SPDLOG_ERROR("unsupported number of senders used: {0}", num_inputs_);
       case 2: {
         auto *tmp =
             static_cast<function_node<std::tuple<TraactMessage, TraactMessage>, TraactMessage> * >(function_node_);
@@ -124,6 +126,8 @@ class DynamicJoinNode {
     using namespace tbb::flow;
 
     switch (num_inputs_) {
+	default:
+		SPDLOG_ERROR("unsupported number of receivers used: {0}", num_inputs_);
       case 2: {
         switch (index) {
           case 0: {

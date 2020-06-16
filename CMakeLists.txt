@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 # public header
 set(LIB_HEADERS
         include/traact/traact.h
+        include/traact/traact_export.h
         include/traact/component/Component.h
         include/traact/component/ComponentTypes.h
         include/traact/datatypes.h
