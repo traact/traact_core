@@ -34,13 +34,13 @@
 
 #include <chrono>
 #include <sstream>
-
+#include <traact/traact_export.h>
 namespace traact {
 
 typedef std::chrono::duration<uint64_t, std::nano> TimeDurationType;
 typedef typename std::chrono::time_point<std::chrono::steady_clock, TimeDurationType> TimestampType;
 
-struct TimestampHashCompare {
+struct TRAACT_EXPORT TimestampHashCompare {
   static size_t hash(const TimestampType &x) {
     // TODO it might be better to cast to micro for better hashcode (assuming no input is faster then 1 micro second), but there should be at most as many messages in the queue as there are timedomainbuffers (should be 3) so does it matter?
     return x.time_since_epoch().count();
@@ -60,7 +60,7 @@ enum class MessageDataMode {
   Dynamic
 };
 
-struct TraactMessage {
+struct TRAACT_EXPORT TraactMessage {
   TimestampType timestamp= TimestampType::min();
   bool valid = false;;
   size_t domain_measurement_index = 0;
@@ -76,13 +76,13 @@ struct TraactMessage {
   }
 };
 
-enum class SourceMode {
+enum class TRAACT_EXPORT SourceMode {
   WaitForBuffer = 0,
   ImmediateReturn
 };
 
 // redefine tbb concurrency to avoid dependency in components just for this enum
-enum concurrency { unlimited = 0, serial = 1 };
+enum TRAACT_EXPORT concurrency { unlimited = 0, serial = 1 };
 
 }
 

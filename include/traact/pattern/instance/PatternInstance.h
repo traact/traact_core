@@ -31,14 +31,14 @@
 
 #ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPATTERN_H_
 #define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPATTERN_H_
-#include <traact/pattern/Pattern.h>
 #include <traact/pattern/instance/PortInstance.h>
-#include <traact_core_export.h>
+#include <traact/pattern/Pattern.h>
+#include <traact/traact_export.h>
 namespace traact::pattern::instance {
 
-class GraphInstance;
+class TRAACT_EXPORT GraphInstance;
 
-class TRAACT_CORE_EXPORT PatternInstance {
+class TRAACT_EXPORT PatternInstance {
  public:
   typedef typename std::shared_ptr<PatternInstance> Ptr;
   PatternInstance();

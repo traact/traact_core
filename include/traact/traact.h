@@ -34,7 +34,9 @@
 
 #include <traact/datatypes.h>
 #include <traact/component/Component.h>
+#include <traact/component/ModuleComponent.h>
 #include <traact/pattern/Pattern.h>
+#include <traact/pattern/ParameterUtils.h>
 #include <traact/pattern/spatial/SpatialPattern.h>
 #include <traact/pattern/instance/GraphInstance.h>
 #include <traact/dataflow/Network.h>
@@ -42,6 +44,8 @@
 
 #include <traact/buffer/GenericComponentBuffer.h>
 #include <traact/buffer/GenericTimeDomainBuffer.h>
+
+#include <traact/traact_export.h>
 
 namespace traact {
 

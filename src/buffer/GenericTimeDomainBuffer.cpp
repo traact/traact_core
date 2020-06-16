@@ -58,17 +58,22 @@ traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(component::Comp
     }
 
     for (auto port : dataComp->getProducerPorts()) {
-      bufferTypes.emplace_back(port->getDataType());
-      std::size_t bufferIndex = bufferTypes.size() - 1;
+      //if(port->IsConnected()) {
+        bufferTypes.emplace_back(port->getDataType());
+        std::size_t bufferIndex = bufferTypes.size() - 1;
 
-      addBuffer(port->getDataType());
+        addBuffer(port->getDataType());
 
-      port_to_bufferIndex[port->getID()] = bufferIndex;
+        port_to_bufferIndex[port->getID()] = bufferIndex;
 
-      for (auto input_port : port->connectedToPtr()) {
-        port_to_bufferIndex[input_port->getID()] = bufferIndex;
-      }
+        for (auto input_port : port->connectedToPtr()) {
+          port_to_bufferIndex[input_port->getID()] = bufferIndex;
+        }
+      //}
     }
+
+
+
 
     //if(component->isSink()){
     maximum_wait_count++;

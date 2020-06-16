@@ -71,12 +71,14 @@ traact::pattern::Pattern::~Pattern() {
 traact::pattern::Pattern &traact::pattern::Pattern::addParameter(const std::string &name,
                                                                  const std::string &default_value) {
   parameter[name]["default"] = default_value;
+  parameter[name]["value"] = default_value;
   return *this;
 }
 traact::pattern::Pattern &traact::pattern::Pattern::addParameter(const std::string &name,
                                                                  const std::string &default_value,
                                                                  const std::set<std::string> &enum_values) {
   parameter[name]["default"] = default_value;
+  parameter[name]["value"] = default_value;
   parameter[name]["enum_values"] = enum_values;
   return *this;
 }

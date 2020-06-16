@@ -29,44 +29,71 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+#include <traact/component/Component.h>
 
-#include <traact/pattern/Port.h>
-#include <traact/traact_export.h>
-namespace traact::pattern::instance {
+namespace traact::component {
 
-class TRAACT_EXPORT PatternInstance;
 
-//
-typedef typename std::pair<std::string, std::string> ComponentID_PortName;
+Component::Component(std::string name, const ComponentType traact_component_type)
+      : name_(std::move(name)), traact_component_type_(traact_component_type) {
 
-struct TRAACT_EXPORT PortInstance {
-  typedef PortInstance *Ptr;
-  typedef const PortInstance *ConstPtr;
+  }
 
-  PortInstance();
-  PortInstance(Port port, PatternInstance *pattern_instance);
 
-  const std::string &getName() const;
 
-  const std::string &getDataType() const;
+  const std::string &Component::getName() const {
+    return name_;
+  }
 
-  int getPortIndex() const;
+  const ComponentType &Component::getComponentType() const {
+    return traact_component_type_;
+  }
 
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr() const;
 
-  ComponentID_PortName getID() const;
+  void Component::updateParameter(const nlohmann::json &parameter) {
 
-  bool IsConnected() const;
+  }
 
-  Port port;
-  bool is_active;
-  ComponentID_PortName connected_to;
-  PatternInstance *pattern_instance;
 
-};
+  bool Component::init() {
+    return true;
+  }
+
+  bool Component::start() {
+    return true;
+  }
+
+  bool Component::stop() {
+    return true;
+  }
+
+  bool Component::teardown() {
+    return true;
+  }
+
+
+  bool Component::initializeBuffer(buffer::GenericComponentBuffer &data) {
+    return true;
+  }
+
+
+  bool Component::processTimePoint(buffer::GenericComponentBuffer &data) {
+    return true;
+  }
+
+
+  void Component::setRequestCallback(const RequestCallbackType &request_callback) {
+    request_callback_ = request_callback;
+  }
+
+  void Component::setAcquireCallback(const AcquireCallbackType &acquire_callback) {
+    acquire_callback_ = acquire_callback;
+  }
+
+
+  void Component::setCommitCallback(const CommitCallbackType &commit_callback) {
+    commit_callback_ = commit_callback;
+  }
+
 
 }
-
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_

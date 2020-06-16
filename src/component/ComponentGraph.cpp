@@ -29,42 +29,53 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_DATAFLOW_NETWORK_H_
-#define TRAACT_INCLUDE_TRAACT_DATAFLOW_NETWORK_H_
-
-#include <memory>
-#include <map>
-#include <traact/buffer/GenericFactoryObject.h>
 #include <traact/component/ComponentGraph.h>
+#include <spdlog/spdlog.h>
 
-#include <traact/traact_export.h>
+namespace traact::component {
 
-namespace traact::dataflow::intern {
-class TRAACT_EXPORT NetworkGraph;
+  ComponentGraph::ComponentGraph(pattern::instance::GraphInstance::Ptr graph_instance) : graph_instance_(std::move(
+      graph_instance)) {
+
+  }
+
+  std::string ComponentGraph::getName() const {
+    return graph_instance_->name;
+  }
+
+  void ComponentGraph::addPattern(const std::string &pattern_id, ComponentPtr component) {
+    SPDLOG_INFO("Graph: {0} Component: {1} add", getName(), component->getName());
+
+    ModuleComponent::Ptr module_comp_tmp = std::dynamic_pointer_cast<ModuleComponent, Component>(component);
+
+    if(module_comp_tmp){
+      SPDLOG_INFO("Graph: {0} Component: {1} is a module component", getName(), component->getName());
+      std::string module_key = module_comp_tmp->GetModuleKey();
+      if(module_map_[module_key]) {
+        SPDLOG_INFO("Graph: {0} Component: {1} module exists", getName(), component->getName());
+        module_comp_tmp->SetModule(module_map_[module_key]);
+      } else {
+        SPDLOG_INFO("Graph: {0} Component: {1} create new module", getName(), component->getName());
+        Module::Ptr new_module = module_comp_tmp->InstantiateModule();
+        module_comp_tmp->SetModule(new_module);
+        module_map_[module_key] = new_module;
+      };
+    }
+
+    patterns_.emplace(std::make_pair(graph_instance_->getPattern(pattern_id), std::move(component)));
+
+  }
+  const std::set<ComponentGraph::PatternComponentPair> &ComponentGraph::getPatterns() const {
+    return patterns_;
+  }
+
+ComponentGraph::ComponentPtr ComponentGraph::getComponent(const std::string& id) {
+    for (const auto &item : patterns_) {
+      if (item.first->instance_id == id)
+        return item.second;
+    }
+    return nullptr;
+  }
+
+
 }
-
-namespace traact::dataflow {
-
-class TRAACT_EXPORT Network {
- public:
-  typedef typename std::shared_ptr<Network> Ptr;
-  typedef typename component::ComponentGraph::Ptr ComponentGraphPtr;
-
-  explicit Network(std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
-
-  void addComponentGraph(ComponentGraphPtr component_graph);
-
-  void start();
-
-  void stop();
- private:
-  typedef typename std::shared_ptr<intern::NetworkGraph> NetworkGraphPtr;
-
-  std::set<ComponentGraphPtr> component_graphs_;
-  std::set<NetworkGraphPtr> network_graphs_;
-  std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
-
-};
-}
-
-#endif //TRAACT_INCLUDE_TRAACT_DATAFLOW_NETWORK_H_

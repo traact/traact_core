@@ -36,14 +36,13 @@
 #include <string>
 #include <set>
 #include <map>
-
-#include <traact/pattern/Port.h>
 #include <nlohmann/json.hpp>
-#include <traact_core_export.h>
+#include <traact/pattern/Port.h>
+
 namespace traact::pattern {
 
 // TODO how to fix loss of method chaining: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern. But this would lead to a set of base classes, ...
-struct TRAACT_CORE_EXPORT Pattern {
+struct TRAACT_EXPORT Pattern {
  public:
   typedef typename std::shared_ptr<Pattern> Ptr;
   Pattern();
@@ -60,6 +59,7 @@ struct TRAACT_CORE_EXPORT Pattern {
                         T min_value = std::numeric_limits<T>::min(),
                         T max_value = std::numeric_limits<T>::max()) {
     parameter[name]["default"] = default_value;
+    parameter[name]["value"] = default_value;
     parameter[name]["min_value"] = min_value;
     parameter[name]["max_value"] = max_value;
     return *this;

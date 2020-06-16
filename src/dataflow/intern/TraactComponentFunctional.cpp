@@ -81,11 +81,11 @@ TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
 
   DefaultComponentBuffer
       &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
-  this->component_base_->processTimePoint(component_buffer);
+  result.valid = this->component_base_->processTimePoint(component_buffer);
 
   this->buffer_manager_->commitBuffer(in.timestamp);
 
-  result.valid = true;
+
   return result;
 }
 

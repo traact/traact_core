@@ -29,44 +29,26 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+#include <traact/pattern/ParameterUtils.h>
 
-#include <traact/pattern/Port.h>
-#include <traact/traact_export.h>
-namespace traact::pattern::instance {
+namespace traact::pattern {
 
-class TRAACT_EXPORT PatternInstance;
-
-//
-typedef typename std::pair<std::string, std::string> ComponentID_PortName;
-
-struct TRAACT_EXPORT PortInstance {
-  typedef PortInstance *Ptr;
-  typedef const PortInstance *ConstPtr;
-
-  PortInstance();
-  PortInstance(Port port, PatternInstance *pattern_instance);
-
-  const std::string &getName() const;
-
-  const std::string &getDataType() const;
-
-  int getPortIndex() const;
-
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr() const;
-
-  ComponentID_PortName getID() const;
-
-  bool IsConnected() const;
-
-  Port port;
-  bool is_active;
-  ComponentID_PortName connected_to;
-  PatternInstance *pattern_instance;
-
+std::set<std::string> CommonParameterEnums::bool_enum= {
+    {"true"},
+    {"false"}
 };
 
-}
+std::map<std::string, bool> CommonParameterEnums::value_to_bool= {
+    {"true", true},
+    {"false", false}
+};
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+void setBoolValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, bool& paramter_out, bool default_value ) {
+  if(!parameter.contains(parameter_name)) {
+    SPDLOG_WARN("Missing parameter: {0}, using default value: {1}",parameter_name, default_value);
+    paramter_out = default_value;
+  } else {
+    paramter_out = parameter[parameter_name]["value"] == "true";
+  }
+}
+}

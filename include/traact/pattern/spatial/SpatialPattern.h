@@ -36,9 +36,9 @@
 #include <map>
 #include <traact/pattern/Pattern.h>
 #include <traact/pattern/spatial/CoordinateSystem.h>
-#include <traact_core_export.h>
+#include <traact/traact_export.h>
 namespace traact::pattern::spatial {
-struct TRAACT_CORE_EXPORT SpatialPattern : public Pattern {
+struct TRAACT_EXPORT SpatialPattern : public Pattern {
  public:
   typedef typename std::shared_ptr<SpatialPattern> Ptr;
   SpatialPattern(const std::string &name, size_t concurrency);

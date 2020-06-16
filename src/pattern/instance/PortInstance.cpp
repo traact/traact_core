@@ -60,3 +60,6 @@ std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::ins
   return pattern_instance->parent_graph->connectedToPtr(getID());
 }
 
+bool traact::pattern::instance::PortInstance::IsConnected() const {
+    return !connectedToPtr().empty();
+}

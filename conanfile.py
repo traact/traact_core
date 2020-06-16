@@ -5,9 +5,7 @@ from conans import ConanFile, CMake, tools
 
 class Traact(ConanFile):
     name = "traact_core"
-    version = "0.0.1"
-    default_user = "camposs"
-    default_channel = "stable"
+    version = "0.0.1"    
 
     description = "Convenience wrapper around tbb for realtime tracking in heterogeneous, distributed sensor environments"
     url = ""
@@ -21,13 +19,11 @@ class Traact(ConanFile):
     compiler = "cppstd"
     options = {
         "shared": [True, False],
-        "workspaceBuild": [True, False],
         "with_tests": [True, False]
     }
 
     default_options = {
         "shared": True,
-        "workspaceBuild": False,
         "with_tests": True
     }
 

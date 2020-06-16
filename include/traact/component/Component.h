@@ -38,9 +38,9 @@
 #include <traact/component/ComponentTypes.h>
 #include <traact/pattern/Pattern.h>
 #include <traact/datatypes.h>
-
+#include <traact/traact_export.h>
 namespace traact::buffer {
-class GenericComponentBuffer;
+class TRAACT_EXPORT GenericComponentBuffer;
 }
 
 namespace traact::component {
@@ -53,7 +53,7 @@ namespace traact::component {
  *
  * @tparam Buffer Provides input and output buffer to the user
  */
-class Component {
+class TRAACT_EXPORT Component {
  public:
   typedef typename std::shared_ptr<Component> Ptr;
 
@@ -65,10 +65,7 @@ class Component {
   // used by producing and consuming functional components and sink components
   //typedef typename std::function<bool(Buffer &)> ProcessCallbackType;
 
-  Component(std::string name, const ComponentType traact_component_type)
-      : name_(std::move(name)), traact_component_type_(traact_component_type) {
-
-  }
+  Component(std::string name, const ComponentType traact_component_type);
 
   virtual ~Component() = default;
 
@@ -76,22 +73,21 @@ class Component {
    * Name of component, unique in dataflow
    * @return
    */
-  const std::string &getName() const {
-    return name_;
-  }
+  const std::string &getName() const;
   /**
    * Type of TraactNetwork supported type of component
    * @return
    */
-  const ComponentType &getComponentType() const {
-    return traact_component_type_;
-  }
+  const ComponentType &getComponentType() const;
 
   /**
-   * Generate dataflow pattern that describes the component.
-   * @return
+   * Called once after the class is instantiated( before init())
+   * and if the parameters change during runtime. If it is called
+   * durring runtime then the user has to make sure that the call
+   * is thread safe.
+   * @param parameter
    */
-  //virtual pattern::dataflow::Pattern::Ptr getPattern() = 0;
+  virtual void updateParameter(const nlohmann::json &parameter);
 
   /**
    * Called once in the beginning after the dataflow network is constructed
@@ -101,33 +97,25 @@ class Component {
    *
    * @return false if initialization is not possible (e.g. camera not available)
    */
-  virtual bool init() {
-    return true;
-  }
+  virtual bool init();
   /**
    * Called after all components are initialized, the dataflow network is connected and ready to run
    *
    * @return false if component is not ready to be used
    */
-  virtual bool start() {
-    return true;
-  }
+  virtual bool start();
 
   /**
    * Request for component to stop operating.
    * Can be started again with by another call to Start()
    * @return false if component can't stop
    */
-  virtual bool stop() {
-    return true;
-  }
+  virtual bool stop();
   /**
    * Component is about to be destroyed
    * @return false if component failed to get into a state to be safely destroyed
    */
-  virtual bool teardown() {
-    return true;
-  }
+  virtual bool teardown();
 
   /**
    * Initialize output buffers based on own information or input information.
@@ -137,9 +125,7 @@ class Component {
    * @param data Buffer class for single component
    * @return false if initialization failed
    */
-  virtual bool initializeBuffer(buffer::GenericComponentBuffer &data) {
-    return true;
-  }
+  virtual bool initializeBuffer(buffer::GenericComponentBuffer &data);
 
   /**
    * Used by producing and consuming functional components and sink components.
@@ -151,9 +137,7 @@ class Component {
    * @param data
    * @return false if processing failed and output has not meaningful data
    */
-  virtual void processTimePoint(buffer::GenericComponentBuffer &data) {
-
-  }
+  virtual bool processTimePoint(buffer::GenericComponentBuffer &data);
 
   /**
    * Used by source components.
@@ -169,9 +153,7 @@ class Component {
    *
    * @param commit_callback set by dataflow network
    */
-  void setRequestCallback(const RequestCallbackType &request_callback) {
-    request_callback_ = request_callback;
-  }
+  void setRequestCallback(const RequestCallbackType &request_callback);
   /**
    * Used by source components.
    * Second step of sending new data into the network.
@@ -183,22 +165,14 @@ class Component {
    *
    * @param commit_callback
    */
-  void setAcquireCallback(const AcquireCallbackType &acquire_callback) {
-    acquire_callback_ = acquire_callback;
-  }
+  void setAcquireCallback(const AcquireCallbackType &acquire_callback) ;
 
   /**
    * Used by source components.
    * When you are finished filling the buffer with data call commit_callback_
    * @param commit_callback
    */
-  void setCommitCallback(const CommitCallbackType &commit_callback) {
-    commit_callback_ = commit_callback;
-  }
-
-  virtual void updateParameter(const nlohmann::json &parameter) {
-
-  }
+  void setCommitCallback(const CommitCallbackType &commit_callback);
 
  protected:
   const std::string name_;

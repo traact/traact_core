@@ -29,44 +29,63 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+#ifndef TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_COMPONENT_MODULECOMPONENT_H_
+#define TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_COMPONENT_MODULECOMPONENT_H_
 
-#include <traact/pattern/Port.h>
-#include <traact/traact_export.h>
-namespace traact::pattern::instance {
+#include <traact/component/Component.h>
+namespace traact::component {
 
-class TRAACT_EXPORT PatternInstance;
+class TRAACT_EXPORT ModuleComponent;
 
-//
-typedef typename std::pair<std::string, std::string> ComponentID_PortName;
+/**
+ * Base class for all module implementation to be used by a module component
+ */
+class TRAACT_EXPORT Module {
+ public:
+  typedef typename std::shared_ptr<Module> Ptr;
+  typedef ModuleComponent* ComponentPtr;
 
-struct TRAACT_EXPORT PortInstance {
-  typedef PortInstance *Ptr;
-  typedef const PortInstance *ConstPtr;
+  Module() = default;
+  virtual ~Module() = default;
 
-  PortInstance();
-  PortInstance(Port port, PatternInstance *pattern_instance);
+  virtual bool init(ComponentPtr module_component);
 
-  const std::string &getName() const;
+  virtual bool start(ComponentPtr module_component);
 
-  const std::string &getDataType() const;
+  virtual bool stop(ComponentPtr module_component);
 
-  int getPortIndex() const;
+  virtual bool teardown(ComponentPtr module_component);
 
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr() const;
+};
 
-  ComponentID_PortName getID() const;
+/**
+ * Base for all traact module components.
+ * A module component is a component that shares a common "module" with a set of other module components.
+ *
+ */
+class TRAACT_EXPORT ModuleComponent : public Component{
+ public:
+  typedef typename std::shared_ptr<ModuleComponent> Ptr;
+  ModuleComponent(std::string name, const ComponentType traact_component_type, const ModuleType module_type);
 
-  bool IsConnected() const;
+  ModuleType GetModuleType() const;
 
-  Port port;
-  bool is_active;
-  ComponentID_PortName connected_to;
-  PatternInstance *pattern_instance;
+  virtual std::string GetModuleKey() = 0;
+  virtual Module::Ptr InstantiateModule() = 0;
+
+  void SetModule(Module::Ptr module);
+
+  bool init() override;
+  bool start() override;
+  bool stop() override;
+  bool teardown() override;
+
+ protected:
+  ModuleType module_type_;
+  Module::Ptr module_;
+
 
 };
 
 }
-
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+#endif //TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_COMPONENT_MODULECOMPONENT_H_

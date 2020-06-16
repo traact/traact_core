@@ -36,12 +36,12 @@
 
 #include <traact/component/ComponentGraph.h>
 #include <traact/buffer/GenericFactoryObject.h>
-
+#include <traact/traact_export.h>
 namespace traact::buffer {
 
-class GenericComponentBuffer;
+class TRAACT_EXPORT GenericComponentBuffer;
 
-class GenericTimeDomainBuffer {
+class TRAACT_EXPORT GenericTimeDomainBuffer {
  public:
   typedef typename std::shared_ptr<GenericTimeDomainBuffer> Ptr;
   typedef GenericComponentBuffer ComponentBuffer;

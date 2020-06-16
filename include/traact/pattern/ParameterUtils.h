@@ -29,44 +29,47 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+#ifndef TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_PATTERN_PARAMETERUTILS_H_
+#define TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_PATTERN_PARAMETERUTILS_H_
 
-#include <traact/pattern/Port.h>
+#include <map>
+#include <set>
+#include <nlohmann/json.hpp>
 #include <traact/traact_export.h>
-namespace traact::pattern::instance {
+#include <spdlog/spdlog.h>
 
-class TRAACT_EXPORT PatternInstance;
+namespace traact::pattern {
 
-//
-typedef typename std::pair<std::string, std::string> ComponentID_PortName;
+void TRAACT_EXPORT setBoolValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, bool& paramter_out, bool default_value );
 
-struct TRAACT_EXPORT PortInstance {
-  typedef PortInstance *Ptr;
-  typedef const PortInstance *ConstPtr;
+template<typename ParaType, typename DefaultValueType>
+void setValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, ParaType& paramter_out, DefaultValueType default_value ) {
+  if(!parameter.contains(parameter_name)) {
+    SPDLOG_WARN("Missing parameter: {0}, using default value: {1}",parameter_name, default_value);
+    paramter_out = default_value;
+  } else {
+    paramter_out = parameter[parameter_name]["value"];
+  }
+}
 
-  PortInstance();
-  PortInstance(Port port, PatternInstance *pattern_instance);
+template<typename ParaType, typename DefaultValueType>
+void setValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, ParaType& paramter_out, DefaultValueType default_value, const std::map<std::string, ParaType>& key_value ) {
+  if(!parameter.contains(parameter_name)) {
+    SPDLOG_WARN("Missing parameter: {0}, using default value: {1}",parameter_name, default_value);
+    paramter_out = key_value.at(default_value);
+  } else {
+    paramter_out = key_value.at(parameter[parameter_name]["value"]);
+  }
+}
 
-  const std::string &getName() const;
-
-  const std::string &getDataType() const;
-
-  int getPortIndex() const;
-
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr() const;
-
-  ComponentID_PortName getID() const;
-
-  bool IsConnected() const;
-
-  Port port;
-  bool is_active;
-  ComponentID_PortName connected_to;
-  PatternInstance *pattern_instance;
+class TRAACT_EXPORT CommonParameterEnums {
+ public:
+  static std::set<std::string> bool_enum;
+  static std::map<std::string, bool> value_to_bool;
 
 };
 
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+
+#endif //TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_PATTERN_PARAMETERUTILS_H_

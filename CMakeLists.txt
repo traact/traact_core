@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
+
 include(GenerateExportHeader)
 
 option(WITH_TESTS "Build Tests" ON)
@@ -34,7 +35,7 @@ set(LIB_HEADERS
         include/traact/serialization/JsonPort.h
         include/traact/serialization/JsonPortInstance.h
         include/traact/serialization/JsonSpatialPattern.h
-        include/traact/serialization/JsonGraphInstance.h)
+        include/traact/serialization/JsonGraphInstance.h include/traact/pattern/ParameterUtils.h include/traact/component/ModuleComponent.h)
 
 # rest of source code
 set(LIB_SOURCES
@@ -60,9 +61,8 @@ set(LIB_SOURCES
         src/pattern/instance/PortInstance.cpp
         src/pattern/instance/GraphInstance.cpp
         src/util/Utils.cpp
-        src/dataflow/Network.cpp)
+        src/dataflow/Network.cpp src/pattern/ParameterUtils.cpp src/component/Component.cpp src/component/ModuleComponent.cpp src/component/ComponentGraph.cpp)
 
-message(${CMAKE_CURRENT_BINARY_DIR})
 
 # conan is required hard, library name, version and description are configured from conan
 if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
@@ -74,7 +74,6 @@ endif ()
 project(${CONAN_PACKAGE_NAME}_PROJECT VERSION ${CONAN_PACKAGE_VERSION})
 
 conan_basic_setup(TARGETS)
-#conan_basic_setup(NO_OUTPUT_DIRS)
 
 if (WITH_COVERAGE)
     #add_compile_options(-g -O0 -Wall -W -Wshadow -Wunused-variable -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage)
@@ -88,13 +87,16 @@ endif ()
 add_definitions(-DTBB_PREVIEW_FLOW_GRAPH_FEATURES=1)
 add_definitions(-DTBB_PREVIEW_FLOW_GRAPH_NODES=1)
 
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+
 add_library(${CONAN_PACKAGE_NAME} SHARED
         ${LIB_HEADERS}
         ${LIB_SOURCES}
         )
 
-
-generate_export_header(${CONAN_PACKAGE_NAME})
+# conan workspace and cmake don't work that well together
+generate_export_header(${CONAN_PACKAGE_NAME} BASE_NAME traact EXPORT_FILE_NAME "../../include/traact/traact_export.h")
 
 conan_target_link_libraries(${CONAN_PACKAGE_NAME})
 
@@ -106,17 +108,10 @@ target_include_directories(${CONAN_PACKAGE_NAME} PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
-
         )
 target_include_directories(${CONAN_PACKAGE_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_BINARY_DIR}
         )
-
-IF (NOT WIN32)
-    MESSAGE(STATUS "Set boost::ublas alignment to 16")
-    set_target_properties(traact_core PROPERTIES COMPILE_DEFINITIONS "BOOST_UBLAS_BOUNDED_ARRAY_ALIGN=__attribute__ ((aligned (16)))")
-ENDIF (NOT WIN32)
 
 install(TARGETS ${CONAN_PACKAGE_NAME}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -128,7 +123,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/traact" # source director
         PATTERN "*.h" # select header files
         )
 
-install(FILES "${PROJECT_BINARY_DIR}/${CONAN_PACKAGE_NAME}_export.h" DESTINATION "include")
+#install(FILES "${PROJECT_BINARY_DIR}/traact_export.h" DESTINATION "include")
 
 
 if (WITH_TESTS)

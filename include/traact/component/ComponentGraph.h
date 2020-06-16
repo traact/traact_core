@@ -38,45 +38,31 @@
 #include <set>
 
 #include <traact/component/Component.h>
+#include <traact/component/ModuleComponent.h>
 #include <traact/pattern/instance/PatternInstance.h>
 #include <traact/pattern/instance/GraphInstance.h>
-
+#include <traact/traact_export.h>
 namespace traact::component {
 
-class ComponentGraph {
+class TRAACT_EXPORT ComponentGraph {
  public:
   typedef typename std::shared_ptr<ComponentGraph> Ptr;
   typedef typename std::shared_ptr<pattern::instance::PatternInstance> PatternPtr;
   typedef typename std::shared_ptr<Component> ComponentPtr;
   typedef typename std::pair<PatternPtr, ComponentPtr> PatternComponentPair;
 
-  explicit ComponentGraph(pattern::instance::GraphInstance::Ptr graph_instance) : graph_instance_(std::move(
-      graph_instance)) {
+  explicit ComponentGraph(pattern::instance::GraphInstance::Ptr graph_instance);
+  std::string getName() const;
 
-  }
+  void addPattern(const std::string &pattern_id, ComponentPtr component);
+  const std::set<PatternComponentPair> &getPatterns() const;
 
-  std::string getName() const {
-    return graph_instance_->name;
-  }
-
-  void addPattern(const std::string &pattern_id, ComponentPtr component) {
-    patterns_.emplace(std::make_pair(graph_instance_->getPattern(pattern_id), std::move(component)));
-  }
-  const std::set<PatternComponentPair> &getPatterns() const {
-    return patterns_;
-  }
-
-  ComponentPtr getComponent(const std::string& id) {
-    for (const auto &item : patterns_) {
-      if (item.first->instance_id == id)
-        return item.second;
-    }
-    return nullptr;
-  }
+  ComponentPtr getComponent(const std::string& id);
 
  private:
   pattern::instance::GraphInstance::Ptr graph_instance_;
   std::set<PatternComponentPair> patterns_;
+  std::map<std::string, Module::Ptr> module_map_;
 };
 }
 

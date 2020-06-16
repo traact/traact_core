@@ -50,7 +50,7 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
     {
       typename RunningBufferType::const_accessor findResult;
       if (running_buffers_.find(findResult, ts)) {
-        //spdlog::info("buffer found in running buffers");
+        SPDLOG_TRACE("buffer found in running buffers");
         findResult.release();
         return 0;
       }
@@ -62,7 +62,7 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
       // check map again because a different thread might have also waited for the lock and created the buffer
       typename RunningBufferType::const_accessor findResult;
       if (running_buffers_.find(findResult, ts)) {
-        SPDLOG_TRACE("in lock: buffer found in running buffers");
+        SPDLOG_TRACE("in lock: buffer found in running buffers, component: {0}", component_name);
         findResult.release();
         return 0;
       }
@@ -71,7 +71,7 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
         TimeDomainBufferPtr freeBuffer;
 
         if (free_buffers_.try_pop(freeBuffer)) {
-          SPDLOG_TRACE("in lock: new buffer for ts: {0}", ts.time_since_epoch().count());
+          SPDLOG_TRACE("in lock: new buffer for component: {0} ts: {1}", component_name, ts.time_since_epoch().count());
           freeBuffer->resetForTimestamp(ts, domain_timestamp_index_);
           running_buffers_.insert(std::make_pair(ts, freeBuffer));
           ++domain_timestamp_index_;
@@ -81,9 +81,11 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
     }
 
     switch (source_mode_) {
+      default:
       case SourceMode::WaitForBuffer: {
         SPDLOG_TRACE("no free buffer, yield");
         std::this_thread::yield();
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         break;
       }
       case SourceMode::ImmediateReturn: {
@@ -111,6 +113,7 @@ TimeDomainManager::DefaultComponentBuffer &TimeDomainManager::acquireBuffer(cons
 int TimeDomainManager::commitBuffer(TimestampType ts) {
 
   typename RunningBufferType::const_accessor findResult;
+  SPDLOG_TRACE("commitBuffer ts: {0}",ts.time_since_epoch().count());
   if (running_buffers_.find(findResult, ts)) {
     //no lock required, atomic<int>
     findResult->second->decreaseUse();

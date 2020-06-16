@@ -28,45 +28,55 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
+#include <spdlog/spdlog.h>
+#include <traact/component/ModuleComponent.h>
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+namespace traact::component {
 
-#include <traact/pattern/Port.h>
-#include <traact/traact_export.h>
-namespace traact::pattern::instance {
 
-class TRAACT_EXPORT PatternInstance;
 
-//
-typedef typename std::pair<std::string, std::string> ComponentID_PortName;
+    bool Module::init(ComponentPtr module_component) {
+      return true;
+    }
 
-struct TRAACT_EXPORT PortInstance {
-  typedef PortInstance *Ptr;
-  typedef const PortInstance *ConstPtr;
+    bool Module::start(ComponentPtr module_component) {
+      return true;
+    }
 
-  PortInstance();
-  PortInstance(Port port, PatternInstance *pattern_instance);
+    bool Module::stop(ComponentPtr module_component) {
+      return true;
+    }
 
-  const std::string &getName() const;
+    bool Module::teardown(ComponentPtr module_component) {
+      return true;
+    }
 
-  const std::string &getDataType() const;
-
-  int getPortIndex() const;
-
-  std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr() const;
-
-  ComponentID_PortName getID() const;
-
-  bool IsConnected() const;
-
-  Port port;
-  bool is_active;
-  ComponentID_PortName connected_to;
-  PatternInstance *pattern_instance;
-
-};
+  ModuleComponent::ModuleComponent(std::string name, const ComponentType traact_component_type, const ModuleType module_type)
+: Component(std::move(name), traact_component_type), module_type_(module_type) {
 
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+ModuleType ModuleComponent::GetModuleType() const {
+  return module_type_;
+}
+
+void ModuleComponent::SetModule(Module::Ptr module) {
+  SPDLOG_DEBUG("setting module for module component");
+  module_ = module;
+}
+
+bool ModuleComponent::init() {
+return module_->init(this);
+}
+bool ModuleComponent::start() {
+return module_->start(this);
+}
+bool ModuleComponent::stop() {
+return module_->stop(this);
+}
+bool ModuleComponent::teardown() {
+return module_->teardown(this);
+}
+
+
+}
