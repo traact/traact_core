@@ -41,10 +41,10 @@
 #include <traact/component/ModuleComponent.h>
 #include <traact/pattern/instance/PatternInstance.h>
 #include <traact/pattern/instance/GraphInstance.h>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 namespace traact::component {
 
-class TRAACT_EXPORT ComponentGraph {
+class TRAACT_CORE_EXPORT ComponentGraph {
  public:
   typedef typename std::shared_ptr<ComponentGraph> Ptr;
   typedef typename std::shared_ptr<pattern::instance::PatternInstance> PatternPtr;

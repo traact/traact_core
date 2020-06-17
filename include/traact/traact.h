@@ -45,7 +45,7 @@
 #include <traact/buffer/GenericComponentBuffer.h>
 #include <traact/buffer/GenericTimeDomainBuffer.h>
 
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 namespace traact {
 

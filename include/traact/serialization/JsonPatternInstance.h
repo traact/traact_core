@@ -35,7 +35,7 @@
 #include <traact/serialization/JsonPattern.h>
 #include <traact/serialization/JsonPortInstance.h>
 #include <traact/pattern/instance/PatternInstance.h>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 namespace ns {
 
 using nlohmann::json;

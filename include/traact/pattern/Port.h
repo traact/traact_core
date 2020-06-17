@@ -37,12 +37,12 @@
 #include <string>
 #include <set>
 #include <memory>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 
 namespace traact::pattern {
 
-enum class TRAACT_EXPORT PortType {
+enum class TRAACT_CORE_EXPORT PortType {
   NONE = 0,
   Producer,
   Consumer
@@ -51,9 +51,9 @@ enum class TRAACT_EXPORT PortType {
 //typedef typename std::pair<std::string, std::string> ComponentName_PortName;
 
 // forward declaration
-struct TRAACT_EXPORT Pattern;
+struct TRAACT_CORE_EXPORT Pattern;
 
-struct TRAACT_EXPORT Port {
+struct TRAACT_CORE_EXPORT Port {
   Port();
   Port(std::string name, std::string datatype, PortType port_type, int port_index);
   virtual ~Port() = default;

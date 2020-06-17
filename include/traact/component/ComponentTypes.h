@@ -31,9 +31,9 @@
 
 #ifndef TRAACT_INCLUDE_TRAACT_COMPONENT_COMPONENTTYPES_H_
 #define TRAACT_INCLUDE_TRAACT_COMPONENT_COMPONENTTYPES_H_
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 namespace traact::component {
-enum class TRAACT_EXPORT ComponentType {
+enum class TRAACT_CORE_EXPORT ComponentType {
   /**
    * invalid component, error, should not be used
    */

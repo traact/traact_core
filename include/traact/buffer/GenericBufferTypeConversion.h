@@ -32,11 +32,11 @@
 #ifndef TRAACT_INCLUDE_TRAACT_BUFFER_GENERIC_GENERICBUFFERTYPECONVERSION_H_
 #define TRAACT_INCLUDE_TRAACT_BUFFER_GENERIC_GENERICBUFFERTYPECONVERSION_H_
 
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 namespace traact::buffer {
 
-struct TRAACT_EXPORT GenericBufferTypeConversion {
+struct TRAACT_CORE_EXPORT GenericBufferTypeConversion {
   template<typename ReturnType, typename HeaderType>
   ReturnType &asMutable(void *obj, void *header);
 

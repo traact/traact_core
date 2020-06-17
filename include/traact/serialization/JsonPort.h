@@ -33,7 +33,7 @@
 
 #include <nlohmann/json.hpp>
 #include <traact/pattern/Port.h>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 namespace ns {
 
 using nlohmann::json;

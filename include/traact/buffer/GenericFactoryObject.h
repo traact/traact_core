@@ -34,11 +34,11 @@
 
 #include <string>
 #include <memory>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 namespace traact::buffer {
 
-class TRAACT_EXPORT GenericFactoryObject {
+class TRAACT_CORE_EXPORT GenericFactoryObject {
  public:
   typedef typename std::shared_ptr<GenericFactoryObject> Ptr;
 
@@ -47,7 +47,7 @@ class TRAACT_EXPORT GenericFactoryObject {
   virtual void deleteObject(void *obj) = 0;
 };
 
-template<class T> class TRAACT_EXPORT TemplatedDefaultFactoryObject : public GenericFactoryObject{
+template<class T> class TemplatedDefaultFactoryObject : public GenericFactoryObject{
  public:
   std::string getTypeName() override {
     return std::move(std::string(T::MetaType));

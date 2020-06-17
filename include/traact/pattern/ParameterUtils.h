@@ -35,12 +35,12 @@
 #include <map>
 #include <set>
 #include <nlohmann/json.hpp>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 #include <spdlog/spdlog.h>
 
 namespace traact::pattern {
 
-void TRAACT_EXPORT setBoolValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, bool& paramter_out, bool default_value );
+void TRAACT_CORE_EXPORT setBoolValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, bool& paramter_out, bool default_value );
 
 template<typename ParaType, typename DefaultValueType>
 void setValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, ParaType& paramter_out, DefaultValueType default_value ) {
@@ -62,7 +62,7 @@ void setValueFromParameter(const nlohmann::json& parameter, std::string paramete
   }
 }
 
-class TRAACT_EXPORT CommonParameterEnums {
+class TRAACT_CORE_EXPORT CommonParameterEnums {
  public:
   static std::set<std::string> bool_enum;
   static std::map<std::string, bool> value_to_bool;

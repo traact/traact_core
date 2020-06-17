@@ -37,15 +37,15 @@
 #include <traact/buffer/GenericFactoryObject.h>
 #include <traact/component/ComponentGraph.h>
 
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 namespace traact::dataflow::intern {
-class TRAACT_EXPORT NetworkGraph;
+class TRAACT_CORE_EXPORT NetworkGraph;
 }
 
 namespace traact::dataflow {
 
-class TRAACT_EXPORT Network {
+class TRAACT_CORE_EXPORT Network {
  public:
   typedef typename std::shared_ptr<Network> Ptr;
   typedef typename component::ComponentGraph::Ptr ComponentGraphPtr;

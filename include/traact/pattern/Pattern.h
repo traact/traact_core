@@ -42,7 +42,7 @@
 namespace traact::pattern {
 
 // TODO how to fix loss of method chaining: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern. But this would lead to a set of base classes, ...
-struct TRAACT_EXPORT Pattern {
+struct TRAACT_CORE_EXPORT Pattern {
  public:
   typedef typename std::shared_ptr<Pattern> Ptr;
   Pattern();

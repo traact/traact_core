@@ -36,10 +36,10 @@
 #include <iostream>
 #include <vector>
 #include <traact/datatypes.h>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 namespace traact::util {
 
-class TRAACT_EXPORT PerformanceMonitor {
+class TRAACT_CORE_EXPORT PerformanceMonitor {
  public:
 
   class BlockTimer {

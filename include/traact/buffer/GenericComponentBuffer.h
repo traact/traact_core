@@ -37,10 +37,10 @@
 #include <traact/datatypes.h>
 #include <traact/buffer/GenericTimeDomainBuffer.h>
 #include <traact/buffer/GenericBufferTypeConversion.h>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 namespace traact::buffer {
-class TRAACT_EXPORT GenericComponentBuffer {
+class TRAACT_CORE_EXPORT GenericComponentBuffer {
  public:
   typedef typename std::shared_ptr<GenericComponentBuffer> Ptr;
   typedef typename GenericTimeDomainBuffer::BufferType TDBufferType;

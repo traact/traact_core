@@ -35,12 +35,12 @@
 #include <traact/component/Component.h>
 namespace traact::component {
 
-class TRAACT_EXPORT ModuleComponent;
+class TRAACT_CORE_EXPORT ModuleComponent;
 
 /**
  * Base class for all module implementation to be used by a module component
  */
-class TRAACT_EXPORT Module {
+class TRAACT_CORE_EXPORT Module {
  public:
   typedef typename std::shared_ptr<Module> Ptr;
   typedef ModuleComponent* ComponentPtr;
@@ -63,7 +63,7 @@ class TRAACT_EXPORT Module {
  * A module component is a component that shares a common "module" with a set of other module components.
  *
  */
-class TRAACT_EXPORT ModuleComponent : public Component{
+class TRAACT_CORE_EXPORT ModuleComponent : public Component{
  public:
   typedef typename std::shared_ptr<ModuleComponent> Ptr;
   ModuleComponent(std::string name, const ComponentType traact_component_type, const ModuleType module_type);

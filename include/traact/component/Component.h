@@ -38,9 +38,9 @@
 #include <traact/component/ComponentTypes.h>
 #include <traact/pattern/Pattern.h>
 #include <traact/datatypes.h>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 namespace traact::buffer {
-class TRAACT_EXPORT GenericComponentBuffer;
+class TRAACT_CORE_EXPORT GenericComponentBuffer;
 }
 
 namespace traact::component {
@@ -53,7 +53,7 @@ namespace traact::component {
  *
  * @tparam Buffer Provides input and output buffer to the user
  */
-class TRAACT_EXPORT Component {
+class TRAACT_CORE_EXPORT Component {
  public:
   typedef typename std::shared_ptr<Component> Ptr;
 

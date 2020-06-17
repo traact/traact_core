@@ -41,17 +41,17 @@
 #include <shared_mutex>
 #include <spdlog/spdlog.h>
 #include <thread>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 namespace traact::component {
-class TRAACT_EXPORT ComponentGraph;
+class TRAACT_CORE_EXPORT ComponentGraph;
 }
 
 namespace traact::buffer {
 
 //
 
-class TRAACT_EXPORT TimeDomainManager {
+class TRAACT_CORE_EXPORT TimeDomainManager {
  public:
   typedef typename std::shared_ptr<TimeDomainManager> Ptr;
   typedef GenericTimeDomainBuffer DefaultTimeDomainBuffer;

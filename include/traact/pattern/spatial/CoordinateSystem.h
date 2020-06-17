@@ -34,10 +34,10 @@
 
 #include <string>
 #include <memory>
-#include <traact/traact_export.h>
+#include <traact/traact_core_export.h>
 
 namespace traact::pattern::spatial {
-struct TRAACT_EXPORT CoordinateSystem {
+struct TRAACT_CORE_EXPORT CoordinateSystem {
  public:
   CoordinateSystem();
   explicit CoordinateSystem(std::string name, bool is_multi);
