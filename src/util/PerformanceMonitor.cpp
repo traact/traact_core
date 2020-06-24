@@ -32,11 +32,11 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
-
+#include <cassert>
 #include "traact/util/PerformanceMonitor.h"
 
-traact::util::PerformanceMonitor::PerformanceMonitor(std::string name) : m_name(std::move(name)), m_startTime(now()) {
-  m_blockTimer.reserve(10);
+traact::util::PerformanceMonitor::PerformanceMonitor(std::string name, int block_timer_count) : m_name(std::move(name)), m_startTime(now()) {
+  m_blockTimer.resize(block_timer_count);
 }
 
 traact::util::PerformanceMonitor::~PerformanceMonitor() = default;
@@ -51,6 +51,7 @@ const std::string &traact::util::PerformanceMonitor::getName() const {
 }
 
 bool traact::util::PerformanceMonitor::initialized(size_t index) const {
+	assert(index <= m_blockTimer.size());
   return m_blockTimer[index].initialized;
 }
 

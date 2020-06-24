@@ -70,7 +70,7 @@ class TRAACT_CORE_EXPORT PerformanceMonitor {
     TimestampType m_startTime;
   };
 
-  explicit PerformanceMonitor(std::string name);
+  explicit PerformanceMonitor(std::string name,int block_timer_count = 10);
 
   ~PerformanceMonitor();
 

@@ -56,7 +56,7 @@ class Traact(ConanFile):
     def configure(self):
         if self.options.with_tests:
             self.options['gtest'].shared = self.options.shared
-        self.options['TBB'].shared = self.options.shared
+        self.options['tbb'].shared = self.options.shared
 
     def build(self):
         cmake = self._configure_cmake()
