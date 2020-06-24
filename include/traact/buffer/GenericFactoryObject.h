@@ -35,16 +35,24 @@
 #include <string>
 #include <memory>
 #include <traact/traact_core_export.h>
-
+#include <rttr/type>
 namespace traact::buffer {
 
-class TRAACT_CORE_EXPORT GenericFactoryObject {
+class TRAACT_CORE_EXPORT GenericFactoryObject : public std::enable_shared_from_this<GenericFactoryObject>{
  public:
   typedef typename std::shared_ptr<GenericFactoryObject> Ptr;
 
   virtual std::string getTypeName() = 0;
   virtual void *createObject(void *header) = 0;
   virtual void deleteObject(void *obj) = 0;
+
+  template <typename Derived>
+  std::shared_ptr<Derived> shared_from_base()
+  {
+    return std::static_pointer_cast<Derived>(shared_from_this());
+  }
+  /* Enable RTTR Type Introspection */
+ RTTR_ENABLE()
 };
 
 template<class T> class TemplatedDefaultFactoryObject : public GenericFactoryObject{
@@ -59,6 +67,9 @@ template<class T> class TemplatedDefaultFactoryObject : public GenericFactoryObj
     auto *tmp = static_cast<typename T::NativeType *>(obj);
     delete tmp;
   }
+
+  /* Enable RTTR Type Introspection */
+ RTTR_ENABLE(GenericFactoryObject)
 };
 
 }

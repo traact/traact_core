@@ -39,6 +39,8 @@
 #include <traact/pattern/Pattern.h>
 #include <traact/datatypes.h>
 #include <traact/traact_core_export.h>
+#include <rttr/type>
+
 namespace traact::buffer {
 class TRAACT_CORE_EXPORT GenericComponentBuffer;
 }
@@ -53,7 +55,7 @@ namespace traact::component {
  *
  * @tparam Buffer Provides input and output buffer to the user
  */
-class TRAACT_CORE_EXPORT Component {
+class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Component>{
  public:
   typedef typename std::shared_ptr<Component> Ptr;
 
@@ -173,6 +175,14 @@ class TRAACT_CORE_EXPORT Component {
    * @param commit_callback
    */
   void setCommitCallback(const CommitCallbackType &commit_callback);
+
+  template <typename Derived>
+  std::shared_ptr<Derived> shared_from_base()
+  {
+    return std::static_pointer_cast<Derived>(shared_from_this());
+  }
+  /* Enable RTTR Type Introspection */
+  RTTR_ENABLE()
 
  protected:
   const std::string name_;

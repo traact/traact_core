@@ -33,9 +33,9 @@ class Traact(ConanFile):
         if self.options.with_tests:
             self.requires("gtest/1.10.0")
         self.requires("nlohmann_json/3.7.3")
-        #self.requires("TBB/2019_U9@conan/stable")
         self.requires("tbb/2019_u9")
         self.requires("spdlog/1.4.2@camposs/stable")
+        self.requires("rttr/0.9.7-dev@camposs/stable")
 
     def _configure_cmake(self):
         cmake = CMake(self)
