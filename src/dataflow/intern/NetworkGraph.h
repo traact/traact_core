@@ -79,7 +79,7 @@ class NetworkGraph {
  private:
 
   DefaultComponentGraphPtr component_graph_;
-  DefaultTimeDomainManagerPtr time_domain_manager_;
+  std::map<int,DefaultTimeDomainManagerPtr> time_domain_manager_;
   const int time_domain_;
   tbb::flow::graph graph_;
 

@@ -41,6 +41,8 @@ namespace traact::buffer {
 class TRAACT_CORE_EXPORT GenericFactoryObject : public std::enable_shared_from_this<GenericFactoryObject>{
  public:
   typedef typename std::shared_ptr<GenericFactoryObject> Ptr;
+  GenericFactoryObject() = default;
+  virtual ~GenericFactoryObject() = default;
 
   virtual std::string getTypeName() = 0;
   virtual void *createObject(void *header) = 0;
@@ -55,6 +57,11 @@ class TRAACT_CORE_EXPORT GenericFactoryObject : public std::enable_shared_from_t
  RTTR_ENABLE()
 };
 
+/**
+ * Default implementation of GenericFactoryObject calling new and delete
+ * using the class defines MetaType and NativeType
+ * @tparam T
+ */
 template<class T> class TemplatedDefaultFactoryObject : public GenericFactoryObject{
  public:
   std::string getTypeName() override {

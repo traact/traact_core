@@ -38,8 +38,30 @@
 #include <traact/buffer/GenericTimeDomainBuffer.h>
 #include <traact/buffer/GenericBufferTypeConversion.h>
 #include <traact/traact_core_export.h>
-
+#include <spdlog/spdlog.h>
 namespace traact::buffer {
+template<typename T>
+ class TRAACT_CORE_EXPORT BorrowedBuffer {
+  public:
+   BorrowedBuffer(GenericTimeDomainBuffer *time_domain_buffer, const T* data) : time_domain_buffer_(time_domain_buffer), data_(data) {
+     time_domain_buffer_->increaseUse();
+   }
+
+   BorrowedBuffer(const BorrowedBuffer &ptr) : data_(ptr.data_), time_domain_buffer_(ptr.time_domain_buffer_) {
+     time_domain_buffer_->increaseUse();
+   }
+   ~BorrowedBuffer() {
+     //SPDLOG_TRACE("destructor, decrease buffer use");
+      time_domain_buffer_->decreaseUse();
+    }
+    const T* GetBuffer() const {
+     return data_;
+   }
+  private:
+   GenericTimeDomainBuffer *time_domain_buffer_;
+   const T* data_;
+};
+
 class TRAACT_CORE_EXPORT GenericComponentBuffer {
  public:
   typedef typename std::shared_ptr<GenericComponentBuffer> Ptr;
@@ -58,8 +80,15 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
   };
 
   template<typename ReturnType, typename HeaderType>
-  const ReturnType &getInput(size_t index) {
+  const ReturnType& getInput(size_t index) {
     return type_conversion_.asImmutable<ReturnType, HeaderType>(input_data_.at(index), 0);
+
+  }
+
+  template<typename ReturnType, typename HeaderType>
+  const BorrowedBuffer<ReturnType> &&borrowInput(size_t index) {
+    BorrowedBuffer<ReturnType> result(&time_domain_buffer_, &type_conversion_.asImmutable<ReturnType, HeaderType>(input_data_.at(index), 0));
+    return std::move(result);
   }
 
   template<typename ReturnType, typename HeaderType>

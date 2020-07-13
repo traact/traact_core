@@ -62,7 +62,7 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
   typedef typename std::shared_ptr<GenericTimeDomainBuffer> TimeDomainBufferPtr;
   typedef typename tbb::concurrent_hash_map<TimestampType, TimeDomainBufferPtr, TimestampHashCompare> RunningBufferType;
 
-  TimeDomainManager(size_t ringbuffer_size,
+  TimeDomainManager(int time_domain,size_t ringbuffer_size,
                     std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
 
   int requestBuffer(const TimestampType ts, const std::string &component_name);
@@ -79,6 +79,7 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
   size_t GetDomainMeasurementIndex(TimestampType ts);
 
  private:
+  int time_domain_;
   std::size_t ringbuffer_size_;
   SourceMode source_mode_;
 

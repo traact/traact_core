@@ -42,6 +42,7 @@ using nlohmann::json;
 void to_json(json &jobj, const traact::pattern::Pattern &obj) {
   jobj["pattern_name"] = obj.name;
   jobj["concurrency"] = obj.concurrency;
+  jobj["parameter"] = obj.parameter;
 
   json::iterator find_it = jobj.find("producer_ports");
   if (!obj.producer_ports.empty()) {
@@ -66,6 +67,7 @@ void to_json(json &jobj, const traact::pattern::Pattern &obj) {
 void from_json(const json &jobj, traact::pattern::Pattern &obj) {
   jobj["pattern_name"].get_to(obj.name);
   jobj["concurrency"].get_to(obj.concurrency);
+  obj.parameter = jobj["parameter"];
 
   auto find_it = jobj.find("producer_ports");
   if (find_it != jobj.end()) {

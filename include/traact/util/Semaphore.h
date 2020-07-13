@@ -29,42 +29,41 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPATTERN_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPATTERN_H_
-#include <traact/pattern/instance/PortInstance.h>
-#include <traact/pattern/Pattern.h>
-#include <traact/traact_core_export.h>
-namespace traact::pattern::instance {
+#ifndef TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_UTIL_SEMAPHORE_H_
+#define TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_UTIL_SEMAPHORE_H_
 
-class TRAACT_CORE_EXPORT GraphInstance;
+#include <mutex>
+#include <condition_variable>
 
-class TRAACT_CORE_EXPORT PatternInstance {
+namespace traact {
+class Semaphore {
  public:
-  typedef typename std::shared_ptr<PatternInstance> Ptr;
-  PatternInstance();
-  PatternInstance(std::string id, Pattern pattern_pointer, GraphInstance *graph);
-  virtual ~PatternInstance();
+  Semaphore (int max_count=1, int count = 0)
+      : max_count_(max_count), count_(count)
+  {
+  }
 
-  std::string getPatternName() const;
-  size_t getConcurrency() const;
+  inline void notify() {
+    std::unique_lock<std::mutex> lock(mtx_);
+    count_++;
+    count_ = std::min(count_, max_count_);
+    //notify the waiting thread
+    cv_.notify_one();
+  }
+  inline void wait() {
+    std::unique_lock<std::mutex> lock(mtx_);
+    while(count_ == 0) {
+      //wait on the mutex until notify is called
+      cv_.wait(lock);
+    }
+    count_--;
+  }
 
-
-  PortInstance::ConstPtr getProducerPort(const std::string &name) const;
-  PortInstance::ConstPtr getConsumerPort(const std::string &name) const;
-  PortInstance::ConstPtr getPort(const std::string &name) const;
-  std::set<PortInstance::ConstPtr> getProducerPorts() const;
-  std::set<PortInstance::ConstPtr> getConsumerPorts() const;
-
-  std::string instance_id;
-  GraphInstance *parent_graph;
-  Pattern pattern_pointer;
-  std::vector<PortInstance> producer_ports;
-  std::vector<PortInstance> consumer_ports;
-  int time_domain{0};
-
-
-
+ private:
+  std::mutex mtx_;
+  std::condition_variable cv_;
+  int count_;
+  int max_count_;
 };
 }
-
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPATTERN_H_
+#endif //TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_UTIL_SEMAPHORE_H_

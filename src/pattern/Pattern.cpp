@@ -68,7 +68,7 @@ traact::pattern::Pattern::~Pattern() {
 
 }
 
-traact::pattern::Pattern &traact::pattern::Pattern::addParameter(const std::string &name,
+traact::pattern::Pattern &traact::pattern::Pattern::addStringParameter(const std::string &name,
                                                                  const std::string &default_value) {
   parameter[name]["default"] = default_value;
   parameter[name]["value"] = default_value;

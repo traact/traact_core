@@ -33,10 +33,10 @@
 
 namespace traact::buffer {
 
-TimeDomainManager::TimeDomainManager(size_t
+TimeDomainManager::TimeDomainManager(int time_domain, size_t
                                      ringbuffer_size,
                                      std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects
-) :
+) : time_domain_(time_domain),
     ringbuffer_size_(
         ringbuffer_size), generic_factory_objects_(std::move(generic_factory_objects)), domain_timestamp_index_(0) {
 
@@ -140,7 +140,7 @@ int TimeDomainManager::commitBuffer(TimestampType ts) {
 void TimeDomainManager::init(const ComponentGraphPtr &component_graph) {
 
   for (size_t index = 0; index < ringbuffer_size_; ++index) {
-    free_buffers_.push(std::make_shared<DefaultTimeDomainBuffer>(component_graph, generic_factory_objects_));
+    free_buffers_.push(std::make_shared<DefaultTimeDomainBuffer>(time_domain_,component_graph, generic_factory_objects_));
   }
 
 };

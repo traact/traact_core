@@ -33,9 +33,9 @@
 #include "traact/buffer/GenericTimeDomainBuffer.h"
 #include "traact/buffer/GenericComponentBuffer.h"
 
-traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(component::ComponentGraph::Ptr component_graph,
+traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(int time_domain, component::ComponentGraph::Ptr component_graph,
                                                                  const std::set<buffer::GenericFactoryObject::Ptr> &generic_factory_objects)
-    : component_graph_(std::move(component_graph)), current_wait_count_(0), maximum_wait_count(0) {
+    : time_domain_(time_domain), component_graph_(std::move(component_graph)), current_wait_count_(0), maximum_wait_count(0) {
   using namespace pattern::instance;
 
   for (const auto &item : generic_factory_objects) {
@@ -43,7 +43,7 @@ traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(component::Comp
     generic_factory_objects_.emplace(std::make_pair(name, item));
   }
 
-  auto components = component_graph_->getPatterns();
+  auto components = component_graph_->getPatternsForTimeDomain(time_domain_);
 
   std::vector<std::string> bufferTypes;
 
@@ -70,13 +70,14 @@ traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(component::Comp
           port_to_bufferIndex[input_port->getID()] = bufferIndex;
         }
       //}
+
     }
 
 
 
 
-    //if(component->isSink()){
-    maximum_wait_count++;
+    //if(!dataComp->consumer_ports.empty()){
+      maximum_wait_count++;
     //}
 
   }
@@ -134,9 +135,13 @@ void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::Timestam
 void traact::buffer::GenericTimeDomainBuffer::decreaseUse() {
   current_wait_count_ -= 1;
   if (current_wait_count_ < 0) {
-    spdlog::error("use count of buffer smaller then 0");
+    SPDLOG_ERROR("use count of buffer smaller then 0");
   }
 }
+void traact::buffer::GenericTimeDomainBuffer::increaseUse() {
+  current_wait_count_ += 1;
+}
+
 int traact::buffer::GenericTimeDomainBuffer::getUseCount() const {
   return current_wait_count_;
 }
@@ -153,3 +158,4 @@ void traact::buffer::GenericTimeDomainBuffer::addBuffer(const std::string &buffe
 size_t traact::buffer::GenericTimeDomainBuffer::GetCurrentMeasurementIndex() const {
   return current_measurement_index_;
 }
+

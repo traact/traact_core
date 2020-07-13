@@ -45,9 +45,15 @@ NetworkGraph::NetworkGraph(DefaultComponentGraphPtr component_graph,
 void NetworkGraph::init() {
   //component_graph_->checkGraph();
 
-  time_domain_manager_.reset(new buffer::TimeDomainManager(3, generic_factory_objects_));
+  auto time_domains = component_graph_->GetTimeDomains();
+  for(auto time_domain : time_domains) {
+    auto new_manager = std::make_shared<buffer::TimeDomainManager>(time_domain, 2, generic_factory_objects_);
+    new_manager->init(component_graph_);
+    time_domain_manager_.emplace(std::make_pair(time_domain, new_manager));
+  }
 
-  time_domain_manager_->init(component_graph_);
+
+
 
   for (const auto &base_component : component_graph_->getPatterns()) {
     DefaultPatternPtr pattern = base_component.first;
@@ -64,24 +70,26 @@ void NetworkGraph::init() {
 
     TraactComponentBasePtr newComponent;
 
+    auto tdm_component = time_domain_manager_[pattern->time_domain];
+
     switch (component->getComponentType()) {
       case component::ComponentType::AsyncSource: {
         newComponent = std::make_shared<TraactComponentSource>(pattern,
                                                                component,
-                                                               time_domain_manager_,
+                                                               tdm_component,
                                                                this);
         break;
       }
       case component::ComponentType::Functional: {
         newComponent = std::make_shared<TraactComponentFunctional>(pattern,
                                                                    component,
-                                                                   time_domain_manager_,
+                                                                   tdm_component,
                                                                    this);
         break;
       }
       case component::ComponentType::SyncSink: {
         newComponent =
-            std::make_shared<TraactComponentSink>(pattern, component, time_domain_manager_, this);
+            std::make_shared<TraactComponentSink>(pattern, component, tdm_component, this);
         break;
       }
       default: {

@@ -64,7 +64,7 @@ struct TRAACT_CORE_EXPORT Pattern {
     parameter[name]["max_value"] = max_value;
     return *this;
   }
-  Pattern &addParameter(const std::string &name,
+  Pattern &addStringParameter(const std::string &name,
                         const std::string &default_value);
   Pattern &addParameter(const std::string &name,
                         const std::string &default_value, const std::set<std::string> &enum_values);

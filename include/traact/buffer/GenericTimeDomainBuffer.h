@@ -47,7 +47,7 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
   typedef GenericComponentBuffer ComponentBuffer;
   typedef typename std::vector<void *> BufferType;
 
-  GenericTimeDomainBuffer(component::ComponentGraph::Ptr component_graph,
+  GenericTimeDomainBuffer(int time_domain, component::ComponentGraph::Ptr component_graph,
                           const std::set<buffer::GenericFactoryObject::Ptr> &generic_factory_objects);
   virtual ~GenericTimeDomainBuffer();
 
@@ -57,9 +57,11 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
   void resetForTimestamp(TimestampType ts, size_t measurement_index);
   size_t GetCurrentMeasurementIndex() const;
   void decreaseUse();
+  void increaseUse();
   int getUseCount() const;
 
  private:
+  int time_domain_;
   component::ComponentGraph::Ptr component_graph_;
   std::map<std::string, buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
   std::atomic<int> current_wait_count_;

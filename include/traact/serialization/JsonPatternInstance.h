@@ -42,6 +42,7 @@ using nlohmann::json;
 
 void to_json(json &jobj, const traact::pattern::instance::PatternInstance &obj) {
   jobj["id"] = obj.instance_id;
+  jobj["time_domain"] = obj.time_domain;
   to_json(jobj, obj.pattern_pointer);
 
   if (!obj.producer_ports.empty()) {
@@ -63,6 +64,7 @@ void to_json(json &jobj, const traact::pattern::instance::PatternInstance &obj) 
 void from_json(const json &jobj, traact::pattern::instance::PatternInstance &obj) {
   jobj["id"].get_to(obj.instance_id);
   from_json(jobj, obj.pattern_pointer);
+  jobj["time_domain"].get_to(obj.time_domain);
 
   auto find_it = jobj.find("producer_ports");
   if (find_it != jobj.end()) {

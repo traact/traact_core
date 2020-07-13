@@ -77,5 +77,20 @@ ComponentGraph::ComponentPtr ComponentGraph::getComponent(const std::string& id)
     return nullptr;
   }
 
+std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTimeDomain(int time_domain) const {
+  std::set<ComponentGraph::PatternComponentPair> result;
+    for(const auto& pattern : patterns_) {
+      if(pattern.first->time_domain == time_domain)
+        result.emplace(pattern);
+    }
+  return std::move(result);
+}
+std::set<int> ComponentGraph::GetTimeDomains() const {
+  std::set<int> result;
+    for(const auto& pattern : patterns_){
+      result.emplace(pattern.first->time_domain);
+    }
+  return result;
+}
 
 }
