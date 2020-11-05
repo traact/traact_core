@@ -37,9 +37,12 @@
 #include <traact/component/ComponentGraph.h>
 #include <traact/buffer/GenericFactoryObject.h>
 #include <traact/traact_core_export.h>
+#include "GenericBufferTypeConversion.h"
+
 namespace traact::buffer {
 
 class TRAACT_CORE_EXPORT GenericComponentBuffer;
+class TRAACT_CORE_EXPORT TimeDomainManager;
 
 class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
  public:
@@ -47,7 +50,7 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
   typedef GenericComponentBuffer ComponentBuffer;
   typedef typename std::vector<void *> BufferType;
 
-  GenericTimeDomainBuffer(int time_domain, component::ComponentGraph::Ptr component_graph,
+  GenericTimeDomainBuffer(int time_domain,TimeDomainManager* manager, component::ComponentGraph::Ptr component_graph,
                           const std::set<buffer::GenericFactoryObject::Ptr> &generic_factory_objects);
   virtual ~GenericTimeDomainBuffer();
 
@@ -59,8 +62,32 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
   void decreaseUse();
   void increaseUse();
   int getUseCount() const;
+  bool initBuffer(std::string buffer_type, void* header, void* buffer);
+
+    template<typename ReturnType, typename HeaderType>
+    const ReturnType& getInput(size_t index) {
+        return type_conversion_.asImmutable<ReturnType, HeaderType>(buffer_data_.at(index), 0);
+
+    }
+
+    template<typename HeaderType>
+    const std::shared_ptr<HeaderType> getInputHeader(size_t index) const {
+        return static_cast<std::shared_ptr<HeaderType> >(buffer_header_.at(index));
+    }
+
+    template<typename ReturnType, typename HeaderType>
+    ReturnType &getOutput(size_t index) {
+        return type_conversion_.asMutable<ReturnType, HeaderType>(buffer_data_.at(index), 0);
+    }
+
+    template<typename HeaderType>
+    const void setOutputHeader(size_t index, std::shared_ptr<HeaderType> header) const {
+        buffer_header_[index] = header;
+        generic_factory_objects_.at(types_of_buffer_.at(index))->initObject(header, buffer_data_.at(index));
+    }
 
  private:
+    TimeDomainManager* timedomain_manager_;
   int time_domain_;
   component::ComponentGraph::Ptr component_graph_;
   std::map<std::string, buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
@@ -72,7 +99,9 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
 
   std::map<std::string, std::shared_ptr<GenericComponentBuffer> > component_buffers_;
   BufferType buffer_data_;
+  BufferType buffer_header_;
   std::vector<std::string> types_of_buffer_;
+  GenericBufferTypeConversion type_conversion_;
 
   void addBuffer(const std::string &buffer_type);
 };

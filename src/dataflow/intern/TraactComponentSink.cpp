@@ -96,10 +96,36 @@ bool TraactComponentSink::teardown() {
 }
 
 void TraactComponentSink::operator()(const TraactMessage &in) {
-  DefaultComponentBuffer
-      &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
-  this->component_base_->processTimePoint(component_buffer);
-  this->buffer_manager_->commitBuffer(in.timestamp);
+    DefaultComponentBuffer
+            &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
+    switch (in.message_type) {
+        case MessageType::Parameter: {
+            init_component(component_buffer);
+            break;
+        }
+        //case MessageType::Parameter:
+        case MessageType::Data: {
+            if(in.valid) {
+
+                this->component_base_->processTimePoint(component_buffer);
+            } else {
+                spdlog::trace("input for component not valid, skip processing: {0}", component_base_->getName());
+            }
+            break;
+        }
+        case MessageType::Invalid:
+        default:
+        {
+            spdlog::error("invalid message: {0}", component_base_->getName());
+            break;
+        }
+
+    }
+
+
+    component_buffer.commit();
+
+
 }
 void TraactComponentSink::connect() {
   auto tmp = this->pattern_base_->getConsumerPorts();
@@ -117,11 +143,6 @@ void TraactComponentSink::disconnect() {
 tbb::flow::receiver<TraactMessage> &TraactComponentSink::getReceiver(int index) {
   using namespace tbb::flow;
 
-  /*if (join_node_ == nullptr) {
-    return *node_;
-  } else {
-    return join_node_->getReceiver(index);
-  }*/
 
   if (pattern_base_->getConcurrency() != unlimited) {
     if (join_node_ == nullptr) {

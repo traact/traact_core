@@ -32,10 +32,11 @@
 #include <spdlog/spdlog.h>
 #include "traact/buffer/GenericTimeDomainBuffer.h"
 #include "traact/buffer/GenericComponentBuffer.h"
+#include "traact/buffer/TimeDomainManager.h"
 
-traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(int time_domain, component::ComponentGraph::Ptr component_graph,
+traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(int time_domain,TimeDomainManager* manager, component::ComponentGraph::Ptr component_graph,
                                                                  const std::set<buffer::GenericFactoryObject::Ptr> &generic_factory_objects)
-    : time_domain_(time_domain), component_graph_(std::move(component_graph)), current_wait_count_(0), maximum_wait_count(0) {
+    : time_domain_(time_domain), timedomain_manager_(manager), component_graph_(std::move(component_graph)), current_wait_count_(0), maximum_wait_count(0) {
   using namespace pattern::instance;
 
   for (const auto &item : generic_factory_objects) {
@@ -89,16 +90,16 @@ traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(int time_domain
       continue;
     }
 
-    BufferType output;
+    std::vector<size_t> output;
     output.resize(dataComp->getProducerPorts().size());
     for (PortInstance::ConstPtr port : dataComp->getProducerPorts()) {
-      output[port->getPortIndex()] = buffer_data_[port_to_bufferIndex[port->getID()]];
+      output[port->getPortIndex()] = port_to_bufferIndex[port->getID()];
     }
 
-    BufferType input;
+    std::vector<size_t> input;
     input.resize(dataComp->getConsumerPorts().size());
     for (PortInstance::ConstPtr port : dataComp->getConsumerPorts()) {
-      input[port->getPortIndex()] = buffer_data_[port_to_bufferIndex[port->getID()]];
+      input[port->getPortIndex()] = port_to_bufferIndex[port->getID()];
     }
 
     component_buffers_[component.first->instance_id] =
@@ -136,6 +137,10 @@ void traact::buffer::GenericTimeDomainBuffer::decreaseUse() {
   current_wait_count_ -= 1;
   if (current_wait_count_ < 0) {
     SPDLOG_ERROR("use count of buffer smaller then 0");
+    throw std::runtime_error("use count of buffer smaller then 0");
+  }
+  if(current_wait_count_ == 0) {
+      timedomain_manager_->releaseBuffer(current_timestamp_);
   }
 }
 void traact::buffer::GenericTimeDomainBuffer::increaseUse() {
@@ -149,13 +154,16 @@ void traact::buffer::GenericTimeDomainBuffer::addBuffer(const std::string &buffe
   void *newBuffer;
 
   //TODO real initialized header
-  newBuffer = generic_factory_objects_[buffer_type]->createObject(nullptr);
+  newBuffer = generic_factory_objects_[buffer_type]->createObject();
 
   buffer_data_.emplace_back(newBuffer);
+  buffer_header_.emplace_back(nullptr);
   types_of_buffer_.emplace_back(buffer_type);
 
 }
 size_t traact::buffer::GenericTimeDomainBuffer::GetCurrentMeasurementIndex() const {
   return current_measurement_index_;
 }
-
+bool traact::buffer::GenericTimeDomainBuffer::initBuffer(std::string buffer_type, void* header, void* buffer){
+    return generic_factory_objects_[buffer_type]->initObject(header, buffer);
+}

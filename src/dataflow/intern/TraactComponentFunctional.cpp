@@ -71,7 +71,8 @@ bool TraactComponentFunctional::teardown() {
   TraactComponentBase::teardown();
 
   delete node_;
-  delete join_node_;
+  if(join_node_)
+    delete join_node_;
 
   return true;
 }
@@ -79,11 +80,44 @@ bool TraactComponentFunctional::teardown() {
 TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
   TraactMessage result = in;
 
-  DefaultComponentBuffer
-      &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
-  result.valid = this->component_base_->processTimePoint(component_buffer);
+    DefaultComponentBuffer &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
 
-  this->buffer_manager_->commitBuffer(in.timestamp);
+    switch (in.message_type) {
+        case MessageType::Parameter:{
+            //SPDLOG_TRACE("configure");
+            init_component(component_buffer);
+            break;
+        }
+
+
+
+
+        case MessageType::Data: {
+            //SPDLOG_TRACE("data");
+            if(in.valid) {
+
+                result.valid = this->component_base_->processTimePoint(component_buffer);
+            } else {
+                spdlog::trace("input for component not valid, skip processing: {0}", component_base_->getName());
+            }
+
+            break;
+        }
+
+
+        case MessageType::Invalid:
+        default:
+        {
+            spdlog::error("invalid message: {0}", component_base_->getName());
+            break;
+        }
+
+    }
+
+
+    component_buffer.commit();
+
+
 
 
   return result;

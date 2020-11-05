@@ -29,45 +29,8 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <traact/dataflow/Network.h>
-
-#include "dataflow/intern/NetworkGraph.h"
-
-namespace traact::dataflow {
-
-Network::Network(std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects)
-    : generic_factory_objects_(std::move(generic_factory_objects)) {}
-
-void Network::addComponentGraph(ComponentGraphPtr component_graph) {
-  component_graphs_.emplace(std::move(component_graph));
-}
-
-void Network::start() {
-  network_graphs_.clear();
-
-  for (const ComponentGraphPtr &component_graph : component_graphs_) {
-    auto newGraph = std::make_shared<intern::NetworkGraph>(component_graph, 0, generic_factory_objects_);
-    network_graphs_.emplace(newGraph);
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->init();
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->start();
-  }
-}
-
-void Network::stop() {
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->stop();
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->teardown();
-  }
-  network_graphs_.clear();
-}
-
+#include "TraactCoreUtils.h"
+#include <spdlog/spdlog.h>
+void traact::core::setup_logger(std::shared_ptr<spdlog::logger> logger) {
+    spdlog::set_default_logger(logger);
 }

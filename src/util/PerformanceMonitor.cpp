@@ -87,12 +87,14 @@ std::string traact::util::PerformanceMonitor::toString() const {
 
     const TimeBlock &tmp = m_blockTimer[index];
 
+      if (tmp.deltaTime == TimeDurationType(0) || tmp.runs == 0) {
+          //ss << " no data, runs " << tmp.runs << ", nanoseconds " << tmp.deltaTime.count() << std::endl;
+          continue;
+      }
+
     ss << std::setw(40) << tmp.blockName << " : ";
 
-    if (tmp.deltaTime == TimeDurationType(0) || tmp.runs == 0) {
-      ss << " no data, runs " << tmp.runs << ", nanoseconds " << tmp.deltaTime.count() << std::endl;
-      continue;
-    }
+
 
     ss << " total time: " << std::setw(10) << nanoMilliseconds(getTotalTimeForBlock(index)).count() << "ms";
     ss << ", runs: " << std::setw(6) << tmp.runs;

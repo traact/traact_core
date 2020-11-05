@@ -36,7 +36,7 @@ set(LIB_HEADERS
         include/traact/serialization/JsonPort.h
         include/traact/serialization/JsonPortInstance.h
         include/traact/serialization/JsonSpatialPattern.h
-        include/traact/serialization/JsonGraphInstance.h include/traact/pattern/ParameterUtils.h include/traact/component/ModuleComponent.h)
+        include/traact/serialization/JsonGraphInstance.h include/traact/pattern/ParameterUtils.h include/traact/component/ModuleComponent.h include/traact/util/TraactCoreUtils.h include/traact/util/TraactCoreUtils.cpp)
 
 # rest of source code
 set(LIB_SOURCES

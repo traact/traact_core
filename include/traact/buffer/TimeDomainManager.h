@@ -69,7 +69,9 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
 
   DefaultComponentBuffer &acquireBuffer(const TimestampType ts, const std::string &component_name);
 
-  int commitBuffer(TimestampType ts);
+  //int commitBuffer(TimestampType ts);
+
+  int releaseBuffer(TimestampType ts);
 
   void init(const ComponentGraphPtr &component_graph);
   SourceMode getSourceMode() const;

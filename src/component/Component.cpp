@@ -39,8 +39,6 @@ Component::Component(std::string name, const ComponentType traact_component_type
 
   }
 
-
-
   const std::string &Component::getName() const {
     return name_;
   }
@@ -50,12 +48,7 @@ Component::Component(std::string name, const ComponentType traact_component_type
   }
 
 
-  void Component::updateParameter(const nlohmann::json &parameter) {
-
-  }
-
-
-  bool Component::init() {
+  bool Component::configure(const nlohmann::json &parameter, buffer::GenericComponentBuffer &data) {
     return true;
   }
 
@@ -68,11 +61,6 @@ Component::Component(std::string name, const ComponentType traact_component_type
   }
 
   bool Component::teardown() {
-    return true;
-  }
-
-
-  bool Component::initializeBuffer(buffer::GenericComponentBuffer &data) {
     return true;
   }
 

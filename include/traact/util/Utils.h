@@ -37,6 +37,7 @@
 
 #include <spdlog/spdlog.h>
 #include <traact/traact_core_export.h>
+#include <traact/datatypes.h>
 namespace traact::util {
 template<typename K, typename T>
 static std::set<K> getKeys(const std::map<K, T> &values) {

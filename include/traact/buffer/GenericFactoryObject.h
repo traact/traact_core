@@ -45,7 +45,8 @@ class TRAACT_CORE_EXPORT GenericFactoryObject : public std::enable_shared_from_t
   virtual ~GenericFactoryObject() = default;
 
   virtual std::string getTypeName() = 0;
-  virtual void *createObject(void *header) = 0;
+  virtual void *createObject() = 0;
+  virtual bool initObject(void *header, void* object) = 0;
   virtual void deleteObject(void *obj) = 0;
 
   template <typename Derived>
@@ -67,8 +68,12 @@ template<class T> class TemplatedDefaultFactoryObject : public GenericFactoryObj
   std::string getTypeName() override {
     return std::move(std::string(T::MetaType));
   }
-  void *createObject(void *) override {
+  void *createObject() override {
     return new typename T::NativeType;
+  }
+
+  bool initObject(void *header, void* object) override{
+    return true;
   }
   void deleteObject(void *obj) override {
     auto *tmp = static_cast<typename T::NativeType *>(obj);

@@ -34,75 +34,85 @@
 #include <dataflow/intern/NetworkGraph.h>
 
 namespace traact::dataflow::intern {
-TraactComponentSource::TraactComponentSource(DefaultPatternPtr pattern_base,
-                                             DefaultComponentPtr component_base,
-                                             DefaultTimeDomainManagerPtr buffer_manager,
-                                             NetworkGraph *network_graph) : TraactComponentBase(std::move(pattern_base),
-                                                                                                std::move(component_base),
-                                                                                                std::move(buffer_manager),
-                                                                                                network_graph), node_(
-    nullptr) {
+    TraactComponentSource::TraactComponentSource(DefaultPatternPtr pattern_base,
+                                                 DefaultComponentPtr component_base,
+                                                 DefaultTimeDomainManagerPtr buffer_manager,
+                                                 NetworkGraph *network_graph) : TraactComponentBase(
+            std::move(pattern_base),
+            std::move(component_base),
+            std::move(buffer_manager),
+            network_graph), node_(
+            nullptr) {
 
-  this->component_base_->setRequestCallback(std::bind(&TraactComponentSource::requestBuffer,
-                                                      this,
-                                                      std::placeholders::_1));
-  this->component_base_->setAcquireCallback(std::bind(&TraactComponentSource::acquireBuffer,
-                                                      this,
-                                                      std::placeholders::_1));
-  this->component_base_->setCommitCallback(std::bind(&TraactComponentSource::commitData, this, std::placeholders::_1));
+        this->component_base_->setRequestCallback(std::bind(&TraactComponentSource::requestBuffer,
+                                                            this,
+                                                            std::placeholders::_1));
+        this->component_base_->setAcquireCallback(std::bind(&TraactComponentSource::acquireBuffer,
+                                                            this,
+                                                            std::placeholders::_1));
+        this->component_base_->setCommitCallback(
+                std::bind(&TraactComponentSource::commitData, this, std::placeholders::_1));
 
-}
+    }
 
-bool TraactComponentSource::init() {
-  TraactComponentBase::init();
-  using namespace tbb::flow;
+    bool TraactComponentSource::init() {
+        TraactComponentBase::init();
+        using namespace tbb::flow;
 
-  node_ = new async_node<tbb::flow::continue_msg, TraactMessage>(this->network_graph_->getTBBGraph(),
-                                                                 tbb::flow::unlimited,
-                                                                 [&](const tbb::flow::continue_msg &msg,
-                                                                     async_node<tbb::flow::continue_msg,
-                                                                                TraactMessage>::gateway_type &gateway) {
-                                                                   //asyncNodeActivity.submitRead(gateway);
-                                                                   //submitRead(gateway);
+        node_ = new async_node<TraactMessage, TraactMessage>(this->network_graph_->getTBBGraph(),
+                                                                       tbb::flow::unlimited,
+                                                                       [&](const TraactMessage &msg,
+                                                                           async_node<TraactMessage,
+                                                                                   TraactMessage>::gateway_type &gateway) {
+                                                                           //asyncNodeActivity.submitRead(gateway);
+                                                                           //submitRead(gateway);
+                                                                           gateway.try_put(msg);
 
-                                                                 });
+                                                                       });
 
-  //broadcast_node_ = new broadcast_node<TraactMessage>(this->network_graph_->getTBBGraph());
-  //make_edge(*node_, *broadcast_node_);
+        //broadcast_node_ = new broadcast_node<TraactMessage>(this->network_graph_->getTBBGraph());
+        //make_edge(*node_, *broadcast_node_);
+        node_->gateway().reserve_wait();
 
-  return true;
-}
-bool TraactComponentSource::start() {
-  node_->gateway().reserve_wait();
+        return true;
+    }
 
-  return
-      TraactComponentBase::start();
-}
-bool TraactComponentSource::stop() {
-  TraactComponentBase::stop();
-  node_->gateway().release_wait();
+    bool TraactComponentSource::start() {
+        // TODO need to reserve again if dataflow was stopped and started again
+        //node_->gateway().reserve_wait();
 
-  return true;
-}
-bool TraactComponentSource::teardown() {
-  TraactComponentBase::teardown();
 
-  delete node_;
+        return TraactComponentBase::start();
+    }
 
-  //delete broadcast_node_;
+    bool TraactComponentSource::stop() {
+        TraactComponentBase::stop();
+        node_->gateway().release_wait();
 
-  return true;
-}
+        return true;
+    }
 
-tbb::flow::sender<TraactMessage> &TraactComponentSource::getSender(int index) {
-  //return *broadcast_node_;
-  return *node_;
-}
+    bool TraactComponentSource::teardown() {
+        TraactComponentBase::teardown();
+        //node_->gateway().release_wait();
 
-void TraactComponentSource::connect() {
+        delete node_;
 
-}
-void TraactComponentSource::disconnect() {
+        //delete broadcast_node_;
 
-}
+        return true;
+    }
+
+    tbb::flow::sender<TraactMessage> &TraactComponentSource::getSender(int index) {
+        //return *broadcast_node_;
+        return *node_;
+    }
+
+    void TraactComponentSource::connect() {
+
+    }
+
+    void TraactComponentSource::disconnect() {
+
+    }
 }

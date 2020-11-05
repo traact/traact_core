@@ -72,6 +72,12 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
   virtual ~Component() = default;
 
   /**
+   * Create Pattern describing input and outputs of the component
+   * @return
+   */
+  virtual pattern::Pattern::Ptr GetPattern() const = 0;
+
+  /**
    * Name of component, unique in dataflow
    * @return
    */
@@ -82,24 +88,19 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
    */
   const ComponentType &getComponentType() const;
 
-  /**
-   * Called once after the class is instantiated( before init())
-   * and if the parameters change during runtime. If it is called
-   * durring runtime then the user has to make sure that the call
-   * is thread safe.
-   * @param parameter
-   */
-  virtual void updateParameter(const nlohmann::json &parameter);
 
   /**
    * Called once in the beginning after the dataflow network is constructed
-   * but before the connections are made or buffers are available.
+   * but before the network starts
+   * It can also be called during runtime between two data calls in case of changed
+   * parameters
    *
    * Use to acquire devices, read configuration files and prepare component to be used.
+   * Also initialize buffers if necessary (e.g. gpu image buffers)
    *
    * @return false if initialization is not possible (e.g. camera not available)
    */
-  virtual bool init();
+  virtual bool configure(const nlohmann::json &parameter, buffer::GenericComponentBuffer &data) ;
   /**
    * Called after all components are initialized, the dataflow network is connected and ready to run
    *
@@ -119,15 +120,6 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
    */
   virtual bool teardown();
 
-  /**
-   * Initialize output buffers based on own information or input information.
-   * The buffers themselves are not available yet.
-   * Called after init, before start.
-   * Can be called before a processTimePoint event in case the input meta info changed
-   * @param data Buffer class for single component
-   * @return false if initialization failed
-   */
-  virtual bool initializeBuffer(buffer::GenericComponentBuffer &data);
 
   /**
    * Used by producing and consuming functional components and sink components.

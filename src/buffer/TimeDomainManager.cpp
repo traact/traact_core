@@ -110,6 +110,7 @@ TimeDomainManager::DefaultComponentBuffer &TimeDomainManager::acquireBuffer(cons
   throw std::invalid_argument("no domain buffer found for timestamp");
 };
 
+/*
 int TimeDomainManager::commitBuffer(TimestampType ts) {
 
   typename RunningBufferType::const_accessor findResult;
@@ -135,12 +136,34 @@ int TimeDomainManager::commitBuffer(TimestampType ts) {
 
   throw std::invalid_argument("no domain buffer found for timestamp");
 
-};
+};*/
+
+int TimeDomainManager::releaseBuffer(TimestampType ts) {
+
+        typename RunningBufferType::const_accessor findResult;
+        SPDLOG_TRACE("commitBuffer ts: {0}",ts.time_since_epoch().count());
+        if (running_buffers_.find(findResult, ts)) {
+
+            TimeDomainBufferPtr freeBuffer = findResult->second;
+            {
+                std::unique_lock lock(mutex_);
+                running_buffers_.erase(findResult);
+                free_buffers_.push(freeBuffer);
+            }
+
+            findResult.release();
+            return 0;
+
+        }
+
+        throw std::invalid_argument("no domain buffer found for timestamp");
+
+    };
 
 void TimeDomainManager::init(const ComponentGraphPtr &component_graph) {
 
   for (size_t index = 0; index < ringbuffer_size_; ++index) {
-    free_buffers_.push(std::make_shared<DefaultTimeDomainBuffer>(time_domain_,component_graph, generic_factory_objects_));
+    free_buffers_.push(std::make_shared<DefaultTimeDomainBuffer>(time_domain_,this, component_graph, generic_factory_objects_));
   }
 
 };

@@ -58,13 +58,13 @@ void NetworkGraph::init() {
   for (const auto &base_component : component_graph_->getPatterns()) {
     DefaultPatternPtr pattern = base_component.first;
     if (!pattern) {
-      spdlog::error("Skipping non dataflow pattern: {0}", base_component.first->instance_id);
+      spdlog::error("Skipping non dataflow pattern");
       continue;
     }
 
     DefaultComponentPtr component = std::dynamic_pointer_cast<DefaultComponent>(base_component.second);
     if (!component) {
-      spdlog::error("Skipping non dataflow component: {0}", base_component.second->getName());
+      spdlog::error("Skipping non dataflow component");
       continue;
     }
 
@@ -110,14 +110,29 @@ void NetworkGraph::init() {
 
   }
 
+
+
   for (const auto &component : network_components_) {
     component->init();
   }
+
+    for (const auto &component : network_components_) {
+        component->connect();
+    }
+
+    TimestampType init_ts = TimestampType(std::chrono::nanoseconds(1));
+    for (const auto &component : network_components_) {
+        auto source_component = std::dynamic_pointer_cast<TraactComponentSource>(component);
+
+        if(source_component){
+            source_component->configure_component(init_ts);
+        }
+
+    }
+
 }
 void NetworkGraph::start() {
-  for (const auto &component : network_components_) {
-    component->connect();
-  }
+
   for (const auto &component : network_components_) {
     component->start();
   }
@@ -127,11 +142,12 @@ void NetworkGraph::stop() {
     component->stop();
   }
 
-  graph_.wait_for_all();
+    graph_.wait_for_all();
 
-  for (const auto &component : network_components_) {
-    component->disconnect();
-  }
+  // before: connect/disconnect in start/stop, now connected network is used for parameter calls before start event
+    //for (const auto &component : network_components_) {
+    //    component->disconnect();
+    //}
 
 
 }

@@ -56,10 +56,40 @@ class TraactComponentSource : public TraactComponentBase {
   void connect() override;
   void disconnect() override;
 
+  int configure_component(TimestampType ts) {
+        TraactMessage message;
+        message.timestamp = ts;
+        message.valid = true;
+        message.message_type = MessageType::Parameter;
+        //message.domain_measurement_index = 1;
+
+        requestBuffer(ts);
+
+        message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
+
+
+
+        SPDLOG_TRACE("try sending data into network");
+        SPDLOG_TRACE(message.toString());
+
+      //node_->gateway().reserve_wait();
+      if (node_->gateway().try_put(message)) {
+      //if (node_->try_put(message)) {
+            SPDLOG_TRACE("try put succeeded");
+            return 0;
+        }
+      //node_->gateway().release_wait();
+
+        SPDLOG_ERROR("try put failed");
+
+
+        return -1;
+    }
+
  protected:
   typedef tbb::flow::async_node<tbb::flow::continue_msg, TraactMessage> async_source_node;
 
-  tbb::flow::async_node<tbb::flow::continue_msg, TraactMessage> *node_;
+  tbb::flow::async_node<TraactMessage, TraactMessage> *node_;
   //tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
 
   int requestBuffer(TimestampType ts) {
@@ -69,23 +99,31 @@ class TraactComponentSource : public TraactComponentBase {
     return this->buffer_manager_->acquireBuffer(ts, this->component_base_->getName());
   }
   int commitData(TimestampType ts) {
+      //node_->gateway().reserve_wait();
     TraactMessage message;
     message.timestamp = ts;
     message.valid = true;
+    message.message_type = MessageType::Data;
+    //message.message_type = MessageType::Parameter;
 
     message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
 
 
+    DefaultComponentBuffer& componentBuffer = acquireBuffer(ts);
+
     SPDLOG_TRACE("try sending data into network");
     SPDLOG_TRACE(message.toString());
     if (node_->gateway().try_put(message)) {
+      //if (send_init_component(ts)) {
       SPDLOG_TRACE("try put succeeded");
-      this->buffer_manager_->commitBuffer(ts);
+      componentBuffer.commit();
       return 0;
     }
 
     SPDLOG_TRACE("try put failed");
-    this->buffer_manager_->commitBuffer(ts);
+      componentBuffer.commit();
+
+      //node_->gateway().release_wait();
 
 
     return -1;

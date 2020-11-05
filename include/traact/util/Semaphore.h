@@ -59,6 +59,11 @@ class Semaphore {
     count_--;
   }
 
+  inline int count() {
+      std::unique_lock<std::mutex> lock(mtx_);
+      return count_;
+  }
+
  private:
   std::mutex mtx_;
   std::condition_variable cv_;

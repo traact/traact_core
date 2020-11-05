@@ -40,7 +40,8 @@
 #include <traact/traact_core_export.h>
 #include <spdlog/spdlog.h>
 namespace traact::buffer {
-template<typename T>
+/*
+    template<typename T>
  class TRAACT_CORE_EXPORT BorrowedBuffer {
   public:
    BorrowedBuffer(GenericTimeDomainBuffer *time_domain_buffer, const T* data) : time_domain_buffer_(time_domain_buffer), data_(data) {
@@ -60,7 +61,7 @@ template<typename T>
   private:
    GenericTimeDomainBuffer *time_domain_buffer_;
    const T* data_;
-};
+};*/
 
 class TRAACT_CORE_EXPORT GenericComponentBuffer {
  public:
@@ -69,43 +70,59 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
   GenericComponentBuffer(std::string
                          component_name,
                          GenericTimeDomainBuffer &time_domain_buffer,
-                         TDBufferType &input,
-                         TDBufferType &output
+                         std::vector<size_t> input,
+                         std::vector<size_t> output
   )
       : component_name_(std::move(component_name)),
         time_domain_buffer_(time_domain_buffer),
         input_data_(std::move(input)),
-        output_data_(std::move(output)) {
+        output_data_(std::move(output))
+        {
+
 
   };
 
   template<typename ReturnType, typename HeaderType>
   const ReturnType& getInput(size_t index) {
-    return type_conversion_.asImmutable<ReturnType, HeaderType>(input_data_.at(index), 0);
+    return time_domain_buffer_.getInput<ReturnType, HeaderType>(input_data_.at(index));
 
   }
 
-  template<typename ReturnType, typename HeaderType>
+  template<typename HeaderType>
+    const std::shared_ptr<HeaderType> getInputHeader(size_t index) const {
+        return time_domain_buffer_.getInputHeader<HeaderType>(input_data_.at(index));
+    }
+
+  /*
+    template<typename ReturnType, typename HeaderType>
   const BorrowedBuffer<ReturnType> &&borrowInput(size_t index) {
     BorrowedBuffer<ReturnType> result(&time_domain_buffer_, &type_conversion_.asImmutable<ReturnType, HeaderType>(input_data_.at(index), 0));
     return std::move(result);
-  }
+  }*/
 
   template<typename ReturnType, typename HeaderType>
   ReturnType &getOutput(size_t index) {
-    return type_conversion_.asMutable<ReturnType, HeaderType>(output_data_.at(index), 0);
+      return time_domain_buffer_.getOutput<ReturnType, HeaderType>(output_data_.at(index));
   }
+
+    template<typename HeaderType>
+    const void setOutputHeader(size_t index, std::shared_ptr<HeaderType> header) const {
+        time_domain_buffer_.setOutputHeader(output_data_.at(index), header);
+    }
 
   const TimestampType &getTimestamp() const {
     return time_domain_buffer_.getTimestamp();
   }
 
- private:
-  TDBufferType input_data_;
-  TDBufferType output_data_;
-  std::string component_name_;
+  int commit() {
+      time_domain_buffer_.decreaseUse();
+  }
 
-  GenericBufferTypeConversion type_conversion_;
+ private:
+  std::vector<size_t> input_data_;
+  std::vector<size_t> output_data_;
+
+  std::string component_name_;
 
   GenericTimeDomainBuffer &time_domain_buffer_;
 };

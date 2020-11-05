@@ -56,6 +56,8 @@ class TRAACT_CORE_EXPORT Module {
 
   virtual bool teardown(ComponentPtr module_component);
 
+  RTTR_ENABLE();
+
 };
 
 /**
@@ -75,7 +77,7 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component{
 
   void SetModule(Module::Ptr module);
 
-  bool init() override;
+  bool configure(const nlohmann::json &parameter, buffer::GenericComponentBuffer &data) override;
   bool start() override;
   bool stop() override;
   bool teardown() override;
@@ -84,7 +86,7 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component{
   ModuleType module_type_;
   Module::Ptr module_;
 
-
+ RTTR_ENABLE(Component)
 };
 
 }

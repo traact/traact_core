@@ -68,11 +68,16 @@ class TraactComponentBase {
   virtual ~TraactComponentBase() = default;;
 
   virtual bool init() {
-    component_base_->init();
+    //component_base_->init();
     return true;
   }
 
   virtual void connect() = 0;
+
+  bool init_component(DefaultComponentBuffer &component_buffer) {
+      SPDLOG_DEBUG("init component");
+      return component_base_->configure(pattern_base_->pattern_pointer.parameter, component_buffer);
+  }
 
   virtual bool start() {
     component_base_->start();
@@ -95,7 +100,7 @@ class TraactComponentBase {
     throw std::runtime_error("trying to get sender port of component with no senders");
   }
   virtual tbb::flow::receiver<TraactMessage> &getReceiver(int index) {
-    throw std::runtime_error("trying to get receiever port of component with no receievers");
+    throw std::runtime_error("trying to get receiever port of component with no receivers");
   }
 
  protected:
