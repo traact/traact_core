@@ -36,7 +36,7 @@
 
 traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(int time_domain,TimeDomainManager* manager, component::ComponentGraph::Ptr component_graph,
                                                                  const std::set<buffer::GenericFactoryObject::Ptr> &generic_factory_objects)
-    : time_domain_(time_domain), timedomain_manager_(manager), component_graph_(std::move(component_graph)), current_wait_count_(0), maximum_wait_count(0) {
+    : time_domain_(time_domain), timedomain_manager_(manager), component_graph_(std::move(component_graph)), current_wait_count_(0), maximum_wait_count_(0), maximum_source_count_(0) {
   using namespace pattern::instance;
 
   for (const auto &item : generic_factory_objects) {
@@ -74,12 +74,22 @@ traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(int time_domain
 
     }
 
+      // if the component is a source component
+      switch(component.second->getComponentType()){
+        // add other potential sources
+          case component::ComponentType::AsyncSource: {
+              maximum_source_count_++;
+
+              break;
+          }
+          default: // nothing to do
+              break;
+      }
 
 
 
-    //if(!dataComp->consumer_ports.empty()){
-      maximum_wait_count++;
-    //}
+      // every component must be called
+      maximum_wait_count_++;
 
   }
 
@@ -126,10 +136,18 @@ const traact::TimestampType &traact::buffer::GenericTimeDomainBuffer::getTimesta
 bool traact::buffer::GenericTimeDomainBuffer::isFree() const {
   return current_wait_count_ == 0;
 }
-void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::TimestampType ts, size_t measurement_index) {
-  SPDLOG_TRACE("resetForTimestamp {0} {1}", ts.time_since_epoch().count(), measurement_index);
+void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::TimestampType ts, size_t measurement_index, const std::vector<BufferSource::Ptr>& sources) {
+  SPDLOG_INFO("resetForTimestamp: {0}  MeaIndex: {1}", ts.time_since_epoch().count(), measurement_index);
+  tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
   current_timestamp_ = ts;
-  current_wait_count_ = maximum_wait_count;
+  source_count_ = 0;
+    is_valid_ = true;
+    source_component_names_.clear();
+    missing_sources_.clear();
+    for(const auto& src : sources){
+        missing_sources_.emplace(src->getComponentName(), src);
+    }
+  current_wait_count_ = maximum_wait_count_;
   current_measurement_index_ = measurement_index;
 
 }
@@ -166,4 +184,44 @@ size_t traact::buffer::GenericTimeDomainBuffer::GetCurrentMeasurementIndex() con
 }
 bool traact::buffer::GenericTimeDomainBuffer::initBuffer(std::string buffer_type, void* header, void* buffer){
     return generic_factory_objects_[buffer_type]->initObject(header, buffer);
+}
+
+void traact::buffer::GenericTimeDomainBuffer::increaseSourceCount(const std::string& component_name) {
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
+    source_count_++;
+    source_component_names_.emplace(component_name);
+    missing_sources_.erase(component_name);
+}
+bool traact::buffer::GenericTimeDomainBuffer::isSourcesSet()  {
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, false);
+    return missing_sources_.empty();
+}
+bool traact::buffer::GenericTimeDomainBuffer::isSourceSet(const std::string& component_name) {
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, false);
+    return missing_sources_.count(component_name) == 0;
+    //return source_component_names_.count(component_name) > 0;
+}
+bool traact::buffer::GenericTimeDomainBuffer::isValid() const {
+    return is_valid_;
+}
+void traact::buffer::GenericTimeDomainBuffer::invalidateBuffer() {
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
+    is_valid_ = true;
+    for(const auto& missing_source : missing_sources_) {
+        decreaseUse();
+        missing_source.second->invalidateBuffer(current_timestamp_, current_measurement_index_);
+    }
+    missing_sources_.clear();
+}
+
+void traact::buffer::GenericTimeDomainBuffer::cancelSource(const std::string& component_name){
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
+    const auto& findResult = missing_sources_.find(component_name);
+    if(findResult != missing_sources_.end()){
+        decreaseUse();
+        findResult->second->invalidateBuffer(current_timestamp_, current_measurement_index_);
+    }
+    missing_sources_.erase(findResult);
+
+
 }

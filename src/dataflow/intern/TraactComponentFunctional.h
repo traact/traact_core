@@ -56,6 +56,8 @@ class TraactComponentFunctional : public TraactComponentBase {
 
   void disconnect() override;
 
+    component::ComponentType getComponentType() override;
+
   tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
   tbb::flow::sender<TraactMessage> &getSender(int index) override;
 

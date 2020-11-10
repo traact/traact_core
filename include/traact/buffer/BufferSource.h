@@ -29,42 +29,20 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
-#define TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
+#ifndef TRAACTMULTI_BUFFERSOURCE_H
+#define TRAACTMULTI_BUFFERSOURCE_H
 
-#include <tbb/flow_graph.h>
+#include <traact/datatypes.h>
 
-#include "TraactComponentBase.h"
-#include "DynamicJoinNode.h"
+namespace traact::buffer {
 
-namespace traact::dataflow::intern {
-
-class TraactComponentSink : public TraactComponentBase {
- public:
-
-  TraactComponentSink(DefaultPatternPtr pattern_base,
-                      DefaultComponentPtr component_base,
-                      DefaultTimeDomainManagerPtr buffer_manager,
-                      NetworkGraph *network_graph);
-
-  bool init() override;
-  bool teardown() override;
-
-  void operator()(const TraactMessage &in);
-  void connect() override;
-  void disconnect() override;
-  component::ComponentType getComponentType() override;
-
-  tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
-
- protected:
-
-  tbb::flow::function_node<TraactMessage> *node_;
-  DynamicJoinNode *join_node_;
-  tbb::flow::sequencer_node<TraactMessage> *sequencer_node_;
-
-};
+    class TRAACT_CORE_EXPORT BufferSource{
+            public:
+            typedef BufferSource* Ptr;
+            virtual ~BufferSource() = default;
+            virtual int invalidateBuffer(TimestampType ts, size_t measurement_index) = 0;
+            virtual std::string getComponentName() = 0;
+    };
 
 }
-
-#endif //TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
+#endif //TRAACTMULTI_BUFFERSOURCE_H

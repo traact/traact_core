@@ -37,7 +37,10 @@
 #include <traact/component/ComponentGraph.h>
 #include <traact/buffer/GenericFactoryObject.h>
 #include <traact/traact_core_export.h>
+#include <tbb/spin_rw_mutex.h>
 #include "GenericBufferTypeConversion.h"
+#include "BufferSource.h"
+
 
 namespace traact::buffer {
 
@@ -57,11 +60,18 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
   GenericComponentBuffer &getComponentBuffer(const std::string &component_name);
   const TimestampType &getTimestamp() const;
   bool isFree() const;
-  void resetForTimestamp(TimestampType ts, size_t measurement_index);
+  void resetForTimestamp(TimestampType ts, size_t measurement_index, const std::vector<BufferSource::Ptr>& sources);
   size_t GetCurrentMeasurementIndex() const;
   void decreaseUse();
   void increaseUse();
   int getUseCount() const;
+  void increaseSourceCount(const std::string& component_name);
+  bool isSourcesSet();
+  bool isSourceSet(const std::string& component_name);
+  bool isValid() const;
+  void cancelSource(const std::string& component_name);
+  void invalidateBuffer();
+
   bool initBuffer(std::string buffer_type, void* header, void* buffer);
 
     template<typename ReturnType, typename HeaderType>
@@ -91,8 +101,17 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
   int time_domain_;
   component::ComponentGraph::Ptr component_graph_;
   std::map<std::string, buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
-  std::atomic<int> current_wait_count_;
-  int maximum_wait_count;
+  std::atomic<int> source_count_;
+  std::set<std::string> source_component_names_;
+  int maximum_source_count_;
+  bool is_valid_;
+  std::map<std::string, BufferSource::Ptr > missing_sources_;
+  std::map<std::string, BufferSource::Ptr > canceled_sources_;
+  tbb::spin_rw_mutex source_mutex_;
+
+
+    std::atomic<int> current_wait_count_;
+  int maximum_wait_count_;
 
   TimestampType current_timestamp_;
   size_t current_measurement_index_;

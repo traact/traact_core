@@ -41,51 +41,117 @@ TimeDomainManager::TimeDomainManager(int time_domain, size_t
         ringbuffer_size), generic_factory_objects_(std::move(generic_factory_objects)), domain_timestamp_index_(0) {
 
 }
+
 int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &component_name) {
 
+    TimestampType start_request = now();
   while (true) {
 
-    SPDLOG_TRACE("trying to get buffer component: {0}, ts: {1}", component_name, ts.time_since_epoch().count());
+    SPDLOG_TRACE("trying to get buffer for component: {0}, ts: {1}", component_name, ts.time_since_epoch().count());
     // tests existing running buffers, concurrent access possible here
+    /*
     {
-      typename RunningBufferType::const_accessor findResult;
-      if (running_buffers_.find(findResult, ts)) {
+        tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+      //typename RunningBufferType::const_accessor findResult;
+      //if (running_buffers_.find(findResult, ts)) {
+      const auto& findResult = running_buffers_.find(ts);
+        if (findResult != running_buffers_.end()) {
         SPDLOG_TRACE("buffer found in running buffers");
-        findResult.release();
+        findResult->second->increaseSourceCount(component_name);
+        //findResult.release();
         return 0;
       }
-    }
+    }*/
 
     // check free buffers, must be made exclusive for now
     {
-      std::unique_lock lock(mutex_);
+      //std::unique_lock lock(mutex_);
+        tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
       // check map again because a different thread might have also waited for the lock and created the buffer
-      typename RunningBufferType::const_accessor findResult;
-      if (running_buffers_.find(findResult, ts)) {
+      //typename RunningBufferType::const_accessor findResult;
+      //if (running_buffers_.find(findResult, ts)) {
+      const auto& findResult = running_buffers_.find(ts);
+      if (findResult != running_buffers_.end()) {
         SPDLOG_TRACE("in lock: buffer found in running buffers, component: {0}", component_name);
-        findResult.release();
+        findResult->second->increaseSourceCount(component_name);
+        //findResult.release();
         return 0;
       }
+
+        // cleanup older buffers
+        for(const auto& it : running_buffers_) {
+            auto& buffer = it.second;
+            // if all inputs are set then it should not be canceled
+            if(buffer->isSourcesSet())
+                continue;
+            // if the buffer is older then the current ts and is missing this source then this path in the graph is invalid
+            if(buffer->getTimestamp() < ts) {
+                if(!buffer->isSourceSet(component_name)){
+                    buffer->cancelSource(component_name);
+                }
+            }
+        }
 
       if (!free_buffers_.empty()) {
         TimeDomainBufferPtr freeBuffer;
 
         if (free_buffers_.try_pop(freeBuffer)) {
+
           SPDLOG_TRACE("in lock: new buffer for component: {0} ts: {1}", component_name, ts.time_since_epoch().count());
-          freeBuffer->resetForTimestamp(ts, domain_timestamp_index_);
-          running_buffers_.insert(std::make_pair(ts, freeBuffer));
+          freeBuffer->resetForTimestamp(ts, domain_timestamp_index_, buffer_sources_);
+          freeBuffer->increaseSourceCount(component_name);
           ++domain_timestamp_index_;
+
+            running_buffers_.emplace(ts, freeBuffer);
           return 0;
         }
       }
     }
 
+    if((now() - start_request) > std::chrono::milliseconds(1000)){
+
+        tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+        if(free_buffers_.empty()){
+            std::vector<size_t > mea_index;
+            mea_index.reserve(running_buffers_.size());
+            std::map<size_t, GenericTimeDomainBuffer::Ptr > mea_ts;
+            for(const auto& it : running_buffers_) {
+                auto& buffer = it.second;
+                if(buffer->isSourcesSet())
+                    continue;
+                mea_index.push_back(buffer->GetCurrentMeasurementIndex());
+                mea_ts.emplace(buffer->GetCurrentMeasurementIndex(), buffer);
+            }
+
+
+            if(!mea_index.empty()){
+                SPDLOG_ERROR("time domain without free buffer for 1000ms, abort oldest event");
+                std::sort(mea_index.begin(),mea_index.end());
+                mea_ts.at(mea_index[0])->invalidateBuffer();
+            }
+        }
+
+
+
+    }
+
+
     switch (source_mode_) {
       default:
       case SourceMode::WaitForBuffer: {
-        SPDLOG_TRACE("no free buffer, yield");
-        std::this_thread::yield();
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          /*
+          if(check_for_blocked_buffer(ts, component_name)){
+              SPDLOG_TRACE("found blocked buffer");
+              //std::this_thread::yield();
+          } else {
+              // TODO add timeout to requestBuffer
+              SPDLOG_TRACE("no free buffer, yield");
+              std::this_thread::yield();
+              //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }*/
+          //check_for_blocked_buffer(ts, component_name);
+          std::this_thread::yield();
+
         break;
       }
       case SourceMode::ImmediateReturn: {
@@ -97,18 +163,70 @@ int TimeDomainManager::requestBuffer(const TimestampType ts, const std::string &
   }
 };
 
+
+
+    bool TimeDomainManager::check_for_blocked_buffer(const TimestampType ts, const std::string &component_name){
+        //return false;
+        tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+
+
+
+        // check all running buffers
+        for(const auto& it : running_buffers_) {
+            auto& component = it.second;
+            // if all inputs are set then it should not be canceled
+            if(component->isSourcesSet())
+                continue;
+            // if the buffer is older then the current ts and the input of the component is set
+            // the other sources have been to slow to feed the input, cancel older ts
+            if(component->getTimestamp() < ts) {
+                if(component->isSourceSet(component_name)){
+                    component->cancelSource(component_name);
+                }
+            }
+        }
+
+
+        return false;
+    }
+
 TimeDomainManager::DefaultComponentBuffer &TimeDomainManager::acquireBuffer(const TimestampType ts,
                                                                             const std::string &component_name) {
-  typename RunningBufferType::const_accessor findResult;
-  if (running_buffers_.find(findResult, ts)) {
+    tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+  //typename RunningBufferType::const_accessor findResult;
+  //if (running_buffers_.find(findResult, ts)) {
+    const auto& findResult = running_buffers_.find(ts);
+    if (findResult != running_buffers_.end()) {
     std::shared_ptr<DefaultTimeDomainBuffer> foundBuffer = findResult->second;
-    findResult.release();
+
+    //findResult.release();
 
     return foundBuffer->getComponentBuffer(component_name);
 
   }
+  SPDLOG_ERROR("no domain buffer found for timestamp {0}", ts.time_since_epoch().count());
   throw std::invalid_argument("no domain buffer found for timestamp");
 };
+
+    TimeDomainManager::DefaultComponentBuffer &TimeDomainManager::acquireBufferSource(const TimestampType ts, const std::string &component_name){
+        tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+        //typename RunningBufferType::const_accessor findResult;
+        //if (running_buffers_.find(findResult, ts)) {
+        const auto& findResult = running_buffers_.find(ts);
+        if (findResult != running_buffers_.end()) {
+            std::shared_ptr<DefaultTimeDomainBuffer> foundBuffer = findResult->second;
+            //foundBuffer->increaseSourceCount(component_name);
+            //findResult.release();
+
+
+
+
+            return foundBuffer->getComponentBuffer(component_name);
+
+        }
+        SPDLOG_ERROR("no domain buffer found for timestamp {0}", ts.time_since_epoch().count());
+        throw std::invalid_argument("no domain buffer found for timestamp");
+    }
 
 /*
 int TimeDomainManager::commitBuffer(TimestampType ts) {
@@ -140,18 +258,22 @@ int TimeDomainManager::commitBuffer(TimestampType ts) {
 
 int TimeDomainManager::releaseBuffer(TimestampType ts) {
 
-        typename RunningBufferType::const_accessor findResult;
-        SPDLOG_TRACE("commitBuffer ts: {0}",ts.time_since_epoch().count());
-        if (running_buffers_.find(findResult, ts)) {
+        tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+
+        //typename RunningBufferType::const_accessor findResult;
+        SPDLOG_INFO("release buffer ts: {0}",ts.time_since_epoch().count());
+        //if (running_buffers_.find(findResult, ts)) {
+        const auto& findResult = running_buffers_.find(ts);
+        if (findResult != running_buffers_.end()) {
 
             TimeDomainBufferPtr freeBuffer = findResult->second;
             {
-                std::unique_lock lock(mutex_);
+                //std::unique_lock lock(mutex_);
                 running_buffers_.erase(findResult);
                 free_buffers_.push(freeBuffer);
             }
 
-            findResult.release();
+            //findResult.release();
             return 0;
 
         }
@@ -174,15 +296,32 @@ void TimeDomainManager::setSourceMode(SourceMode source_mode) {
   source_mode_ = source_mode;
 }
 size_t TimeDomainManager::GetDomainMeasurementIndex(TimestampType ts) {
-  typename RunningBufferType::const_accessor findResult;
-  if (running_buffers_.find(findResult, ts)) {
+    tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+  //typename RunningBufferType::const_accessor findResult;
+    const auto& findResult = running_buffers_.find(ts);
+  if (findResult != running_buffers_.end()) {
     std::shared_ptr<DefaultTimeDomainBuffer> foundBuffer = findResult->second;
-    findResult.release();
 
     return foundBuffer->GetCurrentMeasurementIndex();
 
   }
   throw std::invalid_argument("no domain buffer found for timestamp");
+}
+
+    void TimeDomainManager::registerBufferSource(BufferSource::Ptr buffer_source){
+    buffer_sources_.push_back(buffer_source);
+}
+
+    void TimeDomainManager::stop(){
+        tbb::queuing_rw_mutex::scoped_lock lock(buffer_mutex_, true);
+
+
+
+        // cancel all running buffers
+        for(const auto& it : running_buffers_) {
+            auto& buffer = it.second;
+            buffer->invalidateBuffer();
+        }
 }
 
 }

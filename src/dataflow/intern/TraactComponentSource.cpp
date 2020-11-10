@@ -53,6 +53,8 @@ namespace traact::dataflow::intern {
         this->component_base_->setCommitCallback(
                 std::bind(&TraactComponentSource::commitData, this, std::placeholders::_1));
 
+        buffer_manager_->registerBufferSource(this);
+
     }
 
     bool TraactComponentSource::init() {
@@ -115,4 +117,100 @@ namespace traact::dataflow::intern {
     void TraactComponentSource::disconnect() {
 
     }
+
+    int TraactComponentSource::configure_component(TimestampType ts) {
+        TraactMessage message;
+        message.timestamp = ts;
+        message.valid = true;
+        message.message_type = MessageType::Parameter;
+
+        requestBuffer(ts);
+        DefaultComponentBuffer& componentBuffer = this->buffer_manager_->acquireBufferSource(ts, this->component_base_->getName());
+        init_component(componentBuffer);
+        componentBuffer.commit();
+
+        message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
+
+
+        SPDLOG_INFO("Component {0}; ts {1}; configure {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
+
+        //node_->gateway().reserve_wait();
+        if (node_->gateway().try_put(message)) {
+            //if (node_->try_put(message)) {
+            SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put succeeded");
+            return 0;
+        }
+        //node_->gateway().release_wait();
+
+        SPDLOG_ERROR("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put failed");
+
+
+        return -1;
+    }
+
+    int TraactComponentSource::commitData(TimestampType ts) {
+        //node_->gateway().reserve_wait();
+        TraactMessage message;
+        message.timestamp = ts;
+        message.valid = true;
+        message.message_type = MessageType::Data;
+        //message.message_type = MessageType::Parameter;
+
+        message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
+
+
+        DefaultComponentBuffer& componentBuffer = this->buffer_manager_->acquireBuffer(ts, this->component_base_->getName());
+
+
+        SPDLOG_INFO("Component {0}; ts {1}; Data {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
+        if (node_->gateway().try_put(message)) {
+            //if (send_init_component(ts)) {
+            SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put succeeded");
+            componentBuffer.commit();
+            return 0;
+        }
+
+        SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put failed");
+        componentBuffer.commit();
+
+        //node_->gateway().release_wait();
+
+
+        return -1;
+    }
+
+    int TraactComponentSource::invalidateBuffer(TimestampType ts, size_t measurement_index){
+        TraactMessage message;
+        message.timestamp = ts;
+        message.valid = true;
+        message.message_type = MessageType::AbortTs;
+
+        message.domain_measurement_index = measurement_index;
+
+        //DefaultComponentBuffer& componentBuffer = this->buffer_manager_->acquireBuffer(ts, this->component_base_->getName());
+        //componentBuffer.commit();
+        SPDLOG_TRACE("try sending data into network");
+        SPDLOG_INFO("Component {0}; ts {1}; invalidate {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
+        //node_->gateway().reserve_wait();
+        if (node_->gateway().try_put(message)) {
+            //if (node_->try_put(message)) {
+            SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put succeeded");
+            return 0;
+        }
+        //node_->gateway().release_wait();
+
+        SPDLOG_ERROR("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put failed");
+
+
+        return -1;
+    }
+
+    std::string TraactComponentSource::getComponentName(){
+        return component_base_->getName();
+    }
+
+    component::ComponentType TraactComponentSource::getComponentType(){
+        return component::ComponentType::AsyncSource;
+    }
 }
+

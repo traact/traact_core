@@ -35,6 +35,7 @@
 #include <traact/datatypes.h>
 #include <traact/buffer/GenericTimeDomainBuffer.h>
 #include <traact/buffer/GenericComponentBuffer.h>
+#include <traact/buffer/BufferSource.h>
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/concurrent_queue.h>
 #include <mutex>
@@ -42,14 +43,14 @@
 #include <spdlog/spdlog.h>
 #include <thread>
 #include <traact/traact_core_export.h>
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/queuing_rw_mutex.h>
 
 namespace traact::component {
 class TRAACT_CORE_EXPORT ComponentGraph;
 }
 
 namespace traact::buffer {
-
-//
 
 class TRAACT_CORE_EXPORT TimeDomainManager {
  public:
@@ -60,20 +61,24 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
   typedef typename component::ComponentGraph ComponentGraph;
   typedef typename component::ComponentGraph::Ptr ComponentGraphPtr;
   typedef typename std::shared_ptr<GenericTimeDomainBuffer> TimeDomainBufferPtr;
-  typedef typename tbb::concurrent_hash_map<TimestampType, TimeDomainBufferPtr, TimestampHashCompare> RunningBufferType;
+
 
   TimeDomainManager(int time_domain,size_t ringbuffer_size,
                     std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
 
+  void registerBufferSource(BufferSource::Ptr buffer_source);
+
   int requestBuffer(const TimestampType ts, const std::string &component_name);
 
   DefaultComponentBuffer &acquireBuffer(const TimestampType ts, const std::string &component_name);
+  DefaultComponentBuffer &acquireBufferSource(const TimestampType ts, const std::string &component_name);
 
   //int commitBuffer(TimestampType ts);
 
   int releaseBuffer(TimestampType ts);
 
   void init(const ComponentGraphPtr &component_graph);
+  void stop();
   SourceMode getSourceMode() const;
 
   void setSourceMode(SourceMode source_mode);
@@ -81,9 +86,15 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
   size_t GetDomainMeasurementIndex(TimestampType ts);
 
  private:
+
+    //typedef typename tbb:concurrent_hash_map<TimestampType, TimeDomainBufferPtr, TimestampHashCompare> RunningBufferType;
+    typedef typename std::map<TimestampType, TimeDomainBufferPtr> RunningBufferType;
   int time_domain_;
+  tbb::queuing_rw_mutex buffer_mutex_;
   std::size_t ringbuffer_size_;
   SourceMode source_mode_;
+  std::vector<BufferSource::Ptr> buffer_sources_;
+
 
   //std::mutex buffer_lock_;
   mutable std::shared_mutex mutex_;
@@ -92,6 +103,8 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
   tbb::concurrent_queue<TimeDomainBufferPtr> free_buffers_;
   RunningBufferType running_buffers_;
   std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
+
+  bool check_for_blocked_buffer(const TimestampType ts,const std::string &component_name);
 
 };
 

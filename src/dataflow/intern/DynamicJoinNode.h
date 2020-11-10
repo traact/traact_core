@@ -175,11 +175,24 @@ class DynamicJoinNode {
     __TBB_ASSERT(std::get<0>(in).timestamp == std::get<1>(in).timestamp, "timestamps of sync input differ");
     TraactMessage result= std::get<0>(in);
     result.valid = std::get<0>(in).valid && std::get<1>(in).valid;
+
+    if(std::get<0>(in).message_type == MessageType::Invalid || std::get<1>(in).message_type == MessageType::Invalid )
+        result.message_type = MessageType::Invalid;
+    if(std::get<0>(in).message_type == MessageType::AbortTs || std::get<1>(in).message_type == MessageType::AbortTs )
+      result.message_type = MessageType::AbortTs;
+
+
     return result;
   }
   TraactMessage join3(const std::tuple<TraactMessage, TraactMessage, TraactMessage> &in) {
     TraactMessage result = std::get<0>(in);
     result.valid = std::get<0>(in).valid && std::get<1>(in).valid && std::get<2>(in).valid;
+      if(std::get<0>(in).message_type == MessageType::Invalid || std::get<1>(in).message_type == MessageType::Invalid
+                                                                 || std::get<2>(in).message_type == MessageType::Invalid)
+          result.message_type = MessageType::Invalid;
+      if(std::get<0>(in).message_type == MessageType::AbortTs || std::get<1>(in).message_type == MessageType::AbortTs
+                                                                 || std::get<2>(in).message_type == MessageType::AbortTs)
+          result.message_type = MessageType::AbortTs;
     return result;
   }
  private:

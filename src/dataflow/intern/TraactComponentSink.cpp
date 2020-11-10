@@ -60,10 +60,6 @@ bool TraactComponentSink::init() {
 
   }
 
-  /*if (count_input > 1) {
-    make_edge(join_node_->getSender(), *node_);
-  }*/
-
   if (pattern_base_->getConcurrency() != unlimited) {
     sequencer_node_ =
         new sequencer_node<TraactMessage>(network_graph_->getTBBGraph(), [](const TraactMessage &msg) -> size_t {
@@ -96,6 +92,8 @@ bool TraactComponentSink::teardown() {
 }
 
 void TraactComponentSink::operator()(const TraactMessage &in) {
+    SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
+
     DefaultComponentBuffer
             &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
     switch (in.message_type) {
@@ -103,25 +101,26 @@ void TraactComponentSink::operator()(const TraactMessage &in) {
             init_component(component_buffer);
             break;
         }
-        //case MessageType::Parameter:
+            //case MessageType::Parameter:
         case MessageType::Data: {
-            if(in.valid) {
-
+            if (in.valid) {
                 this->component_base_->processTimePoint(component_buffer);
             } else {
                 spdlog::trace("input for component not valid, skip processing: {0}", component_base_->getName());
             }
             break;
         }
+        case MessageType::AbortTs:{
+            spdlog::warn("abort ts message: component {0}", component_base_->getName());
+            break;
+        }
         case MessageType::Invalid:
-        default:
-        {
+        default: {
             spdlog::error("invalid message: {0}", component_base_->getName());
             break;
         }
 
     }
-
 
     component_buffer.commit();
 
@@ -158,5 +157,9 @@ tbb::flow::receiver<TraactMessage> &TraactComponentSink::getReceiver(int index) 
     }
   };
 
+}
+
+    component::ComponentType TraactComponentSink::getComponentType(){
+    return component::ComponentType::SyncSink;
 }
 }

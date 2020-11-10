@@ -103,6 +103,8 @@ class TraactComponentBase {
     throw std::runtime_error("trying to get receiever port of component with no receivers");
   }
 
+  virtual component::ComponentType getComponentType() = 0;
+
  protected:
   DefaultTimeDomainManagerPtr buffer_manager_;
   DefaultComponentPtr component_base_;

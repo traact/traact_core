@@ -78,13 +78,15 @@ bool TraactComponentFunctional::teardown() {
 }
 
 TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
+    SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
   TraactMessage result = in;
 
     DefaultComponentBuffer &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
 
+
     switch (in.message_type) {
         case MessageType::Parameter:{
-            //SPDLOG_TRACE("configure");
+
             init_component(component_buffer);
             break;
         }
@@ -103,16 +105,22 @@ TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
 
             break;
         }
+        case MessageType::AbortTs:{
+            SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), "abort");
+            break;
+        }
 
 
         case MessageType::Invalid:
         default:
         {
-            spdlog::error("invalid message: {0}", component_base_->getName());
+            SPDLOG_ERROR("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), "invalid message");
             break;
         }
 
     }
+
+
 
 
     component_buffer.commit();
@@ -149,6 +157,10 @@ tbb::flow::sender<TraactMessage> &TraactComponentFunctional::getSender(int index
   if (index != 0)
     throw std::invalid_argument("sender index of traact component functional must be 0");
   return *node_;
+}
+
+    component::ComponentType TraactComponentFunctional::getComponentType(){
+    return component::ComponentType::Functional;
 }
 
 }

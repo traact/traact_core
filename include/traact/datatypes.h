@@ -63,7 +63,8 @@ enum class MessageDataMode {
 enum class MessageType {
     Invalid = 0,
     Data ,
-    Parameter
+    Parameter,
+    AbortTs
 };
 
 struct TRAACT_CORE_EXPORT TraactMessage {
@@ -80,7 +81,7 @@ struct TRAACT_CORE_EXPORT TraactMessage {
 
   std::string toString() const {
     std::stringstream ss;
-    ss << "TraactMessage TS: " << timestamp.time_since_epoch().count() << " MeaIndex: " << domain_measurement_index << " valid: " << valid << std::endl;
+    ss << "TraactMessage TS: " << timestamp.time_since_epoch().count() << " MeaIndex: " << domain_measurement_index << " valid: " << valid << " message type: " << static_cast<int>(message_type) << std::endl;
     return ss.str();
   }
 };

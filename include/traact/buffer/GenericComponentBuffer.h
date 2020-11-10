@@ -40,7 +40,7 @@
 #include <traact/traact_core_export.h>
 #include <spdlog/spdlog.h>
 namespace traact::buffer {
-/*
+
     template<typename T>
  class TRAACT_CORE_EXPORT BorrowedBuffer {
   public:
@@ -61,7 +61,7 @@ namespace traact::buffer {
   private:
    GenericTimeDomainBuffer *time_domain_buffer_;
    const T* data_;
-};*/
+};
 
 class TRAACT_CORE_EXPORT GenericComponentBuffer {
  public:
@@ -93,12 +93,12 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
         return time_domain_buffer_.getInputHeader<HeaderType>(input_data_.at(index));
     }
 
-  /*
+
     template<typename ReturnType, typename HeaderType>
   const BorrowedBuffer<ReturnType> &&borrowInput(size_t index) {
-    BorrowedBuffer<ReturnType> result(&time_domain_buffer_, &type_conversion_.asImmutable<ReturnType, HeaderType>(input_data_.at(index), 0));
+    BorrowedBuffer<ReturnType> result(&time_domain_buffer_, &time_domain_buffer_.getInput<ReturnType, HeaderType>(input_data_.at(index)));
     return std::move(result);
-  }*/
+  }
 
   template<typename ReturnType, typename HeaderType>
   ReturnType &getOutput(size_t index) {
@@ -116,6 +116,10 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
 
   int commit() {
       time_domain_buffer_.decreaseUse();
+  }
+
+  bool isValid() const {
+      return time_domain_buffer_.isValid();
   }
 
  private:

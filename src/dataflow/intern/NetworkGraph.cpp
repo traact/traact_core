@@ -47,7 +47,7 @@ void NetworkGraph::init() {
 
   auto time_domains = component_graph_->GetTimeDomains();
   for(auto time_domain : time_domains) {
-    auto new_manager = std::make_shared<buffer::TimeDomainManager>(time_domain, 2, generic_factory_objects_);
+    auto new_manager = std::make_shared<buffer::TimeDomainManager>(time_domain, 3, generic_factory_objects_);
     new_manager->init(component_graph_);
     time_domain_manager_.emplace(std::make_pair(time_domain, new_manager));
   }
@@ -78,6 +78,7 @@ void NetworkGraph::init() {
                                                                component,
                                                                tdm_component,
                                                                this);
+
         break;
       }
       case component::ComponentType::Functional: {
@@ -139,10 +140,20 @@ void NetworkGraph::start() {
 }
 void NetworkGraph::stop() {
   for (const auto &component : network_components_) {
-    component->stop();
+    if(component->getComponentType() == component::ComponentType::AsyncSource)
+        component->stop();
+  }
+
+  for(auto& tdm : time_domain_manager_){
+      tdm.second->stop();
   }
 
     graph_.wait_for_all();
+
+    for (const auto &component : network_components_) {
+        if(component->getComponentType() != component::ComponentType::AsyncSource)
+            component->stop();
+    }
 
   // before: connect/disconnect in start/stop, now connected network is used for parameter calls before start event
     //for (const auto &component : network_components_) {

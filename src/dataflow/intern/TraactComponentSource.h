@@ -39,52 +39,29 @@
 
 namespace traact::dataflow::intern {
 
-class TraactComponentSource : public TraactComponentBase {
+class TraactComponentSource : public TraactComponentBase, buffer::BufferSource {
  public:
   TraactComponentSource(DefaultPatternPtr pattern_base,
                         DefaultComponentPtr component_base,
                         DefaultTimeDomainManagerPtr buffer_manager,
                         NetworkGraph *network_graph);
 
+
   bool init() override;
   bool start() override;
   bool stop() override;
   bool teardown() override;
+  component::ComponentType getComponentType() override;
 
   tbb::flow::sender<TraactMessage> &getSender(int index) override;
 
   void connect() override;
   void disconnect() override;
 
-  int configure_component(TimestampType ts) {
-        TraactMessage message;
-        message.timestamp = ts;
-        message.valid = true;
-        message.message_type = MessageType::Parameter;
-        //message.domain_measurement_index = 1;
+  int configure_component(TimestampType ts);
 
-        requestBuffer(ts);
-
-        message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
-
-
-
-        SPDLOG_TRACE("try sending data into network");
-        SPDLOG_TRACE(message.toString());
-
-      //node_->gateway().reserve_wait();
-      if (node_->gateway().try_put(message)) {
-      //if (node_->try_put(message)) {
-            SPDLOG_TRACE("try put succeeded");
-            return 0;
-        }
-      //node_->gateway().release_wait();
-
-        SPDLOG_ERROR("try put failed");
-
-
-        return -1;
-    }
+    int invalidateBuffer(TimestampType ts, size_t measurement_index) override;
+    std::string getComponentName() override;
 
  protected:
   typedef tbb::flow::async_node<tbb::flow::continue_msg, TraactMessage> async_source_node;
@@ -93,41 +70,14 @@ class TraactComponentSource : public TraactComponentBase {
   //tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
 
   int requestBuffer(TimestampType ts) {
-    return this->buffer_manager_->requestBuffer(ts, this->component_base_->getName());
+    return this->buffer_manager_->requestBuffer(ts, component_base_->getName());
   }
   DefaultComponentBuffer &acquireBuffer(TimestampType ts) {
-    return this->buffer_manager_->acquireBuffer(ts, this->component_base_->getName());
+      DefaultComponentBuffer &buffer = buffer_manager_->acquireBuffer(ts, component_base_->getName());
+
+    return buffer;
   }
-  int commitData(TimestampType ts) {
-      //node_->gateway().reserve_wait();
-    TraactMessage message;
-    message.timestamp = ts;
-    message.valid = true;
-    message.message_type = MessageType::Data;
-    //message.message_type = MessageType::Parameter;
-
-    message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
-
-
-    DefaultComponentBuffer& componentBuffer = acquireBuffer(ts);
-
-    SPDLOG_TRACE("try sending data into network");
-    SPDLOG_TRACE(message.toString());
-    if (node_->gateway().try_put(message)) {
-      //if (send_init_component(ts)) {
-      SPDLOG_TRACE("try put succeeded");
-      componentBuffer.commit();
-      return 0;
-    }
-
-    SPDLOG_TRACE("try put failed");
-      componentBuffer.commit();
-
-      //node_->gateway().release_wait();
-
-
-    return -1;
-  }
+  int commitData(TimestampType ts);
 
 };
 
