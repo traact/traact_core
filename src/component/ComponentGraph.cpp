@@ -85,11 +85,24 @@ std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTim
     }
   return std::move(result);
 }
-std::set<int> ComponentGraph::GetTimeDomains() const {
-  std::set<int> result;
+std::set<std::tuple<int, std::string, TimeDurationType> > ComponentGraph::GetTimeDomains() const {
+    std::set<std::tuple<int, std::string, TimeDurationType> > result;
+    std::set<int> all_domains;
+
     for(const auto& pattern : patterns_){
-      result.emplace(pattern.first->time_domain);
+        all_domains.emplace(pattern.first->time_domain);
+        if(pattern.first->is_master){
+
+            result.emplace(pattern.first->time_domain, pattern.first->instance_id, pattern.first->max_offset );
+        }
+
     }
+
+    // TODO check that there is exactly one master source for every time domain
+    if(result.size() < all_domains.size()){
+        spdlog::error("not all time domains have a master source");
+    }
+
   return result;
 }
 

@@ -60,8 +60,10 @@ class TraactComponentSource : public TraactComponentBase, buffer::BufferSource {
 
   int configure_component(TimestampType ts);
 
-    int invalidateBuffer(TimestampType ts, size_t measurement_index) override;
+    int invalidateBuffer(TimestampType ts, buffer::GenericTimeDomainBuffer* buffer) override;
     std::string getComponentName() override;
+
+    bool isMaster();
 
  protected:
   typedef tbb::flow::async_node<tbb::flow::continue_msg, TraactMessage> async_source_node;
@@ -69,7 +71,7 @@ class TraactComponentSource : public TraactComponentBase, buffer::BufferSource {
   tbb::flow::async_node<TraactMessage, TraactMessage> *node_;
   //tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
 
-  int requestBuffer(TimestampType ts) {
+  TimestampType requestBuffer(TimestampType ts) {
     return this->buffer_manager_->requestBuffer(ts, component_base_->getName());
   }
   DefaultComponentBuffer &acquireBuffer(TimestampType ts) {
@@ -78,6 +80,8 @@ class TraactComponentSource : public TraactComponentBase, buffer::BufferSource {
     return buffer;
   }
   int commitData(TimestampType ts);
+
+
 
 };
 

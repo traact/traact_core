@@ -119,17 +119,20 @@ namespace traact::dataflow::intern {
     }
 
     int TraactComponentSource::configure_component(TimestampType ts) {
+        requestBuffer(ts);
+
         TraactMessage message;
         message.timestamp = ts;
         message.valid = true;
         message.message_type = MessageType::Parameter;
+        message.domain_buffer = buffer_manager_->acquireTimeDomainBuffer(ts).get();
+        message.domain_measurement_index = message.domain_buffer->GetCurrentMeasurementIndex();
 
-        requestBuffer(ts);
-        DefaultComponentBuffer& componentBuffer = this->buffer_manager_->acquireBufferSource(ts, this->component_base_->getName());
+        DefaultComponentBuffer& componentBuffer = message.domain_buffer->getComponentBuffer(component_base_->getName());
         init_component(componentBuffer);
         componentBuffer.commit();
 
-        message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
+
 
 
         SPDLOG_INFO("Component {0}; ts {1}; configure {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
@@ -154,13 +157,9 @@ namespace traact::dataflow::intern {
         message.timestamp = ts;
         message.valid = true;
         message.message_type = MessageType::Data;
-        //message.message_type = MessageType::Parameter;
-
-        message.domain_measurement_index = buffer_manager_->GetDomainMeasurementIndex(ts);
-
-
-        DefaultComponentBuffer& componentBuffer = this->buffer_manager_->acquireBuffer(ts, this->component_base_->getName());
-
+        message.domain_buffer = buffer_manager_->acquireTimeDomainBuffer(ts).get();
+        message.domain_measurement_index = message.domain_buffer->GetCurrentMeasurementIndex();
+        DefaultComponentBuffer& componentBuffer = message.domain_buffer->getComponentBuffer(component_base_->getName());
 
         SPDLOG_INFO("Component {0}; ts {1}; Data {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
         if (node_->gateway().try_put(message)) {
@@ -179,27 +178,29 @@ namespace traact::dataflow::intern {
         return -1;
     }
 
-    int TraactComponentSource::invalidateBuffer(TimestampType ts, size_t measurement_index){
+    int TraactComponentSource::invalidateBuffer(TimestampType ts, buffer::GenericTimeDomainBuffer* buffer){
         TraactMessage message;
         message.timestamp = ts;
-        message.valid = true;
+        message.valid = false;
         message.message_type = MessageType::AbortTs;
+        message.domain_buffer = buffer;
+        message.domain_measurement_index = message.domain_buffer->GetCurrentMeasurementIndex();
 
-        message.domain_measurement_index = measurement_index;
+        DefaultComponentBuffer& componentBuffer = message.domain_buffer->getComponentBuffer(component_base_->getName());
 
-        //DefaultComponentBuffer& componentBuffer = this->buffer_manager_->acquireBuffer(ts, this->component_base_->getName());
-        //componentBuffer.commit();
         SPDLOG_TRACE("try sending data into network");
         SPDLOG_INFO("Component {0}; ts {1}; invalidate {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
         //node_->gateway().reserve_wait();
         if (node_->gateway().try_put(message)) {
             //if (node_->try_put(message)) {
             SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put succeeded");
+            //componentBuffer.commit();
             return 0;
         }
         //node_->gateway().release_wait();
 
         SPDLOG_ERROR("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put failed");
+        //componentBuffer.commit();
 
 
         return -1;
@@ -211,6 +212,10 @@ namespace traact::dataflow::intern {
 
     component::ComponentType TraactComponentSource::getComponentType(){
         return component::ComponentType::AsyncSource;
+    }
+
+    bool TraactComponentSource::isMaster(){
+        return pattern_base_->is_master;
     }
 }
 

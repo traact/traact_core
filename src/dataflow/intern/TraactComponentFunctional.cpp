@@ -81,7 +81,7 @@ TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
     SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
   TraactMessage result = in;
 
-    DefaultComponentBuffer &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
+    DefaultComponentBuffer &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
 
 
     switch (in.message_type) {
@@ -97,8 +97,7 @@ TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
         case MessageType::Data: {
             //SPDLOG_TRACE("data");
             if(in.valid) {
-
-                result.valid = this->component_base_->processTimePoint(component_buffer);
+                result.valid = component_base_->processTimePoint(component_buffer);
             } else {
                 spdlog::trace("input for component not valid, skip processing: {0}", component_base_->getName());
             }

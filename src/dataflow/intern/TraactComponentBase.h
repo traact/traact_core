@@ -41,6 +41,7 @@
 #include <traact/pattern/instance/PatternInstance.h>
 #include <traact/buffer/TimeDomainManager.h>
 #include <traact/buffer/GenericComponentBuffer.h>
+#include "TraactDataflowMessage.h"
 
 namespace traact::dataflow::intern {
 class NetworkGraph;

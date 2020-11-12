@@ -37,8 +37,8 @@ traact::pattern::instance::GraphInstance::GraphInstance() : name("Invalid") {
 }
 
 traact::pattern::instance::PatternInstance::Ptr traact::pattern::instance::GraphInstance::addPattern(std::string pattern_id,
-                                                                                                     traact::pattern::Pattern::Ptr pattern) {
-  PatternInstance::Ptr newPattern = std::make_shared<PatternInstance>(pattern_id, *pattern, this);
+                                                                                                     traact::pattern::Pattern::Ptr pattern, bool is_master, TimeDurationType max_suboridnate_offset) {
+  PatternInstance::Ptr newPattern = std::make_shared<PatternInstance>(pattern_id,is_master,max_suboridnate_offset, *pattern, this);
   pattern_instances[pattern_id] = newPattern;
   return newPattern;
 }

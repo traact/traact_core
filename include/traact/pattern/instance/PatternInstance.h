@@ -33,16 +33,20 @@
 #define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPATTERN_H_
 #include <traact/pattern/instance/PortInstance.h>
 #include <traact/pattern/Pattern.h>
+#include <traact/datatypes.h>
 #include <traact/traact_core_export.h>
+
 namespace traact::pattern::instance {
 
 class TRAACT_CORE_EXPORT GraphInstance;
 
 class TRAACT_CORE_EXPORT PatternInstance {
  public:
-  typedef typename std::shared_ptr<PatternInstance> Ptr;
+    PatternInstance(std::string id, bool ismaster, TimeDurationType maxoffset, Pattern pattern_pointer,
+                    GraphInstance *graph);
+
+    typedef typename std::shared_ptr<PatternInstance> Ptr;
   PatternInstance();
-  PatternInstance(std::string id, Pattern pattern_pointer, GraphInstance *graph);
   virtual ~PatternInstance();
 
   std::string getPatternName() const;
@@ -61,6 +65,8 @@ class TRAACT_CORE_EXPORT PatternInstance {
   std::vector<PortInstance> producer_ports;
   std::vector<PortInstance> consumer_ports;
   int time_domain{0};
+  bool is_master;
+  TimeDurationType max_offset;
 
 
 

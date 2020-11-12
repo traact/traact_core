@@ -43,6 +43,10 @@ using nlohmann::json;
 void to_json(json &jobj, const traact::pattern::instance::PatternInstance &obj) {
   jobj["id"] = obj.instance_id;
   jobj["time_domain"] = obj.time_domain;
+  jobj["is_master"] = obj.is_master;
+  if(obj.is_master) {
+      jobj["max_subordinate_offset"] = obj.max_offset.count();
+  }
   to_json(jobj, obj.pattern_pointer);
 
   if (!obj.producer_ports.empty()) {
@@ -63,6 +67,12 @@ void to_json(json &jobj, const traact::pattern::instance::PatternInstance &obj) 
 
 void from_json(const json &jobj, traact::pattern::instance::PatternInstance &obj) {
   jobj["id"].get_to(obj.instance_id);
+    jobj["is_master"].get_to(obj.is_master);
+    if(obj.is_master) {
+        uint64_t offset=0;
+        jobj["max_subordinate_offset"].get_to(offset);
+        obj.max_offset = traact::TimeDurationType(offset);
+    }
   from_json(jobj, obj.pattern_pointer);
   jobj["time_domain"].get_to(obj.time_domain);
 

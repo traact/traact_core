@@ -152,9 +152,10 @@ void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::Timestam
 
 }
 void traact::buffer::GenericTimeDomainBuffer::decreaseUse() {
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
   current_wait_count_ -= 1;
   if (current_wait_count_ < 0) {
-    SPDLOG_ERROR("use count of buffer smaller then 0");
+    SPDLOG_ERROR("use count of buffer ts {1} smaller then 0 : {0}", current_wait_count_, current_timestamp_.time_since_epoch().count());
     throw std::runtime_error("use count of buffer smaller then 0");
   }
   if(current_wait_count_ == 0) {
@@ -193,11 +194,11 @@ void traact::buffer::GenericTimeDomainBuffer::increaseSourceCount(const std::str
     missing_sources_.erase(component_name);
 }
 bool traact::buffer::GenericTimeDomainBuffer::isSourcesSet()  {
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, false);
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
     return missing_sources_.empty();
 }
 bool traact::buffer::GenericTimeDomainBuffer::isSourceSet(const std::string& component_name) {
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, false);
+    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
     return missing_sources_.count(component_name) == 0;
     //return source_component_names_.count(component_name) > 0;
 }
@@ -209,7 +210,7 @@ void traact::buffer::GenericTimeDomainBuffer::invalidateBuffer() {
     is_valid_ = true;
     for(const auto& missing_source : missing_sources_) {
         decreaseUse();
-        missing_source.second->invalidateBuffer(current_timestamp_, current_measurement_index_);
+        missing_source.second->invalidateBuffer(current_timestamp_, this);
     }
     missing_sources_.clear();
 }
@@ -219,7 +220,7 @@ void traact::buffer::GenericTimeDomainBuffer::cancelSource(const std::string& co
     const auto& findResult = missing_sources_.find(component_name);
     if(findResult != missing_sources_.end()){
         decreaseUse();
-        findResult->second->invalidateBuffer(current_timestamp_, current_measurement_index_);
+        findResult->second->invalidateBuffer(current_timestamp_, this);
     }
     missing_sources_.erase(findResult);
 

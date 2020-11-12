@@ -61,7 +61,7 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
 
   // used by source components
 
-  typedef typename std::function<int(TimestampType)> RequestCallbackType;
+  typedef typename std::function<TimestampType(TimestampType)> RequestCallbackType;
   typedef typename std::function<buffer::GenericComponentBuffer &(TimestampType)> AcquireCallbackType;
   typedef typename std::function<int(TimestampType)> CommitCallbackType;
   // used by producing and consuming functional components and sink components

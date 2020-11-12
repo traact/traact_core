@@ -95,7 +95,7 @@ void TraactComponentSink::operator()(const TraactMessage &in) {
     SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
 
     DefaultComponentBuffer
-            &component_buffer = this->buffer_manager_->acquireBuffer(in.timestamp, this->component_base_->getName());
+            &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
     switch (in.message_type) {
         case MessageType::Parameter: {
             init_component(component_buffer);
@@ -131,7 +131,7 @@ void TraactComponentSink::connect() {
 
   for (auto port : tmp) {
     for (auto producer_port : port->connectedToPtr()) {
-      tbb::flow::make_edge(this->network_graph_->getSender(producer_port), getReceiver(port->getPortIndex()));
+      tbb::flow::make_edge(network_graph_->getSender(producer_port), getReceiver(port->getPortIndex()));
     }
   }
 }

@@ -34,7 +34,8 @@
 
 #include <mutex>
 #include <condition_variable>
-
+#include <chrono>
+#include <traact/datatypes.h>
 namespace traact {
 class Semaphore {
  public:
@@ -50,6 +51,7 @@ class Semaphore {
     //notify the waiting thread
     cv_.notify_one();
   }
+
   inline void wait() {
     std::unique_lock<std::mutex> lock(mtx_);
     while(count_ == 0) {
@@ -70,5 +72,35 @@ class Semaphore {
   int count_;
   int max_count_;
 };
+
+class WaitForMasterTs {
+
+    public:
+    WaitForMasterTs ()
+                : current_ts(TimestampType::min())
+        {
+        }
+
+        inline void notifyAll(const TimestampType ts) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            current_ts = ts;
+            cv_.notify_all();
+        }
+
+        inline void wait(const TimestampType ts) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            while(current_ts > ts) {
+                //wait on the mutex until notify is called
+                cv_.wait(lock);
+            }
+        }
+
+
+    private:
+        std::mutex mtx_;
+        std::condition_variable cv_;
+        TimestampType current_ts;
+    };
+
 }
 #endif //TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_UTIL_SEMAPHORE_H_

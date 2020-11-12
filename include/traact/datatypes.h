@@ -60,31 +60,7 @@ enum class MessageDataMode {
   Dynamic
 };
 
-enum class MessageType {
-    Invalid = 0,
-    Data ,
-    Parameter,
-    AbortTs
-};
 
-struct TRAACT_CORE_EXPORT TraactMessage {
-    MessageType message_type = MessageType::Invalid;
-  TimestampType timestamp = TimestampType::min();
-  bool valid = false;
-  size_t domain_measurement_index = 0;
-
-
-
-  uint64_t key() const {
-    return timestamp.time_since_epoch().count();
-  }
-
-  std::string toString() const {
-    std::stringstream ss;
-    ss << "TraactMessage TS: " << timestamp.time_since_epoch().count() << " MeaIndex: " << domain_measurement_index << " valid: " << valid << " message type: " << static_cast<int>(message_type) << std::endl;
-    return ss.str();
-  }
-};
 
 enum class TRAACT_CORE_EXPORT SourceMode {
   WaitForBuffer = 0,

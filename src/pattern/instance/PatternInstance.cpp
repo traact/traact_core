@@ -31,10 +31,12 @@
 
 #include "traact/pattern/instance/PatternInstance.h"
 #include <traact/util/Utils.h>
-traact::pattern::instance::PatternInstance::PatternInstance(std::string id,
-                                                            Pattern pattern_pointer,
-                                                            traact::pattern::instance::GraphInstance *graph)
-    : pattern_pointer(std::move(pattern_pointer)), instance_id(std::move(id)), parent_graph(graph) {
+
+
+traact::pattern::instance::PatternInstance::PatternInstance(std::string id, bool ismaster, traact::TimeDurationType maxoffset,
+                                                            traact::pattern::Pattern pattern_pointer, traact::pattern::instance::GraphInstance *graph)
+    : pattern_pointer(std::move(pattern_pointer)), instance_id(std::move(id)), parent_graph(graph), is_master(ismaster), max_offset(maxoffset)
+    {
   for (const auto &consumer_port : pattern_pointer.consumer_ports) {
     PortInstance newPort(consumer_port, this);
     consumer_ports.emplace_back(std::move(newPort));

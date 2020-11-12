@@ -47,9 +47,10 @@ void NetworkGraph::init() {
 
   auto time_domains = component_graph_->GetTimeDomains();
   for(auto time_domain : time_domains) {
-    auto new_manager = std::make_shared<buffer::TimeDomainManager>(time_domain, 3, generic_factory_objects_);
+
+    auto new_manager = std::make_shared<buffer::TimeDomainManager>(std::get<0>(time_domain),std::get<1>(time_domain),std::get<2>(time_domain), 3, generic_factory_objects_);
     new_manager->init(component_graph_);
-    time_domain_manager_.emplace(std::make_pair(time_domain, new_manager));
+    time_domain_manager_.emplace(std::get<0>(time_domain), new_manager);
   }
 
 
@@ -121,12 +122,24 @@ void NetworkGraph::init() {
         component->connect();
     }
 
-    TimestampType init_ts = TimestampType(std::chrono::nanoseconds(1));
+    TimestampType init_ts = TimestampType(std::chrono::nanoseconds (1));
+    // first init master, then other components
     for (const auto &component : network_components_) {
         auto source_component = std::dynamic_pointer_cast<TraactComponentSource>(component);
 
         if(source_component){
-            source_component->configure_component(init_ts);
+            if(source_component->isMaster())
+                source_component->configure_component(init_ts);
+        }
+
+    }
+
+    for (const auto &component : network_components_) {
+        auto source_component = std::dynamic_pointer_cast<TraactComponentSource>(component);
+
+        if(source_component){
+            if(!source_component->isMaster())
+                source_component->configure_component(init_ts);
         }
 
     }
@@ -143,6 +156,8 @@ void NetworkGraph::stop() {
     if(component->getComponentType() == component::ComponentType::AsyncSource)
         component->stop();
   }
+
+
 
   for(auto& tdm : time_domain_manager_){
       tdm.second->stop();

@@ -62,7 +62,7 @@ set(LIB_SOURCES
         src/pattern/instance/PortInstance.cpp
         src/pattern/instance/GraphInstance.cpp
         src/util/Utils.cpp
-        src/dataflow/Network.cpp src/pattern/ParameterUtils.cpp src/component/Component.cpp src/component/ModuleComponent.cpp src/component/ComponentGraph.cpp include/traact/util/Semaphore.h include/traact/buffer/BufferSource.h)
+        src/dataflow/Network.cpp src/pattern/ParameterUtils.cpp src/component/Component.cpp src/component/ModuleComponent.cpp src/component/ComponentGraph.cpp include/traact/util/Semaphore.h include/traact/buffer/BufferSource.h src/dataflow/intern/TraactDataflowMessage.h)
 
 
 # conan is required hard, library name, version and description are configured from conan

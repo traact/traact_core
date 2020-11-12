@@ -29,23 +29,43 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_BUFFERSOURCE_H
-#define TRAACTMULTI_BUFFERSOURCE_H
+#ifndef TRAACTMULTI_TRAACTDATAFLOWMESSAGE_H
+#define TRAACTMULTI_TRAACTDATAFLOWMESSAGE_H
 
 #include <traact/datatypes.h>
 
-
 namespace traact::buffer {
-
     class TRAACT_CORE_EXPORT GenericTimeDomainBuffer;
+}
 
-    class TRAACT_CORE_EXPORT BufferSource{
-            public:
-            typedef BufferSource* Ptr;
-            virtual ~BufferSource() = default;
-            virtual int invalidateBuffer(TimestampType ts, GenericTimeDomainBuffer* buffer) = 0;
-            virtual std::string getComponentName() = 0;
+namespace traact {
+    enum class MessageType {
+        Invalid = 0,
+        Data ,
+        Parameter,
+        AbortTs
     };
 
+    struct TraactMessage {
+            MessageType message_type = MessageType::Invalid;
+            TimestampType timestamp = TimestampType::min();
+            //std::shared_ptr<buffer::GenericTimeDomainBuffer> domain_buffer = nullptr;
+            buffer::GenericTimeDomainBuffer* domain_buffer = nullptr;
+            bool valid = false;
+            size_t domain_measurement_index = 0;
+
+
+
+            uint64_t key() const {
+                return timestamp.time_since_epoch().count();
+            }
+
+            std::string toString() const {
+                std::stringstream ss;
+                ss << "TraactMessage TS: " << timestamp.time_since_epoch().count() << " MeaIndex: " << domain_measurement_index << " valid: " << valid << " message type: " << static_cast<int>(message_type) << std::endl;
+                return ss.str();
+            }
+    };
 }
-#endif //TRAACTMULTI_BUFFERSOURCE_H
+
+#endif //TRAACTMULTI_TRAACTDATAFLOWMESSAGE_H
