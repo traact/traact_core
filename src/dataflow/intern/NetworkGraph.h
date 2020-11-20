@@ -83,7 +83,7 @@ class NetworkGraph {
   const int time_domain_;
   tbb::flow::graph graph_;
 
-  std::set<TraactComponentBasePtr> network_components_;
+  std::vector<TraactComponentBasePtr> network_components_;
   std::map<PortPtr, TraactComponentBasePtr> port_to_network_component;
 
   std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects_;

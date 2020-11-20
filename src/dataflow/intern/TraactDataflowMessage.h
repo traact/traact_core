@@ -39,12 +39,7 @@ namespace traact::buffer {
 }
 
 namespace traact {
-    enum class MessageType {
-        Invalid = 0,
-        Data ,
-        Parameter,
-        AbortTs
-    };
+
 
     struct TraactMessage {
             MessageType message_type = MessageType::Invalid;
@@ -52,12 +47,13 @@ namespace traact {
             //std::shared_ptr<buffer::GenericTimeDomainBuffer> domain_buffer = nullptr;
             buffer::GenericTimeDomainBuffer* domain_buffer = nullptr;
             bool valid = false;
-            size_t domain_measurement_index = 0;
+            std::size_t domain_measurement_index = 0;
 
 
 
             uint64_t key() const {
-                return timestamp.time_since_epoch().count();
+                //return timestamp.time_since_epoch().count();
+                return domain_measurement_index;
             }
 
             std::string toString() const {

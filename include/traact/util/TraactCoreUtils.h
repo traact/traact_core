@@ -31,12 +31,6 @@
 
 #ifndef TRAACTMULTI_TRAACTCOREUTILS_H
 #define TRAACTMULTI_TRAACTCOREUTILS_H
-#include <spdlog/logger.h>
-#include <traact/traact_core_export.h>
-namespace traact::core {
-    void TRAACT_CORE_EXPORT setup_logger(std::shared_ptr<spdlog::logger> logger);
-}
-
 
 
 

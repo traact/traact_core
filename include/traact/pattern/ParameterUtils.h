@@ -36,7 +36,7 @@
 #include <set>
 #include <nlohmann/json.hpp>
 #include <traact/traact_core_export.h>
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
 
 namespace traact::pattern {
 

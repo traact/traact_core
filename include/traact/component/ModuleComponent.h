@@ -77,7 +77,7 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component{
 
   void SetModule(Module::Ptr module);
 
-  bool configure(const nlohmann::json &parameter, buffer::GenericComponentBuffer &data) override;
+  bool configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) override;
   bool start() override;
   bool stop() override;
   bool teardown() override;

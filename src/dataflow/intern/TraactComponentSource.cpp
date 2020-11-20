@@ -44,16 +44,12 @@ namespace traact::dataflow::intern {
             network_graph), node_(
             nullptr) {
 
-        this->component_base_->setRequestCallback(std::bind(&TraactComponentSource::requestBuffer,
+        this->component_base_->setRequestCallback(std::bind(&TraactComponentSource::RequestBuffer,
                                                             this,
                                                             std::placeholders::_1));
-        this->component_base_->setAcquireCallback(std::bind(&TraactComponentSource::acquireBuffer,
-                                                            this,
-                                                            std::placeholders::_1));
-        this->component_base_->setCommitCallback(
-                std::bind(&TraactComponentSource::commitData, this, std::placeholders::_1));
 
-        buffer_manager_->registerBufferSource(this);
+
+        buffer_manager_->RegisterBufferSource(this);
 
     }
 
@@ -72,8 +68,8 @@ namespace traact::dataflow::intern {
 
                                                                        });
 
-        //broadcast_node_ = new broadcast_node<TraactMessage>(this->network_graph_->getTBBGraph());
-        //make_edge(*node_, *broadcast_node_);
+        broadcast_node_ = new broadcast_node<TraactMessage>(this->network_graph_->getTBBGraph());
+        make_edge(*node_, *broadcast_node_);
         node_->gateway().reserve_wait();
 
         return true;
@@ -98,16 +94,16 @@ namespace traact::dataflow::intern {
         TraactComponentBase::teardown();
         //node_->gateway().release_wait();
 
+        delete broadcast_node_;
         delete node_;
 
-        //delete broadcast_node_;
 
         return true;
     }
 
     tbb::flow::sender<TraactMessage> &TraactComponentSource::getSender(int index) {
-        //return *broadcast_node_;
-        return *node_;
+        return *broadcast_node_;
+        //return *node_;
     }
 
     void TraactComponentSource::connect() {
@@ -119,77 +115,33 @@ namespace traact::dataflow::intern {
     }
 
     int TraactComponentSource::configure_component(TimestampType ts) {
-        requestBuffer(ts);
+        auto source_buffer = buffer_manager_->RequestBuffer(ts, component_base_->getName());
+        if(source_buffer == nullptr)
+            return -1;
+        source_buffer->SetMessageType(MessageType::Parameter);
 
-        TraactMessage message;
-        message.timestamp = ts;
-        message.valid = true;
-        message.message_type = MessageType::Parameter;
-        message.domain_buffer = buffer_manager_->acquireTimeDomainBuffer(ts).get();
-        message.domain_measurement_index = message.domain_buffer->GetCurrentMeasurementIndex();
-
-        DefaultComponentBuffer& componentBuffer = message.domain_buffer->getComponentBuffer(component_base_->getName());
-        init_component(componentBuffer);
-        componentBuffer.commit();
+        init_component(nullptr);
+        //componentBuffer.commit();
+        source_buffer->Commit();
 
 
-
-
-        SPDLOG_INFO("Component {0}; ts {1}; configure {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
-
-        //node_->gateway().reserve_wait();
-        if (node_->gateway().try_put(message)) {
-            //if (node_->try_put(message)) {
-            SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put succeeded");
-            return 0;
-        }
-        //node_->gateway().release_wait();
-
-        SPDLOG_ERROR("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put failed");
-
-
-        return -1;
     }
 
-    int TraactComponentSource::commitData(TimestampType ts) {
-        //node_->gateway().reserve_wait();
+
+    int TraactComponentSource::SendMessage(buffer::GenericTimeDomainBuffer *buffer, bool valid, MessageType msg_type) {
         TraactMessage message;
+        TimestampType ts = buffer->getTimestamp();
         message.timestamp = ts;
-        message.valid = true;
-        message.message_type = MessageType::Data;
-        message.domain_buffer = buffer_manager_->acquireTimeDomainBuffer(ts).get();
-        message.domain_measurement_index = message.domain_buffer->GetCurrentMeasurementIndex();
-        DefaultComponentBuffer& componentBuffer = message.domain_buffer->getComponentBuffer(component_base_->getName());
+        message.valid = valid;
+        message.message_type = msg_type;
 
-        SPDLOG_INFO("Component {0}; ts {1}; Data {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
-        if (node_->gateway().try_put(message)) {
-            //if (send_init_component(ts)) {
-            SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put succeeded");
-            componentBuffer.commit();
-            return 0;
-        }
-
-        SPDLOG_TRACE("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put failed");
-        componentBuffer.commit();
-
-        //node_->gateway().release_wait();
-
-
-        return -1;
-    }
-
-    int TraactComponentSource::invalidateBuffer(TimestampType ts, buffer::GenericTimeDomainBuffer* buffer){
-        TraactMessage message;
-        message.timestamp = ts;
-        message.valid = false;
-        message.message_type = MessageType::AbortTs;
         message.domain_buffer = buffer;
         message.domain_measurement_index = message.domain_buffer->GetCurrentMeasurementIndex();
 
-        DefaultComponentBuffer& componentBuffer = message.domain_buffer->getComponentBuffer(component_base_->getName());
 
-        SPDLOG_TRACE("try sending data into network");
-        SPDLOG_INFO("Component {0}; ts {1}; invalidate {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
+        //DefaultComponentBuffer& componentBuffer = message.domain_buffer->getComponentBuffer(component_base_->getName());
+
+        SPDLOG_TRACE("Try send message into network Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), message.toString());
         //node_->gateway().reserve_wait();
         if (node_->gateway().try_put(message)) {
             //if (node_->try_put(message)) {
@@ -202,8 +154,7 @@ namespace traact::dataflow::intern {
         SPDLOG_ERROR("Component {0}; ts {1}; {2}", component_base_->getName(), ts.time_since_epoch().count(), "try put failed");
         //componentBuffer.commit();
 
-
-        return -1;
+        throw std::runtime_error("try_put failed, dataflow network broken");
     }
 
     std::string TraactComponentSource::getComponentName(){

@@ -48,8 +48,9 @@ void NetworkGraph::init() {
   auto time_domains = component_graph_->GetTimeDomains();
   for(auto time_domain : time_domains) {
 
-    auto new_manager = std::make_shared<buffer::TimeDomainManager>(std::get<0>(time_domain),std::get<1>(time_domain),std::get<2>(time_domain), 3, generic_factory_objects_);
-    new_manager->init(component_graph_);
+     auto td_config = component_graph_->GetTimeDomainConfig(std::get<0>(time_domain));
+
+    auto new_manager = std::make_shared<buffer::TimeDomainManager>(td_config, generic_factory_objects_);
     time_domain_manager_.emplace(std::get<0>(time_domain), new_manager);
   }
 
@@ -108,9 +109,20 @@ void NetworkGraph::init() {
       port_to_network_component[port] = newComponent;
     }
 
-    network_components_.emplace(newComponent);
+    network_components_.emplace_back(newComponent);
 
   }
+
+  std::sort(network_components_.begin(),network_components_.end(),[](const TraactComponentBase::Ptr& a, const TraactComponentBase::Ptr& b)
+  {
+      return a->getComponentType() < b->getComponentType();
+  });
+
+
+  for(auto& td_manager : time_domain_manager_){
+      td_manager.second->init(component_graph_);
+  }
+
 
 
 
@@ -121,6 +133,8 @@ void NetworkGraph::init() {
     for (const auto &component : network_components_) {
         component->connect();
     }
+
+
 
     TimestampType init_ts = TimestampType(std::chrono::nanoseconds (1));
     // first init master, then other components
@@ -147,27 +161,33 @@ void NetworkGraph::init() {
 }
 void NetworkGraph::start() {
 
-  for (const auto &component : network_components_) {
-    component->start();
+  for (auto it = network_components_.rbegin(); it != network_components_.rend(); ++it) {
+      (*it)->start();
   }
 }
 void NetworkGraph::stop() {
-  for (const auto &component : network_components_) {
-    if(component->getComponentType() == component::ComponentType::AsyncSource)
-        component->stop();
-  }
 
 
+    for (auto it = network_components_.begin(); it != network_components_.end(); ++it) {
+        if((*it)->getComponentType() == component::ComponentType::AsyncSource)
+            (*it)->stop();
 
-  for(auto& tdm : time_domain_manager_){
-      tdm.second->stop();
-  }
+    }
+
+    for(auto& tdm : time_domain_manager_){
+        tdm.second->stop();
+    }
 
     graph_.wait_for_all();
 
-    for (const auto &component : network_components_) {
-        if(component->getComponentType() != component::ComponentType::AsyncSource)
-            component->stop();
+
+
+
+
+    for (auto it = network_components_.begin(); it != network_components_.end(); ++it) {
+        if((*it)->getComponentType() != component::ComponentType::AsyncSource)
+            (*it)->stop();
+
     }
 
   // before: connect/disconnect in start/stop, now connected network is used for parameter calls before start event

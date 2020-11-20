@@ -42,7 +42,9 @@
 #include <rttr/type>
 
 namespace traact::buffer {
-class TRAACT_CORE_EXPORT GenericComponentBuffer;
+    class TRAACT_CORE_EXPORT GenericSourceTimeDomainBuffer;
+    class TRAACT_CORE_EXPORT GenericComponentBuffer;
+    class TRAACT_CORE_EXPORT GenericComponentBufferConfig;
 }
 
 namespace traact::component {
@@ -55,15 +57,12 @@ namespace traact::component {
  *
  * @tparam Buffer Provides input and output buffer to the user
  */
-class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Component>{
+class TRAACT_CORE_EXPORT Component {
  public:
   typedef typename std::shared_ptr<Component> Ptr;
 
   // used by source components
-
-  typedef typename std::function<TimestampType(TimestampType)> RequestCallbackType;
-  typedef typename std::function<buffer::GenericComponentBuffer &(TimestampType)> AcquireCallbackType;
-  typedef typename std::function<int(TimestampType)> CommitCallbackType;
+  typedef typename std::function<buffer::GenericSourceTimeDomainBuffer* (TimestampType)> RequestCallbackType;
   // used by producing and consuming functional components and sink components
   //typedef typename std::function<bool(Buffer &)> ProcessCallbackType;
 
@@ -100,7 +99,7 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
    *
    * @return false if initialization is not possible (e.g. camera not available)
    */
-  virtual bool configure(const nlohmann::json &parameter, buffer::GenericComponentBuffer &data) ;
+  virtual bool configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) ;
   /**
    * Called after all components are initialized, the dataflow network is connected and ready to run
    *
@@ -139,8 +138,8 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
    * timestamp for the new data call request_callback_(ts) to register the new timestamp
    * in the dataflow network.
    *
-   * Return true if successful and you can proceed with acquire
-   * In case of false the dataflow network rejects this timestamp for some reason.
+   * Returns a GenericSourceTimeDomainBuffer if successful and you can proceed to set the data.
+   * In case of nullptr the dataflow network rejects this timestamp for some reason.
    * (examples Overloaded dataflow network, timestamp too old)
    * The reason should be reported by the network to the user.
    * In case of rejection you should throw away the measurement and try again with the next.
@@ -148,31 +147,10 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
    * @param commit_callback set by dataflow network
    */
   void setRequestCallback(const RequestCallbackType &request_callback);
-  /**
-   * Used by source components.
-   * Second step of sending new data into the network.
-   * Use when request_callback returned true.
-   * Call auto &buffer = acquire_callback_( timestamp )
-   * Returns Buffer object to write data into.
-   * Fill buffer with data.
-   * It is best to immediately use the buffer memory, if possible, to avoid copy operations.
-   *
-   * @param commit_callback
-   */
-  void setAcquireCallback(const AcquireCallbackType &acquire_callback) ;
 
-  /**
-   * Used by source components.
-   * When you are finished filling the buffer with data call commit_callback_
-   * @param commit_callback
-   */
-  void setCommitCallback(const CommitCallbackType &commit_callback);
+  virtual void invalidTimePoint(TimestampType ts, std::size_t mea_idx);
 
-  template <typename Derived>
-  std::shared_ptr<Derived> shared_from_base()
-  {
-    return std::static_pointer_cast<Derived>(shared_from_this());
-  }
+
   /* Enable RTTR Type Introspection */
   RTTR_ENABLE()
 
@@ -182,8 +160,6 @@ class TRAACT_CORE_EXPORT Component : public std::enable_shared_from_this<Compone
 
   // used by source components
   RequestCallbackType request_callback_;
-  AcquireCallbackType acquire_callback_;
-  CommitCallbackType commit_callback_;
 };
 }
 

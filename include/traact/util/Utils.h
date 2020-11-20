@@ -35,7 +35,7 @@
 #include <set>
 #include <map>
 
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
 #include <traact/traact_core_export.h>
 #include <traact/datatypes.h>
 namespace traact::util {

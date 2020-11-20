@@ -28,7 +28,7 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
 #include "traact/pattern/Port.h"
 
 #include "traact/pattern/Pattern.h"

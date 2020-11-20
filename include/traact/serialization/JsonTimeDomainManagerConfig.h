@@ -29,37 +29,41 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <traact/util/Logging.h>
-#include "traact/pattern/instance/PortInstance.h"
-#include "traact/pattern/instance/PatternInstance.h"
-#include <traact/pattern/instance/GraphInstance.h>
-traact::pattern::instance::PortInstance::PortInstance(traact::pattern::Port port,
-                                                      traact::pattern::instance::PatternInstance *pattern_instance)
-    : port(port), pattern_instance(pattern_instance) {
+#ifndef TRAACTMULTI_JSONTIMEDOMAINMANAGERCONFIG_H
+#define TRAACTMULTI_JSONTIMEDOMAINMANAGERCONFIG_H
 
-}
+#include <nlohmann/json.hpp>
+#include <traact/datatypes.h>
+#include <traact/traact_core_export.h>
+namespace ns {
 
-traact::pattern::instance::PortInstance::PortInstance() : port(), pattern_instance(nullptr) {
+    using nlohmann::json;
 
-}
+    void to_json(json &jobj, const traact::buffer::TimeDomainManagerConfig &obj) {
+        jobj["time_domain"] = obj.time_domain;
+        jobj["ringbuffer_size"] = obj.ringbuffer_size;
+        jobj["source_mode"] = static_cast<int>(obj.source_mode);
+        jobj["missing_source_event_mode"] = static_cast<int>(obj.missing_source_event_mode);
+        jobj["master_source"] = obj.master_source;
+        jobj["measurement_delta"] = obj.measurement_delta.count();
+        jobj["max_offset"] = obj.max_offset.count();
+        jobj["max_delay"] = obj.max_delay.count();
 
-traact::pattern::instance::ComponentID_PortName traact::pattern::instance::PortInstance::getID() const {
-  return std::make_pair(pattern_instance->instance_id, getName());
-}
+    }
 
-const std::string &traact::pattern::instance::PortInstance::getName() const {
-  return port.name;
-}
-const std::string &traact::pattern::instance::PortInstance::getDataType() const {
-  return port.datatype;
-}
-int traact::pattern::instance::PortInstance::getPortIndex() const {
-  return port.port_index;
-}
-std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::instance::PortInstance::connectedToPtr() const {
-  return pattern_instance->parent_graph->connectedToPtr(getID());
-}
+    void from_json(const json &jobj, traact::buffer::TimeDomainManagerConfig &obj) {
+        jobj.at("time_domain").get_to(obj.time_domain);
+        jobj.at("ringbuffer_size").get_to(obj.ringbuffer_size);
+        jobj.at("source_mode").get_to(obj.source_mode);
+        jobj.at("missing_source_event_mode").get_to(obj.missing_source_event_mode);
+        jobj.at("master_source").get_to(obj.master_source);
 
-bool traact::pattern::instance::PortInstance::IsConnected() const {
-    return !connectedToPtr().empty();
-}
+        obj.measurement_delta = std::chrono::nanoseconds(jobj.at("measurement_delta").get<int64_t>());
+        obj.max_offset = std::chrono::nanoseconds(jobj.at("max_offset").get<int64_t>());
+        obj.max_delay = std::chrono::nanoseconds(jobj.at("max_delay").get<int64_t>());
+    }
+
+} // namespace ns
+
+
+#endif //TRAACTMULTI_JSONTIMEDOMAINMANAGERCONFIG_H

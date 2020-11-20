@@ -38,19 +38,25 @@
 #include <traact/buffer/GenericTimeDomainBuffer.h>
 #include <traact/buffer/GenericBufferTypeConversion.h>
 #include <traact/traact_core_export.h>
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
 namespace traact::buffer {
+
+    class TRAACT_CORE_EXPORT GenericComponentBufferConfig {
+
+    };
 
     template<typename T>
  class TRAACT_CORE_EXPORT BorrowedBuffer {
   public:
+     typedef typename std::shared_ptr<BorrowedBuffer<T> > Ptr;
+
+     BorrowedBuffer(const BorrowedBuffer&) = delete;
+     BorrowedBuffer& operator=(BorrowedBuffer const&) = delete;
+
    BorrowedBuffer(GenericTimeDomainBuffer *time_domain_buffer, const T* data) : time_domain_buffer_(time_domain_buffer), data_(data) {
      time_domain_buffer_->increaseUse();
    }
 
-   BorrowedBuffer(const BorrowedBuffer &ptr) : data_(ptr.data_), time_domain_buffer_(ptr.time_domain_buffer_) {
-     time_domain_buffer_->increaseUse();
-   }
    ~BorrowedBuffer() {
      //SPDLOG_TRACE("destructor, decrease buffer use");
       time_domain_buffer_->decreaseUse();
@@ -95,9 +101,8 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
 
 
     template<typename ReturnType, typename HeaderType>
-  const BorrowedBuffer<ReturnType> &&borrowInput(size_t index) {
-    BorrowedBuffer<ReturnType> result(&time_domain_buffer_, &time_domain_buffer_.getInput<ReturnType, HeaderType>(input_data_.at(index)));
-    return std::move(result);
+  const typename BorrowedBuffer<ReturnType>::Ptr borrowInput(size_t index) {
+    return std::make_shared<BorrowedBuffer<ReturnType>>(&time_domain_buffer_, &time_domain_buffer_.getInput<ReturnType, HeaderType>(input_data_.at(index)));
   }
 
   template<typename ReturnType, typename HeaderType>
@@ -116,11 +121,20 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
 
   int commit() {
       time_domain_buffer_.decreaseUse();
+      return 0;
   }
 
   bool isValid() const {
-      return time_domain_buffer_.isValid();
+      return true;//time_domain_buffer_.isUsed();
   }
+
+  std::size_t GetInputCount() {
+      return input_data_.size();
+  }
+
+    std::size_t GetOutputCount() {
+        return output_data_.size();
+    }
 
  private:
   std::vector<size_t> input_data_;

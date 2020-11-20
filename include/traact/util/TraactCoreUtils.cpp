@@ -30,7 +30,4 @@
 **/
 
 #include "TraactCoreUtils.h"
-#include <spdlog/spdlog.h>
-void traact::core::setup_logger(std::shared_ptr<spdlog::logger> logger) {
-    spdlog::set_default_logger(logger);
-}
+

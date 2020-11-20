@@ -58,6 +58,7 @@ class TRAACT_CORE_EXPORT ComponentGraph {
   const std::set<PatternComponentPair> &getPatterns() const;
   std::set<PatternComponentPair> getPatternsForTimeDomain(int time_domain) const;
   std::set<std::tuple<int, std::string, TimeDurationType>> GetTimeDomains() const;
+  traact::buffer::TimeDomainManagerConfig GetTimeDomainConfig(std::size_t time_domain) const;
 
   ComponentPtr getComponent(const std::string& id);
 

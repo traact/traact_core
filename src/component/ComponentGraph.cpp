@@ -30,12 +30,16 @@
 **/
 
 #include <traact/component/ComponentGraph.h>
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
+
+#include <exception>
 
 namespace traact::component {
 
   ComponentGraph::ComponentGraph(pattern::instance::GraphInstance::Ptr graph_instance) : graph_instance_(std::move(
       graph_instance)) {
+
+
 
   }
 
@@ -80,8 +84,24 @@ ComponentGraph::ComponentPtr ComponentGraph::getComponent(const std::string& id)
 std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTimeDomain(int time_domain) const {
   std::set<ComponentGraph::PatternComponentPair> result;
     for(const auto& pattern : patterns_) {
-      if(pattern.first->time_domain == time_domain)
-        result.emplace(pattern);
+        switch (pattern.second->getComponentType()) {
+            case ComponentType::AsyncSource:
+            case ComponentType::Functional:
+            case ComponentType::AsyncFunctional:
+            case ComponentType::SyncSink:
+            {
+                if(pattern.first->time_domain == time_domain)
+                    result.emplace(pattern);
+                break;
+            }
+            case ComponentType::Invalid:{
+                throw std::runtime_error("getPatternsForTimeDomain for invalid ComponentType");
+            }
+            default: {
+                throw std::runtime_error("getPatternsForTimeDomain not implemented for ComponentType : "+ std::to_string((int)pattern.second->getComponentType()));
+            }
+
+        }
     }
   return std::move(result);
 }
@@ -105,5 +125,17 @@ std::set<std::tuple<int, std::string, TimeDurationType> > ComponentGraph::GetTim
 
   return result;
 }
+
+    traact::buffer::TimeDomainManagerConfig ComponentGraph::GetTimeDomainConfig(std::size_t time_domain) const {
+      auto result = graph_instance_->timedomain_configs.find(time_domain);
+      if(result == graph_instance_->timedomain_configs.end()){
+          traact::buffer::TimeDomainManagerConfig config;
+          spdlog::error("no valid time domain manager config for time domain {0}", time_domain);
+          return config;
+      } else {
+          return result->second;
+      }
+
+    }
 
 }

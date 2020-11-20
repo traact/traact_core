@@ -30,7 +30,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
 
 #include <traact/traact.h>
 #include <thread>

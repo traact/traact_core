@@ -58,6 +58,7 @@ class TRAACT_CORE_EXPORT GraphInstance {
 
   std::string name;
   std::map<std::string, PatternInstance::Ptr> pattern_instances;
+  std::map<int, traact::buffer::TimeDomainManagerConfig> timedomain_configs;
 
   void initializeGraphConnections();
 

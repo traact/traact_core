@@ -60,15 +60,39 @@ enum class MessageDataMode {
   Dynamic
 };
 
+enum class MessageType {
+    Invalid = 0,
+    Parameter,
+    Data ,
+    AbortTs
+};
 
-
-enum class TRAACT_CORE_EXPORT SourceMode {
+enum class SourceMode {
   WaitForBuffer = 0,
   ImmediateReturn
 };
 
+enum class MissingSourceEventMode {
+    WaitForEvent = 0,
+    CancelOldest
+};
+
 // redefine tbb concurrency to avoid dependency in components just for this enum
-enum TRAACT_CORE_EXPORT concurrency { unlimited = 0, serial = 1 };
+enum concurrency { unlimited = 0, serial = 1 };
+
+namespace buffer {
+    struct TRAACT_CORE_EXPORT TimeDomainManagerConfig {
+        int time_domain{-1};
+        std::size_t ringbuffer_size{0};
+        TimeDurationType max_offset{TimeDurationType::min()};
+        TimeDurationType  max_delay{TimeDurationType::min()};
+        TimeDurationType measurement_delta{TimeDurationType::min()};
+        SourceMode source_mode{SourceMode::WaitForBuffer};
+        MissingSourceEventMode missing_source_event_mode{MissingSourceEventMode::WaitForEvent};
+        std::string master_source{"invalid"};
+
+    };
+}
 
 }
 

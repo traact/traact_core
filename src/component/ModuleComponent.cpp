@@ -28,7 +28,7 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
 #include <traact/component/ModuleComponent.h>
 
 namespace traact::component {
@@ -65,7 +65,7 @@ void ModuleComponent::SetModule(Module::Ptr module) {
   module_ = module;
 }
 
-bool ModuleComponent::configure(const nlohmann::json &parameter, buffer::GenericComponentBuffer &data) {
+bool ModuleComponent::configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) {
 return module_->init(this);
 }
 bool ModuleComponent::start() {

@@ -102,5 +102,36 @@ class WaitForMasterTs {
         TimestampType current_ts;
     };
 
+    class WaitForInit {
+
+    public:
+        WaitForInit ()
+                : is_init(false)
+        {
+        }
+
+        inline void SetInit(bool init) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            is_init = init;
+            cv_.notify_all();
+        }
+
+        inline void Wait() {
+            std::unique_lock<std::mutex> lock(mtx_);
+            while(!is_init) {
+                //wait on the mutex until notify is called
+                cv_.wait(lock);
+            }
+        }
+
+
+    private:
+        std::mutex mtx_;
+        std::condition_variable cv_;
+        bool is_init;
+    };
+
 }
+
+
 #endif //TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_UTIL_SEMAPHORE_H_

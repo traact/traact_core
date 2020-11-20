@@ -29,101 +29,17 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <spdlog/spdlog.h>
+#include <traact/util/Logging.h>
 #include "traact/buffer/GenericTimeDomainBuffer.h"
 #include "traact/buffer/GenericComponentBuffer.h"
 #include "traact/buffer/TimeDomainManager.h"
 
-traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(int time_domain,TimeDomainManager* manager, component::ComponentGraph::Ptr component_graph,
-                                                                 const std::set<buffer::GenericFactoryObject::Ptr> &generic_factory_objects)
-    : time_domain_(time_domain), timedomain_manager_(manager), component_graph_(std::move(component_graph)), current_wait_count_(0), maximum_wait_count_(0), maximum_source_count_(0) {
-  using namespace pattern::instance;
-
-  for (const auto &item : generic_factory_objects) {
-    std::string name = item->getTypeName();
-    generic_factory_objects_.emplace(std::make_pair(name, item));
-  }
-
-  auto components = component_graph_->getPatternsForTimeDomain(time_domain_);
-
-  std::vector<std::string> bufferTypes;
-
-  std::map<ComponentID_PortName, int> port_to_bufferIndex;
-
-  for (const auto &component : components) {
-
-    std::shared_ptr<PatternInstance> dataComp = component.first;
-    if (!dataComp) {
-      spdlog::warn("skipping non dataflow pattern : {0}", component.first->instance_id);
-      continue;
-    }
-
-    for (auto port : dataComp->getProducerPorts()) {
-      //if(port->IsConnected()) {
-        bufferTypes.emplace_back(port->getDataType());
-        std::size_t bufferIndex = bufferTypes.size() - 1;
-
-        addBuffer(port->getDataType());
-
-        port_to_bufferIndex[port->getID()] = bufferIndex;
-
-        for (auto input_port : port->connectedToPtr()) {
-          port_to_bufferIndex[input_port->getID()] = bufferIndex;
-        }
-      //}
-
-    }
-
-      // if the component is a source component
-      switch(component.second->getComponentType()){
-        // add other potential sources
-          case component::ComponentType::AsyncSource: {
-              maximum_source_count_++;
-
-              break;
-          }
-          default: // nothing to do
-              break;
-      }
 
 
 
-      // every component must be called
-      maximum_wait_count_++;
-
-  }
-
-  for (const auto &component : components) {
-
-    std::shared_ptr<PatternInstance> dataComp = component.first;
-    if (!dataComp) {
-      continue;
-    }
-
-    std::vector<size_t> output;
-    output.resize(dataComp->getProducerPorts().size());
-    for (PortInstance::ConstPtr port : dataComp->getProducerPorts()) {
-      output[port->getPortIndex()] = port_to_bufferIndex[port->getID()];
-    }
-
-    std::vector<size_t> input;
-    input.resize(dataComp->getConsumerPorts().size());
-    for (PortInstance::ConstPtr port : dataComp->getConsumerPorts()) {
-      input[port->getPortIndex()] = port_to_bufferIndex[port->getID()];
-    }
-
-    component_buffers_[component.first->instance_id] =
-        std::make_shared<GenericComponentBuffer>(component.first->instance_id, *this, input, output);
-
-  }
-
-}
 traact::buffer::GenericTimeDomainBuffer::~GenericTimeDomainBuffer() {
-  for (int index = 0; index < buffer_data_.size(); ++index) {
-    const std::string &type = types_of_buffer_[index];
-    void *buffer = buffer_data_[index];
-    generic_factory_objects_[type]->deleteObject(buffer);
-  }
+
+
 
 }
 traact::buffer::GenericComponentBuffer &traact::buffer::GenericTimeDomainBuffer::getComponentBuffer(
@@ -136,93 +52,175 @@ const traact::TimestampType &traact::buffer::GenericTimeDomainBuffer::getTimesta
 bool traact::buffer::GenericTimeDomainBuffer::isFree() const {
   return current_wait_count_ == 0;
 }
-void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::TimestampType ts, size_t measurement_index, const std::vector<BufferSource::Ptr>& sources) {
-  SPDLOG_INFO("resetForTimestamp: {0}  MeaIndex: {1}", ts.time_since_epoch().count(), measurement_index);
-  tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
-  current_timestamp_ = ts;
-  source_count_ = 0;
-    is_valid_ = true;
-    source_component_names_.clear();
-    missing_sources_.clear();
-    for(const auto& src : sources){
-        missing_sources_.emplace(src->getComponentName(), src);
-    }
-  current_wait_count_ = maximum_wait_count_;
-  current_measurement_index_ = measurement_index;
+void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::TimestampType ts, size_t measurement_index) {
+  SPDLOG_DEBUG("resetForTimestamp: {0}  MeaIndex: {1}", ts.time_since_epoch().count(), measurement_index);
+    tbb::queuing_mutex::scoped_lock(source_mutex_);
 
+    current_measurement_index_ = measurement_index;
+    current_timestamp_ = ts;
+    current_wait_count_ = maximum_wait_count_;
+    for(int i=0;i<td_buffer_sources_valid_.size();++i){
+        td_buffer_sources_valid_[i] = false;
+        td_buffer_sources_[i] = nullptr;
+        td_buffer_sources_send_[i] = false;
+    }
+    is_used_ = true;
 }
 void traact::buffer::GenericTimeDomainBuffer::decreaseUse() {
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
-  current_wait_count_ -= 1;
+    tbb::queuing_mutex::scoped_lock(source_mutex_);
+  current_wait_count_--;
   if (current_wait_count_ < 0) {
     SPDLOG_ERROR("use count of buffer ts {1} smaller then 0 : {0}", current_wait_count_, current_timestamp_.time_since_epoch().count());
     throw std::runtime_error("use count of buffer smaller then 0");
   }
   if(current_wait_count_ == 0) {
-      timedomain_manager_->releaseBuffer(current_timestamp_);
+      is_used_ = false;
+      timedomain_manager_->ReleaseTimeDomainBuffer(this);
   }
 }
 void traact::buffer::GenericTimeDomainBuffer::increaseUse() {
-  current_wait_count_ += 1;
+    tbb::queuing_mutex::scoped_lock(source_mutex_);
+  current_wait_count_ ++;
 }
 
 int traact::buffer::GenericTimeDomainBuffer::getUseCount() const {
   return current_wait_count_;
 }
-void traact::buffer::GenericTimeDomainBuffer::addBuffer(const std::string &buffer_type) {
-  void *newBuffer;
 
-  //TODO real initialized header
-  newBuffer = generic_factory_objects_[buffer_type]->createObject();
-
-  buffer_data_.emplace_back(newBuffer);
-  buffer_header_.emplace_back(nullptr);
-  types_of_buffer_.emplace_back(buffer_type);
-
-}
 size_t traact::buffer::GenericTimeDomainBuffer::GetCurrentMeasurementIndex() const {
   return current_measurement_index_;
 }
-bool traact::buffer::GenericTimeDomainBuffer::initBuffer(std::string buffer_type, void* header, void* buffer){
-    return generic_factory_objects_[buffer_type]->initObject(header, buffer);
+
+
+bool traact::buffer::GenericTimeDomainBuffer::isSourcesSet()  {
+    tbb::queuing_mutex::scoped_lock(source_mutex_);
+    bool result = true;
+    for(bool is_set : td_buffer_sources_valid_){
+        result = result && is_set;
+    }
+    return result;
 }
 
-void traact::buffer::GenericTimeDomainBuffer::increaseSourceCount(const std::string& component_name) {
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
-    source_count_++;
-    source_component_names_.emplace(component_name);
-    missing_sources_.erase(component_name);
-}
-bool traact::buffer::GenericTimeDomainBuffer::isSourcesSet()  {
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
-    return missing_sources_.empty();
-}
-bool traact::buffer::GenericTimeDomainBuffer::isSourceSet(const std::string& component_name) {
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
-    return missing_sources_.count(component_name) == 0;
-    //return source_component_names_.count(component_name) > 0;
-}
-bool traact::buffer::GenericTimeDomainBuffer::isValid() const {
-    return is_valid_;
+bool traact::buffer::GenericTimeDomainBuffer::isUsed() const {
+    return is_used_;
 }
 void traact::buffer::GenericTimeDomainBuffer::invalidateBuffer() {
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
-    is_valid_ = true;
-    for(const auto& missing_source : missing_sources_) {
-        decreaseUse();
-        missing_source.second->invalidateBuffer(current_timestamp_, this);
-    }
-    missing_sources_.clear();
-}
 
-void traact::buffer::GenericTimeDomainBuffer::cancelSource(const std::string& component_name){
-    tbb::spin_rw_mutex::scoped_lock(source_mutex_, true);
-    const auto& findResult = missing_sources_.find(component_name);
-    if(findResult != missing_sources_.end()){
-        decreaseUse();
-        findResult->second->invalidateBuffer(current_timestamp_, this);
+    for(int index = 0; index < td_buffer_sources_valid_.size();++ index){
+        SetInvalidSourceBuffer(index);
     }
-    missing_sources_.erase(findResult);
 
 
 }
+
+bool traact::buffer::GenericTimeDomainBuffer::SetInvalidSourceBuffer(std::size_t source_buffer) {
+
+    if(!td_buffer_sources_send_[source_buffer]){
+        td_buffer_sources_send_[source_buffer] = true;
+        buffer_sources_[source_buffer]->SendMessage(this, false, MessageType::AbortTs);
+        decreaseUse();
+        return true;
+    }
+
+    return false;
+}
+
+traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(traact::buffer::TimeDomainManager *timedomainManager,
+                                                                 std::vector<BufferSource*> bufferSources,
+                                                                 traact::buffer::GenericTimeDomainBuffer::BufferType bufferData,
+                                                                 traact::buffer::GenericTimeDomainBuffer::BufferType bufferHeader,
+                                                                 const std::map<pattern::instance::ComponentID_PortName, int> &port_to_bufferIndex,
+                                                                 const std::set<pattern::instance::PatternInstance::Ptr> &components)
+                                                                 : timedomain_manager_(timedomainManager),
+                                                                 buffer_sources_(std::move(bufferSources)),
+                                                                 buffer_data_(std::move(bufferData)),
+                                                                 buffer_header_(std::move(bufferHeader)) {
+
+    using namespace traact::pattern::instance;
+
+    for (const auto &dataComp : components) {
+
+        if (!dataComp) {
+            continue;
+        }
+
+        std::vector<size_t> output;
+        output.resize(dataComp->getProducerPorts().size());
+        for (PortInstance::ConstPtr port : dataComp->getProducerPorts()) {
+            output[port->getPortIndex()] = port_to_bufferIndex.at(port->getID());
+        }
+
+        std::vector<size_t> input;
+        input.resize(dataComp->getConsumerPorts().size());
+        for (PortInstance::ConstPtr port : dataComp->getConsumerPorts()) {
+            input[port->getPortIndex()] = port_to_bufferIndex.at(port->getID());
+        }
+
+        component_buffers_[dataComp->instance_id] =
+                std::make_shared<GenericComponentBuffer>(dataComp->instance_id, *this, input, output);
+
+    }
+
+    maximum_wait_count_ = components.size();
+    td_buffer_sources_valid_.resize(buffer_sources_.size(), false);
+    td_buffer_sources_.resize(buffer_sources_.size(), nullptr);
+    td_buffer_sources_send_.resize(buffer_sources_.size(), false);
+    is_used_ = false;
+    is_master_set_ = false;
+
+}
+
+void
+traact::buffer::GenericTimeDomainBuffer::SetSourceBuffer(traact::buffer::GenericSourceTimeDomainBuffer *source_buffer) {
+
+
+    if(!is_used_){
+        spdlog::error("trying to set source buffer for invalid time domain buffer");
+        throw std::runtime_error("trying to set source buffer for invalid time domain buffer");
+        return;
+    }
+
+    const std::size_t source_index = source_buffer->GetSourceTDBufferIndex();
+    MessageType msg_type = source_buffer->GetMessageType();
+    if(td_buffer_sources_valid_[source_index]){
+        spdlog::error("source {0} is already set for buffer idx: {2}", source_index, current_measurement_index_);
+        throw std::runtime_error("trying to set already existing source");
+    }
+    // decreaseUse after all messages are send
+    {
+        tbb::queuing_mutex::scoped_lock(source_mutex_);
+        td_buffer_sources_valid_[source_index] = true;
+        td_buffer_sources_[source_index] = source_buffer;
+        const auto& global_buffer_index = source_buffer->GetGlobalBufferIndex();
+        void** data = source_buffer->GetBufferData();
+
+        for(int index = 0; index < global_buffer_index.size();++ index){
+            buffer_data_[global_buffer_index[index]] = data[index];
+        }
+
+        if(source_buffer->IsMaster()){
+            is_master_set_ = true;
+        }
+
+        td_buffer_sources_send_[source_index] = true;
+        buffer_sources_[source_index]->SendMessage(this, true, msg_type);
+
+    }
+
+    decreaseUse();
+
+}
+
+
+
+
+
+
+
+
+const std::vector<traact::buffer::GenericSourceTimeDomainBuffer *> &
+traact::buffer::GenericTimeDomainBuffer::GetSourceTimeDomainBuffer() const {
+    return td_buffer_sources_;
+}
+
+

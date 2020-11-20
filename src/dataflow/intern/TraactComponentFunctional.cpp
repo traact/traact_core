@@ -64,6 +64,9 @@ bool TraactComponentFunctional::init() {
 
   }
 
+    broadcast_node_ = new broadcast_node<TraactMessage>(this->network_graph_->getTBBGraph());
+    make_edge(*node_, *broadcast_node_);
+
   return true;
 }
 
@@ -78,7 +81,7 @@ bool TraactComponentFunctional::teardown() {
 }
 
 TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
-    SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
+    SPDLOG_DEBUG("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
   TraactMessage result = in;
 
     DefaultComponentBuffer &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
@@ -87,7 +90,7 @@ TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
     switch (in.message_type) {
         case MessageType::Parameter:{
 
-            init_component(component_buffer);
+            init_component(nullptr);
             break;
         }
 
@@ -105,7 +108,8 @@ TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
             break;
         }
         case MessageType::AbortTs:{
-            SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), "abort");
+            SPDLOG_TRACE("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), "abort");
+            component_base_->invalidTimePoint(in.timestamp, in.domain_measurement_index);
             break;
         }
 
@@ -155,7 +159,8 @@ tbb::flow::receiver<TraactMessage> &TraactComponentFunctional::getReceiver(int i
 tbb::flow::sender<TraactMessage> &TraactComponentFunctional::getSender(int index) {
   if (index != 0)
     throw std::invalid_argument("sender index of traact component functional must be 0");
-  return *node_;
+  //return *node_;
+  return *broadcast_node_;
 }
 
     component::ComponentType TraactComponentFunctional::getComponentType(){

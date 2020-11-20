@@ -28,38 +28,40 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <iostream>
+#include "Logging.h"
 
-#include <traact/util/Logging.h>
-#include "traact/pattern/instance/PortInstance.h"
-#include "traact/pattern/instance/PatternInstance.h"
-#include <traact/pattern/instance/GraphInstance.h>
-traact::pattern::instance::PortInstance::PortInstance(traact::pattern::Port port,
-                                                      traact::pattern::instance::PatternInstance *pattern_instance)
-    : port(port), pattern_instance(pattern_instance) {
-
+void traact::util::setup_logger(std::shared_ptr<spdlog::logger> logger) {
+    spdlog::set_default_logger(logger);
 }
 
-traact::pattern::instance::PortInstance::PortInstance() : port(), pattern_instance(nullptr) {
+void
+traact::util::init_logging(spdlog::level::level_enum log_level, bool use_file_sink, std::string file) {
+    try {
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        console_sink->set_level(spdlog::level::trace);
+        console_sink->set_pattern("[%^%l%$] %v");
 
-}
+        std::shared_ptr<spdlog::logger> logger;
+        if(use_file_sink){
+            auto filesink = std::make_shared<spdlog::sinks::basic_file_sink_mt >(file);
+            spdlog::sinks_init_list sinks{filesink, console_sink};
+            logger = std::make_shared<spdlog::logger>("console", sinks);
+        } else {
+            spdlog::sinks_init_list sinks{console_sink};
+            logger = std::make_shared<spdlog::logger>("console", sinks);
+        }
 
-traact::pattern::instance::ComponentID_PortName traact::pattern::instance::PortInstance::getID() const {
-  return std::make_pair(pattern_instance->instance_id, getName());
-}
 
-const std::string &traact::pattern::instance::PortInstance::getName() const {
-  return port.name;
-}
-const std::string &traact::pattern::instance::PortInstance::getDataType() const {
-  return port.datatype;
-}
-int traact::pattern::instance::PortInstance::getPortIndex() const {
-  return port.port_index;
-}
-std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::instance::PortInstance::connectedToPtr() const {
-  return pattern_instance->parent_graph->connectedToPtr(getID());
-}
 
-bool traact::pattern::instance::PortInstance::IsConnected() const {
-    return !connectedToPtr().empty();
+
+        spdlog::set_default_logger(logger);
+        setup_logger(logger);
+
+    }
+    catch (const spdlog::spdlog_ex &ex) {
+        std::cout << "Log initialization failed: " << ex.what() << std::endl;
+    }
 }

@@ -92,13 +92,13 @@ bool TraactComponentSink::teardown() {
 }
 
 void TraactComponentSink::operator()(const TraactMessage &in) {
-    SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
+    SPDLOG_DEBUG("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
 
     DefaultComponentBuffer
             &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
     switch (in.message_type) {
         case MessageType::Parameter: {
-            init_component(component_buffer);
+            init_component(nullptr);
             break;
         }
             //case MessageType::Parameter:
@@ -112,6 +112,7 @@ void TraactComponentSink::operator()(const TraactMessage &in) {
         }
         case MessageType::AbortTs:{
             spdlog::warn("abort ts message: component {0}", component_base_->getName());
+            component_base_->invalidTimePoint(in.timestamp, in.domain_measurement_index);
             break;
         }
         case MessageType::Invalid:

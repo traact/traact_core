@@ -31,6 +31,7 @@
 
 #include <traact/component/Component.h>
 
+
 namespace traact::component {
 
 
@@ -48,7 +49,7 @@ Component::Component(std::string name, const ComponentType traact_component_type
   }
 
 
-  bool Component::configure(const nlohmann::json &parameter, buffer::GenericComponentBuffer &data) {
+  bool Component::configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) {
     return true;
   }
 
@@ -74,14 +75,9 @@ Component::Component(std::string name, const ComponentType traact_component_type
     request_callback_ = request_callback;
   }
 
-  void Component::setAcquireCallback(const AcquireCallbackType &acquire_callback) {
-    acquire_callback_ = acquire_callback;
-  }
+    void Component::invalidTimePoint(TimestampType ts, std::size_t mea_idx) {
 
-
-  void Component::setCommitCallback(const CommitCallbackType &commit_callback) {
-    commit_callback_ = commit_callback;
-  }
+    }
 
 
 }

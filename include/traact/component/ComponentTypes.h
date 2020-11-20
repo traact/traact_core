@@ -63,16 +63,6 @@ enum class TRAACT_CORE_EXPORT ComponentType {
    */
   //SyncSource,
   /**
-   * synchronous data sink component. use this for any component that provides data to programs outside of traact.
-   * e.g. Redering of camera images and poses
-   * Use:
-   * Dataflow network calls: processTimePoint(Buffer& buffer)
-   *
-   * The buffer and its reuse is blocked by the call to processTimePoint. The function should return as fast as possible.
-   * Output will be reworked
-   */
-  SyncSink,
-  /**
    * standard use case for a traact component.
    * Define inputs and outputs to process input data and generate output data.
    * e.g. marker tracker, feature extractor, image conversion, tranformation if poses
@@ -90,8 +80,17 @@ enum class TRAACT_CORE_EXPORT ComponentType {
    * Dataflow network calls: processTimePoint(Buffer& buffer)
    */
   AsyncFunctional,
-  AsyncSink, //problem images: copy output? otherwise buffer can not be reused. might be a good idea if ringbuffer is big enough. detach buffer elements?
-  BufferedAsyncSink, // Buffer 1 timestamp (hold buffer until user retrieves), notify user of new data, have function to aquire buffer. use AsyncSource interface?
+    /**
+       * synchronous data sink component. use this for any component that provides data to programs outside of traact.
+       * e.g. Redering of camera images and poses
+       * Use:
+       * Dataflow network calls: processTimePoint(Buffer& buffer)
+       *
+       * The buffer and its reuse is blocked by the call to processTimePoint. The function should return as fast as possible.
+       * Output will be reworked
+       */
+    SyncSink,
+  //AsyncSink, // Idea would be to share the buffer with the external program until it is finished. realized by borrowBuffer in SyncSink, not needed anymroe
 
 };
 

@@ -29,37 +29,17 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <traact/util/Logging.h>
-#include "traact/pattern/instance/PortInstance.h"
-#include "traact/pattern/instance/PatternInstance.h"
-#include <traact/pattern/instance/GraphInstance.h>
-traact::pattern::instance::PortInstance::PortInstance(traact::pattern::Port port,
-                                                      traact::pattern::instance::PatternInstance *pattern_instance)
-    : port(port), pattern_instance(pattern_instance) {
+#ifndef TRAACTMULTI_LOGGING_H
+#define TRAACTMULTI_LOGGING_H
+
+#define SPDLOG_ACTIVE_LEVEL 0
+#include <spdlog/spdlog.h>
+
+#include <traact/traact_core_export.h>
+namespace traact::util {
+    void TRAACT_CORE_EXPORT init_logging(spdlog::level::level_enum log_level, bool use_file_sink, std::string file);
+    void TRAACT_CORE_EXPORT setup_logger(std::shared_ptr<spdlog::logger> logger);
 
 }
 
-traact::pattern::instance::PortInstance::PortInstance() : port(), pattern_instance(nullptr) {
-
-}
-
-traact::pattern::instance::ComponentID_PortName traact::pattern::instance::PortInstance::getID() const {
-  return std::make_pair(pattern_instance->instance_id, getName());
-}
-
-const std::string &traact::pattern::instance::PortInstance::getName() const {
-  return port.name;
-}
-const std::string &traact::pattern::instance::PortInstance::getDataType() const {
-  return port.datatype;
-}
-int traact::pattern::instance::PortInstance::getPortIndex() const {
-  return port.port_index;
-}
-std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::instance::PortInstance::connectedToPtr() const {
-  return pattern_instance->parent_graph->connectedToPtr(getID());
-}
-
-bool traact::pattern::instance::PortInstance::IsConnected() const {
-    return !connectedToPtr().empty();
-}
+#endif //TRAACTMULTI_LOGGING_H

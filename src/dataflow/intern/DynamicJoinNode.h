@@ -70,6 +70,8 @@ class DynamicJoinNode {
         make_edge(*join_p, *func_p);
         break;
       }
+        default:
+            throw std::invalid_argument("unsupported number of senders used");
     }
   }
   virtual ~DynamicJoinNode() {
@@ -116,7 +118,8 @@ class DynamicJoinNode {
                                       TraactMessage> * >(function_node_);
         return *tmp;
       }
-	  default:throw std::invalid_argument("unsupported number of senders used");
+	  default:
+	      throw std::invalid_argument("unsupported number of senders used");
     }
 
   }

@@ -63,6 +63,7 @@ class TraactComponentFunctional : public TraactComponentBase {
 
  protected:
   tbb::flow::function_node<TraactMessage, TraactMessage> *node_;
+  tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
   DynamicJoinNode *join_node_;
 
 };

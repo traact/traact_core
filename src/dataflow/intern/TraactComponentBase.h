@@ -75,9 +75,9 @@ class TraactComponentBase {
 
   virtual void connect() = 0;
 
-  bool init_component(DefaultComponentBuffer &component_buffer) {
+  bool init_component(buffer::GenericComponentBufferConfig* buffer_config) {
       SPDLOG_DEBUG("init component");
-      return component_base_->configure(pattern_base_->pattern_pointer.parameter, component_buffer);
+      return component_base_->configure(pattern_base_->pattern_pointer.parameter, buffer_config);
   }
 
   virtual bool start() {
