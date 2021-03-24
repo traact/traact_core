@@ -62,9 +62,8 @@ class TRAACT_CORE_EXPORT Component {
   typedef typename std::shared_ptr<Component> Ptr;
 
   // used by source components
-  typedef typename std::function<buffer::GenericSourceTimeDomainBuffer* (TimestampType)> RequestCallbackType;
-  // used by producing and consuming functional components and sink components
-  //typedef typename std::function<bool(Buffer &)> ProcessCallbackType;
+  typedef typename std::function<buffer::GenericSourceTimeDomainBuffer* (TimestampType)> RequestCallback;
+
 
   Component(std::string name, const ComponentType traact_component_type);
 
@@ -108,9 +107,9 @@ class TRAACT_CORE_EXPORT Component {
   virtual bool start();
 
   /**
-   * Request for component to stop operating.
+   * Request for component to Stop operating.
    * Can be started again with by another call to Start()
-   * @return false if component can't stop
+   * @return false if component can't Stop
    */
   virtual bool stop();
   /**
@@ -146,7 +145,7 @@ class TRAACT_CORE_EXPORT Component {
    *
    * @param commit_callback set by dataflow network
    */
-  void setRequestCallback(const RequestCallbackType &request_callback);
+  void setRequestCallback(const RequestCallback &request_callback);
 
   virtual void invalidTimePoint(TimestampType ts, std::size_t mea_idx);
 
@@ -159,7 +158,7 @@ class TRAACT_CORE_EXPORT Component {
   const ComponentType traact_component_type_;
 
   // used by source components
-  RequestCallbackType request_callback_;
+  RequestCallback request_callback_;
 };
 }
 

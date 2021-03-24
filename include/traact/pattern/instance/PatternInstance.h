@@ -42,7 +42,7 @@ class TRAACT_CORE_EXPORT GraphInstance;
 
 class TRAACT_CORE_EXPORT PatternInstance {
  public:
-    PatternInstance(std::string id, bool ismaster, TimeDurationType maxoffset, Pattern pattern_pointer,
+    PatternInstance(std::string id, Pattern pattern_pointer,
                     GraphInstance *graph);
 
     typedef typename std::shared_ptr<PatternInstance> Ptr;
@@ -65,8 +65,6 @@ class TRAACT_CORE_EXPORT PatternInstance {
   std::vector<PortInstance> producer_ports;
   std::vector<PortInstance> consumer_ports;
   int time_domain{0};
-  bool is_master;
-  TimeDurationType max_offset;
 
 
 

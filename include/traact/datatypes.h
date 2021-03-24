@@ -62,9 +62,12 @@ enum class MessageDataMode {
 
 enum class MessageType {
     Invalid = 0,
-    Parameter,
+    Configure,
+    Start,
     Data ,
-    AbortTs
+    Stop,
+    Teardown
+
 };
 
 enum class SourceMode {

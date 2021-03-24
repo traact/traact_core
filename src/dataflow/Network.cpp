@@ -46,7 +46,7 @@ void Network::start() {
   network_graphs_.clear();
 
   for (const ComponentGraphPtr &component_graph : component_graphs_) {
-    auto newGraph = std::make_shared<intern::NetworkGraph>(component_graph, 0, generic_factory_objects_);
+    auto newGraph = std::make_shared<intern::NetworkGraph>(component_graph, generic_factory_objects_);
     network_graphs_.emplace(newGraph);
   }
 

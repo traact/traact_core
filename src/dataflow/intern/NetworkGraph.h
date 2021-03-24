@@ -62,7 +62,6 @@ class NetworkGraph {
   typedef typename pattern::instance::PortInstance::ConstPtr PortPtr;
 
   NetworkGraph(DefaultComponentGraphPtr component_graph,
-               int time_domain,
                std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
   ~NetworkGraph() = default;
 
@@ -76,11 +75,12 @@ class NetworkGraph {
   tbb::flow::sender<TraactMessage> &getSender(PortPtr port);
   tbb::flow::receiver<TraactMessage> &getReceiver(PortPtr port);
 
+    tbb::flow::receiver<TraactMessage> &getSourceReceiver(const std::string& component_name);
+
  private:
 
   DefaultComponentGraphPtr component_graph_;
   std::map<int,DefaultTimeDomainManagerPtr> time_domain_manager_;
-  const int time_domain_;
   tbb::flow::graph graph_;
 
   std::vector<TraactComponentBasePtr> network_components_;

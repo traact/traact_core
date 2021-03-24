@@ -29,55 +29,42 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <traact/component/Component.h>
+#ifndef TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
+#define TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
 
+#include <tbb/flow_graph.h>
 
-namespace traact::component {
+#include "TraactComponentBase.h"
+#include "DynamicJoinNode.h"
 
+namespace traact::dataflow::intern {
 
-Component::Component(std::string name, const ComponentType traact_component_type)
-      : name_(std::move(name)), traact_component_type_(traact_component_type) {
+class TraactComponentSyncSink : public TraactComponentBase {
+ public:
 
-  }
+  TraactComponentSyncSink(DefaultPatternPtr pattern_base,
+                          DefaultComponentPtr component_base,
+                          DefaultTimeDomainManagerPtr buffer_manager,
+                          NetworkGraph *network_graph);
 
-  const std::string &Component::getName() const {
-    return name_;
-  }
+  bool init() override;
+  bool teardown() override;
 
-  const ComponentType &Component::getComponentType() const {
-    return traact_component_type_;
-  }
+  void operator()(const TraactMessage &in);
+  void connect() override;
+  void disconnect() override;
+  component::ComponentType getComponentType() override;
 
+  tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
 
-  bool Component::configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) {
-    return true;
-  }
+ protected:
 
-  bool Component::start() {
-    return true;
-  }
+  tbb::flow::function_node<TraactMessage> *node_;
+  DynamicJoinNode *join_node_;
+  tbb::flow::sequencer_node<TraactMessage> *sequencer_node_;
 
-  bool Component::stop() {
-    return true;
-  }
-
-  bool Component::teardown() {
-    return true;
-  }
-
-
-  bool Component::processTimePoint(buffer::GenericComponentBuffer &data) {
-    return true;
-  }
-
-
-  void Component::setRequestCallback(const RequestCallback &request_callback) {
-      request_callback_ = request_callback;
-  }
-
-    void Component::invalidTimePoint(TimestampType ts, std::size_t mea_idx) {
-
-    }
-
+};
 
 }
+
+#endif //TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_

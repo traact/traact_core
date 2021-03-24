@@ -81,35 +81,40 @@ bool TraactComponentFunctional::teardown() {
 }
 
 TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
-    SPDLOG_DEBUG("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
+
   TraactMessage result = in;
 
     DefaultComponentBuffer &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
 
+    SPDLOG_DEBUG("Component {0}; ts {1}; {2}",component_base_->getName(),component_buffer.getTimestamp().time_since_epoch().count(), in.toString());
 
     switch (in.message_type) {
-        case MessageType::Parameter:{
-
-            init_component(nullptr);
+        case MessageType::Configure:{
+            component_base_->configure(pattern_base_->pattern_pointer.parameter, nullptr);
             break;
         }
-
-
-
+        case MessageType::Start:{
+            component_base_->start();
+            break;
+        }
+        case MessageType::Stop:{
+            component_base_->stop();
+            break;
+        }
+        case MessageType::Teardown:{
+            component_base_->teardown();
+            break;
+        }
 
         case MessageType::Data: {
-            //SPDLOG_TRACE("data");
-            if(in.valid) {
-                result.valid = component_base_->processTimePoint(component_buffer);
+            if(in.valid_data) {
+                spdlog::trace("input for component valid, processing: {0}; MeaIndex: {1}", component_base_->getName(), in.event_idx);
+                result.valid_data = component_base_->processTimePoint(component_buffer);
             } else {
-                spdlog::trace("input for component not valid, skip processing: {0}", component_base_->getName());
+                spdlog::trace("input for component not valid, skip processing: {0}; MeaIndex: {1}", component_base_->getName(), in.event_idx);
+                component_base_->invalidTimePoint(component_buffer.getTimestamp(), in.event_idx);
             }
 
-            break;
-        }
-        case MessageType::AbortTs:{
-            SPDLOG_TRACE("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), "abort");
-            component_base_->invalidTimePoint(in.timestamp, in.domain_measurement_index);
             break;
         }
 
@@ -117,7 +122,7 @@ TraactMessage TraactComponentFunctional::operator()(const TraactMessage &in) {
         case MessageType::Invalid:
         default:
         {
-            SPDLOG_ERROR("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), "invalid message");
+            SPDLOG_ERROR("Component {0}; idx {1}; {2}",component_base_->getName(),in.event_idx, "invalid message");
             break;
         }
 
@@ -157,9 +162,6 @@ tbb::flow::receiver<TraactMessage> &TraactComponentFunctional::getReceiver(int i
   }
 }
 tbb::flow::sender<TraactMessage> &TraactComponentFunctional::getSender(int index) {
-  if (index != 0)
-    throw std::invalid_argument("sender index of traact component functional must be 0");
-  //return *node_;
   return *broadcast_node_;
 }
 

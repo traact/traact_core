@@ -35,7 +35,7 @@
 #include <traact/datatypes.h>
 
 namespace traact::buffer {
-    class TRAACT_CORE_EXPORT GenericTimeDomainBuffer;
+    class GenericTimeDomainBuffer;
 }
 
 namespace traact {
@@ -43,22 +43,36 @@ namespace traact {
 
     struct TraactMessage {
             MessageType message_type = MessageType::Invalid;
-            TimestampType timestamp = TimestampType::min();
-            //std::shared_ptr<buffer::GenericTimeDomainBuffer> domain_buffer = nullptr;
+            std::size_t event_idx = 0;
             buffer::GenericTimeDomainBuffer* domain_buffer = nullptr;
-            bool valid = false;
-            std::size_t domain_measurement_index = 0;
+            bool valid_data = false;
 
 
 
             uint64_t key() const {
-                //return timestamp.time_since_epoch().count();
-                return domain_measurement_index;
+                return event_idx;
+            }
+
+            inline void merge(const TraactMessage& msg){
+                __TBB_ASSERT(event_idx == msg.event_idx, "event index of sync input differ");
+                __TBB_ASSERT(domain_buffer == msg.domain_buffer, "domain_buffer of sync input differ");
+
+                valid_data = valid_data && msg.valid_data;
+
+                switch (msg.message_type) {
+                    case MessageType::Invalid: {
+                        message_type = MessageType::Invalid;
+                        break;
+                    }
+                    default:
+                        break;
+
+                }
             }
 
             std::string toString() const {
                 std::stringstream ss;
-                ss << "TraactMessage TS: " << timestamp.time_since_epoch().count() << " MeaIndex: " << domain_measurement_index << " valid: " << valid << " message type: " << static_cast<int>(message_type) << std::endl;
+                ss << "TraactMessage MeaIndex: " << event_idx << " message type: " << static_cast<int>(message_type) << std::endl;
                 return ss.str();
             }
     };

@@ -43,16 +43,12 @@
 #include <traact/util/Logging.h>
 #include <thread>
 #include <traact/traact_core_export.h>
-#include <tbb/concurrent_unordered_map.h>
-#include <tbb/queuing_rw_mutex.h>
-#include <tbb/spin_rw_mutex.h>
-#include <tbb/recursive_mutex.h>
-#include <traact/util/Semaphore.h>
+#include <tbb/flow_graph.h>
 #include <list>
 #include "GenericSourceTimeDomainBuffer.h"
 
 namespace traact::component {
-class TRAACT_CORE_EXPORT ComponentGraph;
+class ComponentGraph;
 }
 
 namespace traact::buffer {
@@ -67,7 +63,6 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
 
   typedef typename component::ComponentGraph ComponentGraph;
   typedef typename component::ComponentGraph::Ptr ComponentGraphPtr;
-  typedef typename std::shared_ptr<GenericTimeDomainBuffer> TimeDomainBufferPtr;
 
 
   TimeDomainManager(TimeDomainManagerConfig config,
@@ -77,30 +72,37 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
 
     void RegisterBufferSource(BufferSource::Ptr buffer_source);
 
-  GenericSourceTimeDomainBuffer* RequestBuffer(const TimestampType ts, const std::string &component_name);
-  
-  void ReleaseTimeDomainBuffer(GenericTimeDomainBuffer* td_buffer);
+  //GenericSourceTimeDomainBuffer* RequestBuffer(const TimestampType ts, const std::string &component_name);
+  //bool CommitSourceBuffer(GenericSourceTimeDomainBuffer *buffer, bool valid);
+  //void ReleaseTimeDomainBuffer(GenericTimeDomainBuffer* td_buffer);
 
-  bool CommitSourceBuffer(GenericSourceTimeDomainBuffer* buffer);
-
-
-  void init(const ComponentGraphPtr &component_graph);
-  void stop();
-  SourceMode getSourceMode() const;
+    virtual void Init(const ComponentGraphPtr &component_graph);
 
 
- private:
+    virtual GenericSourceTimeDomainBuffer *RequestSourceBuffer(const TimestampType ts, const std::string &component_name) = 0;
 
-    //typedef tbb::queuing_rw_mutex TD_Lock;
-    bool initialized_{false};
-    typedef tbb::recursive_mutex TD_Lock;
+    virtual bool CommitSourceBuffer(GenericSourceTimeDomainBuffer *buffer, bool valid) =0 ;
+
+    virtual void ReleaseTimeDomainBuffer(GenericTimeDomainBuffer *td_buffer) = 0;
+
+
+
+
+    virtual void Configure() = 0;
+    virtual void Start() = 0;
+    virtual void Stop() = 0;
+    virtual void Teardown() = 0;
+
+  SourceMode GetSourceMode() const;
+
+
+    void SetOutputHeader(std::size_t buffer_index, void *header);
+
+protected:
+
 
     TimeDomainManagerConfig config_;
 
-
-
-    std::atomic<std::size_t> current_mea_idx;
-    std::atomic<std::size_t> next_mea_idx_;
     std::map<std::string, buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
 
     ComponentGraphPtr component_graph_;
@@ -109,45 +111,16 @@ class TRAACT_CORE_EXPORT TimeDomainManager {
     std::vector<BufferSource*> buffer_sources_;
     std::map<std::string, size_t> name_to_buffer_source_;
 
-
-    std::map<std::size_t, GenericTimeDomainBuffer*> td_ringbuffer_;
     std::vector<GenericTimeDomainBuffer*> td_ringbuffer_list_;
-    GenericTimeDomainBuffer* configure_message_td_buffer_;
-    std::shared_ptr<Semaphore> td_ringbuffer_lock_;
 
-
-    std::vector<GenericSourceTimeDomainBuffer*> all_source_buffer_;
-    std::vector<tbb::concurrent_queue<GenericSourceTimeDomainBuffer*> > free_source_buffer_;
-    std::vector< std::shared_ptr<Semaphore> > free_source_buffer_lock_;
-    //std::vector<tbb::concurrent_queue<GenericSourceTimeDomainBuffer*> > unassigned_source_buffer_;
-    std::vector<std::list<GenericSourceTimeDomainBuffer*> > unassigned_source_buffer_;
-    TD_Lock buffer_mutex_;
-
+    std::vector<std::vector<GenericSourceTimeDomainBuffer*> > all_source_buffer_;
 
     std::vector<std::string> buffer_datatype_;
-    // buffer_data[buffer_size_index][buffer_index]
     std::vector<std::vector<void*> > buffer_data_;
     std::vector<std::vector<void*> > buffer_header_;
     std::map<pattern::instance::ComponentID_PortName, int> port_to_bufferIndex_;
 
 
-    bool IsTimestampMatch(TimestampType master, TimestampType subordiante);
-    bool IsAfterTimestamp(TimestampType master, TimestampType subordinate);
-
-    bool GetMeaIdx(TimestampType ts, std::size_t &meaIdx);
-    std::size_t GetMaxMeaIdx();
-    //int GetTDBufferIdx(std::size_t meaIdx);
-    TimestampType  GetMeaIdxTs(std::size_t meaIdx);
-    void AdvanceBuffers();
-
-    bool index_calc_init_{false};
-    WaitForInit wait_for_index_index_lock;
-    std::size_t meaIdx_offset_{0};
-    TimestampType first_master_ts_{std::chrono::nanoseconds (0)};
-    std::vector<TimestampType> latest_ts_;
-
-    bool InternalCommitBuffer(GenericSourceTimeDomainBuffer *buffer);
-    void InvalidateOlderTD(std::size_t mea_idx, std::size_t source_idx);
 
 
 };

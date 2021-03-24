@@ -33,9 +33,9 @@
 #include <traact/util/Utils.h>
 
 
-traact::pattern::instance::PatternInstance::PatternInstance(std::string id, bool ismaster, traact::TimeDurationType maxoffset,
+traact::pattern::instance::PatternInstance::PatternInstance(std::string id,
                                                             traact::pattern::Pattern pattern_pointer, traact::pattern::instance::GraphInstance *graph)
-    : pattern_pointer(std::move(pattern_pointer)), instance_id(std::move(id)), parent_graph(graph), is_master(ismaster), max_offset(maxoffset)
+    : pattern_pointer(std::move(pattern_pointer)), instance_id(std::move(id)), parent_graph(graph)
     {
   for (const auto &consumer_port : pattern_pointer.consumer_ports) {
     PortInstance newPort(consumer_port, this);

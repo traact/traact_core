@@ -35,6 +35,7 @@
 #include <tbb/flow_graph.h>
 #include <traact/datatypes.h>
 #include <tuple>
+#include "TraactDataflowMessage.h"
 
 namespace traact::dataflow::intern {
 
@@ -70,6 +71,19 @@ class DynamicJoinNode {
         make_edge(*join_p, *func_p);
         break;
       }
+        case 4: {
+            auto join_p =
+                    new join_node<std::tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage>, key_matching<uint64_t> >(graph);
+            join_node_ = join_p;
+            auto func_p = new function_node<tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage>, TraactMessage>(graph,
+                                                                                                               unlimited,
+                                                                                                               std::bind(&DynamicJoinNode::join4,
+                                                                                                                         this,
+                                                                                                                         std::placeholders::_1));
+            function_node_ = func_p;
+            make_edge(*join_p, *func_p);
+            break;
+        }
         default:
             throw std::invalid_argument("unsupported number of senders used");
     }
@@ -98,6 +112,17 @@ class DynamicJoinNode {
         delete tmp2;
         break;
       }
+        case 4: {
+            auto *tmp =
+                    static_cast<join_node<std::tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage>,
+                            key_matching<uint64_t> > * >(join_node_);
+            delete tmp;
+            auto *tmp2 =
+                    static_cast<function_node<tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage>,
+                            TraactMessage> * >(function_node_);
+            delete tmp2;
+            break;
+        }
       default:break;
 
     }
@@ -118,6 +143,12 @@ class DynamicJoinNode {
                                       TraactMessage> * >(function_node_);
         return *tmp;
       }
+      case 4: {
+            auto *tmp =
+                    static_cast<function_node<std::tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage>,
+                            TraactMessage> * >(function_node_);
+            return *tmp;
+        }
 	  default:
 	      throw std::invalid_argument("unsupported number of senders used");
     }
@@ -167,37 +198,65 @@ class DynamicJoinNode {
           }
           default:throw std::invalid_argument("unsupported index for receiver of dynamic join node");
         }
-
       }
+        case 4: {
+            switch (index) {
+                case 0: {
+                    auto *tmp =
+                            static_cast<join_node<std::tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage>,
+                                    key_matching<uint64_t> > * >(join_node_);
+                    return input_port<0>(*tmp);
+                }
+                case 1: {
+                    auto *tmp =
+                            static_cast<join_node<std::tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage>,
+                                    key_matching<uint64_t> > * >(join_node_);
+                    return input_port<1>(*tmp);
+                }
+                case 2: {
+                    auto *tmp =
+                            static_cast<join_node<std::tuple<TraactMessage, TraactMessage, TraactMessage,TraactMessage>,
+                                    key_matching<uint64_t> > * >(join_node_);
+                    return input_port<2>(*tmp);
+                }
+                case 3: {
+                    auto *tmp =
+                            static_cast<join_node<std::tuple<TraactMessage, TraactMessage, TraactMessage,TraactMessage>,
+                                    key_matching<uint64_t> > * >(join_node_);
+                    return input_port<3>(*tmp);
+                }
+                default:throw std::invalid_argument("unsupported index for receiver of dynamic join node");
+            }
+        }
       default:throw std::invalid_argument("unsupported numver of inputs for dynamic join node");
     }
 
   }
 
   TraactMessage join2(const std::tuple<TraactMessage, TraactMessage> &in) {
-    __TBB_ASSERT(std::get<0>(in).timestamp == std::get<1>(in).timestamp, "timestamps of sync input differ");
-    TraactMessage result= std::get<0>(in);
-    result.valid = std::get<0>(in).valid && std::get<1>(in).valid;
 
-    if(std::get<0>(in).message_type == MessageType::Invalid || std::get<1>(in).message_type == MessageType::Invalid )
-        result.message_type = MessageType::Invalid;
-    if(std::get<0>(in).message_type == MessageType::AbortTs || std::get<1>(in).message_type == MessageType::AbortTs )
-      result.message_type = MessageType::AbortTs;
+    TraactMessage result= std::get<0>(in);
+
+    result.merge(std::get<1>(in));
+
 
 
     return result;
   }
   TraactMessage join3(const std::tuple<TraactMessage, TraactMessage, TraactMessage> &in) {
     TraactMessage result = std::get<0>(in);
-    result.valid = std::get<0>(in).valid && std::get<1>(in).valid && std::get<2>(in).valid;
-      if(std::get<0>(in).message_type == MessageType::Invalid || std::get<1>(in).message_type == MessageType::Invalid
-                                                                 || std::get<2>(in).message_type == MessageType::Invalid)
-          result.message_type = MessageType::Invalid;
-      if(std::get<0>(in).message_type == MessageType::AbortTs || std::get<1>(in).message_type == MessageType::AbortTs
-                                                                 || std::get<2>(in).message_type == MessageType::AbortTs)
-          result.message_type = MessageType::AbortTs;
+      result.merge(std::get<1>(in));
+      result.merge(std::get<2>(in));
+
     return result;
   }
+    TraactMessage join4(const std::tuple<TraactMessage, TraactMessage, TraactMessage, TraactMessage> &in) {
+        TraactMessage result = std::get<0>(in);
+        result.merge(std::get<1>(in));
+        result.merge(std::get<2>(in));
+        result.merge(std::get<3>(in));
+        return result;
+    }
  private:
   void *join_node_;
   void *function_node_;

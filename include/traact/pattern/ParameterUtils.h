@@ -43,23 +43,27 @@ namespace traact::pattern {
 void TRAACT_CORE_EXPORT setBoolValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, bool& paramter_out, bool default_value );
 
 template<typename ParaType, typename DefaultValueType>
-void setValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, ParaType& paramter_out, DefaultValueType default_value ) {
+bool setValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, ParaType& paramter_out, DefaultValueType default_value ) {
   if(!parameter.contains(parameter_name)) {
     SPDLOG_WARN("Missing parameter: {0}, using default value: {1}",parameter_name, default_value);
     paramter_out = default_value;
+    return false;
   } else {
     paramter_out = parameter[parameter_name]["value"];
   }
+    return true;
 }
 
 template<typename ParaType, typename DefaultValueType>
-void setValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, ParaType& paramter_out, DefaultValueType default_value, const std::map<std::string, ParaType>& key_value ) {
+bool setValueFromParameter(const nlohmann::json& parameter, std::string parameter_name, ParaType& paramter_out, DefaultValueType default_value, const std::map<std::string, ParaType>& key_value ) {
   if(!parameter.contains(parameter_name)) {
     SPDLOG_WARN("Missing parameter: {0}, using default value: {1}",parameter_name, default_value);
     paramter_out = key_value.at(default_value);
+    return false;
   } else {
     paramter_out = key_value.at(parameter[parameter_name]["value"]);
   }
+    return true;
 }
 
 class TRAACT_CORE_EXPORT CommonParameterEnums {

@@ -41,6 +41,7 @@
 #include "GenericBufferTypeConversion.h"
 #include "BufferSource.h"
 #include "GenericSourceTimeDomainBuffer.h"
+#include <tbb/recursive_mutex.h>
 
 namespace traact::buffer {
 
@@ -57,10 +58,13 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
 
     virtual ~GenericTimeDomainBuffer();
 
+    GenericComponentBufferConfig* getComponentBufferConfig(const std::string &component_name);
   GenericComponentBuffer &getComponentBuffer(const std::string &component_name);
   const TimestampType &getTimestamp() const;
   bool isFree() const;
-  void resetForTimestamp(TimestampType ts, size_t measurement_index);
+
+  void resetForEvent(size_t event_idx);
+
   size_t GetCurrentMeasurementIndex() const;
   void decreaseUse();
   void increaseUse();
@@ -77,8 +81,8 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
     }
 
     template<typename HeaderType>
-    const std::shared_ptr<HeaderType> getInputHeader(size_t index) const {
-        return static_cast<std::shared_ptr<HeaderType> >(buffer_header_.at(index));
+    const HeaderType getInputHeader(size_t index) const {
+        return static_cast<HeaderType >(buffer_header_.at(index));
     }
 
     template<typename ReturnType, typename HeaderType>
@@ -86,17 +90,17 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
         return type_conversion_.asMutable<ReturnType, HeaderType>(buffer_data_.at(index), 0);
     }
 
-    template<typename HeaderType>
-    const void setOutputHeader(size_t index, std::shared_ptr<HeaderType> header) const {
-        //TODO set in td_manager_
-    }
 
-    void SetSourceBuffer(GenericSourceTimeDomainBuffer* source_buffer);
+    const void setOutputHeader(size_t index, void* header);
+
+    void SetSourceBuffer(traact::buffer::GenericSourceTimeDomainBuffer *source_buffer);
     bool SetInvalidSourceBuffer(std::size_t source_buffer);
 
     const std::vector<GenericSourceTimeDomainBuffer*>& GetSourceTimeDomainBuffer() const;
 
  private:
+    //typedef tbb::queuing_mutex LockType;
+    typedef tbb::recursive_mutex LockType;
     TimeDomainManager* timedomain_manager_;
     std::vector<BufferSource*> buffer_sources_;
     std::vector<bool> td_buffer_sources_valid_;
@@ -104,7 +108,7 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
     std::vector<GenericSourceTimeDomainBuffer*> td_buffer_sources_;
     bool is_used_;
     bool is_master_set_;
-    tbb::queuing_mutex source_mutex_;
+    LockType source_mutex_;
 
 
     std::atomic<int> current_wait_count_;
@@ -114,6 +118,7 @@ class TRAACT_CORE_EXPORT GenericTimeDomainBuffer {
     size_t current_measurement_index_;
 
     std::map<std::string, std::shared_ptr<GenericComponentBuffer> > component_buffers_;
+    std::map<std::string, std::shared_ptr<GenericComponentBufferConfig> > component_buffers_config_;
     BufferType buffer_data_;
     BufferType buffer_header_;
     GenericBufferTypeConversion type_conversion_;

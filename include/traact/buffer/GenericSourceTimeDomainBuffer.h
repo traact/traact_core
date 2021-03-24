@@ -51,7 +51,7 @@ namespace traact::buffer {
                                       std::vector<size_t> global_buffer_index);
 
         void Init(traact::TimestampType ts, std::size_t mea_idx);
-        bool Commit();
+        bool Commit(bool valid = true);
 
         template<typename ReturnType, typename HeaderType>
         ReturnType &getOutput(size_t index) {

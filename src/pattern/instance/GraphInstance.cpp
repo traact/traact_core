@@ -37,8 +37,8 @@ traact::pattern::instance::GraphInstance::GraphInstance() : name("Invalid") {
 }
 
 traact::pattern::instance::PatternInstance::Ptr traact::pattern::instance::GraphInstance::addPattern(std::string pattern_id,
-                                                                                                     traact::pattern::Pattern::Ptr pattern, bool is_master, TimeDurationType max_suboridnate_offset) {
-  PatternInstance::Ptr newPattern = std::make_shared<PatternInstance>(pattern_id,is_master,max_suboridnate_offset, *pattern, this);
+                                                                                                     traact::pattern::Pattern::Ptr pattern) {
+  PatternInstance::Ptr newPattern = std::make_shared<PatternInstance>(pattern_id, *pattern, this);
   pattern_instances[pattern_id] = newPattern;
   return newPattern;
 }
@@ -73,7 +73,9 @@ bool traact::pattern::instance::GraphInstance::connect(std::string source_compon
                                                        std::string consumer_port) {
 
 
-  //todo check
+  if(!checkSourceAndSink(source_component, producer_port, sink_component, consumer_port))
+      return false;
+
   PortInstance::Ptr source = util::vectorGetForName(pattern_instances[source_component]->producer_ports, producer_port);
   PortInstance::Ptr sink = util::vectorGetForName(pattern_instances[sink_component]->consumer_ports, consumer_port);
 
@@ -104,5 +106,40 @@ std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::ins
   }
 
   return result;
+}
+
+bool
+traact::pattern::instance::GraphInstance::checkSourceAndSink(std::string source_component, std::string producer_port,
+                                                             std::string sink_component, std::string consumer_port) {
+
+    bool result = true;
+
+    auto find_source = pattern_instances.find(source_component);
+    if(find_source == pattern_instances.end()){
+        spdlog::error("Unknown Source {0} when trying to connect {0}:{1} to {2}:{3}", source_component, producer_port, sink_component, consumer_port);
+        result = false;
+    } else {
+        if(!util::vectorContainsName(find_source->second->producer_ports, producer_port)){
+            spdlog::error("Unknown Port {1} in Source {0} when trying to connect {0}:{1} to {2}:{3}", source_component, producer_port, sink_component, consumer_port);
+            result = false;
+        }
+
+    }
+
+    auto find_sink = pattern_instances.find(sink_component);
+    if(find_sink == pattern_instances.end()){
+        spdlog::error("Unknown Sink {2} when trying to connect {0}:{1} to {2}:{3}", source_component, producer_port, sink_component, consumer_port);
+        result = false;
+    } else {
+        if(!util::vectorContainsName(find_sink->second->consumer_ports, consumer_port)){
+            spdlog::error("Unknown Port {3} in Sink {2} when trying to connect {0}:{1} to {2}:{3}", source_component, producer_port, sink_component, consumer_port);
+            result = false;
+        }
+
+    }
+
+
+
+    return result;
 }
 

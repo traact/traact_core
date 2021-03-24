@@ -131,6 +131,36 @@ class WaitForMasterTs {
         bool is_init;
     };
 
+    template <typename T>
+    class WaitForValue {
+
+    public:
+        WaitForValue ()
+                : current_value(std::numeric_limits<T>::min())
+        {
+        }
+
+        inline void notifyAll(const T value) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            current_value = value;
+            cv_.notify_all();
+        }
+
+        inline void wait(const T value) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            while(current_value > value) {
+                //wait on the mutex until notify is called
+                cv_.wait(lock);
+            }
+        }
+
+
+    private:
+        std::mutex mtx_;
+        std::condition_variable cv_;
+        T current_value;
+    };
+
 }
 
 

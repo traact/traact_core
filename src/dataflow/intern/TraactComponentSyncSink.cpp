@@ -28,15 +28,15 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
-#include "TraactComponentSink.h"
+#include "TraactComponentSyncSink.h"
 
 #include <dataflow/intern/NetworkGraph.h>
 
 namespace traact::dataflow::intern {
-TraactComponentSink::TraactComponentSink(DefaultPatternPtr pattern_base,
-                                         DefaultComponentPtr component_base,
-                                         DefaultTimeDomainManagerPtr buffer_manager,
-                                         NetworkGraph *network_graph) : TraactComponentBase(std::move(pattern_base),
+TraactComponentSyncSink::TraactComponentSyncSink(DefaultPatternPtr pattern_base,
+                                                 DefaultComponentPtr component_base,
+                                                 DefaultTimeDomainManagerPtr buffer_manager,
+                                                 NetworkGraph *network_graph) : TraactComponentBase(std::move(pattern_base),
                                                                                             std::move(component_base),
                                                                                             std::move(buffer_manager),
                                                                                             network_graph) {
@@ -45,7 +45,7 @@ TraactComponentSink::TraactComponentSink(DefaultPatternPtr pattern_base,
   sequencer_node_ = nullptr;
 }
 
-bool TraactComponentSink::init() {
+bool TraactComponentSyncSink::init() {
   using namespace tbb::flow;
 
   TraactComponentBase::init();
@@ -63,7 +63,7 @@ bool TraactComponentSink::init() {
   if (pattern_base_->getConcurrency() != unlimited) {
     sequencer_node_ =
         new sequencer_node<TraactMessage>(network_graph_->getTBBGraph(), [](const TraactMessage &msg) -> size_t {
-          return msg.domain_measurement_index;
+          return msg.event_idx;
         });
 
     if (count_input > 1) {
@@ -81,7 +81,7 @@ bool TraactComponentSink::init() {
   return true;
 }
 
-bool TraactComponentSink::teardown() {
+bool TraactComponentSyncSink::teardown() {
   TraactComponentBase::teardown();
 
   delete node_;
@@ -91,33 +91,43 @@ bool TraactComponentSink::teardown() {
   return true;
 }
 
-void TraactComponentSink::operator()(const TraactMessage &in) {
-    SPDLOG_DEBUG("Component {0}; ts {1}; {2}",component_base_->getName(),in.timestamp.time_since_epoch().count(), in.toString());
+void TraactComponentSyncSink::operator()(const TraactMessage &in) {
+
 
     DefaultComponentBuffer
             &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
+
+    SPDLOG_DEBUG("Component {0}; ts {1}; {2}",component_base_->getName(),component_buffer.getTimestamp().time_since_epoch().count(), in.toString());
     switch (in.message_type) {
-        case MessageType::Parameter: {
-            init_component(nullptr);
+        case MessageType::Configure:{
+            component_base_->configure(pattern_base_->pattern_pointer.parameter, nullptr);
             break;
         }
-            //case MessageType::Parameter:
+        case MessageType::Start:{
+            component_base_->start();
+            break;
+        }
+        case MessageType::Stop:{
+            component_base_->stop();
+            break;
+        }
+        case MessageType::Teardown:{
+            component_base_->teardown();
+            break;
+        }
+
         case MessageType::Data: {
-            if (in.valid) {
+            if (in.valid_data) {
                 this->component_base_->processTimePoint(component_buffer);
             } else {
-                spdlog::trace("input for component not valid, skip processing: {0}", component_base_->getName());
+                spdlog::warn("input for component not valid, skip processing: {0}; MeaIndex: {1}", component_base_->getName(), in.event_idx);
+                component_base_->invalidTimePoint(component_buffer.getTimestamp(), in.event_idx);
             }
-            break;
-        }
-        case MessageType::AbortTs:{
-            spdlog::warn("abort ts message: component {0}", component_base_->getName());
-            component_base_->invalidTimePoint(in.timestamp, in.domain_measurement_index);
             break;
         }
         case MessageType::Invalid:
         default: {
-            spdlog::error("invalid message: {0}", component_base_->getName());
+            SPDLOG_ERROR("Component {0}; idx {1}; {2}",component_base_->getName(),in.event_idx, "invalid message");
             break;
         }
 
@@ -127,7 +137,7 @@ void TraactComponentSink::operator()(const TraactMessage &in) {
 
 
 }
-void TraactComponentSink::connect() {
+void TraactComponentSyncSink::connect() {
   auto tmp = this->pattern_base_->getConsumerPorts();
 
   for (auto port : tmp) {
@@ -136,11 +146,11 @@ void TraactComponentSink::connect() {
     }
   }
 }
-void TraactComponentSink::disconnect() {
+void TraactComponentSyncSink::disconnect() {
 
 }
 
-tbb::flow::receiver<TraactMessage> &TraactComponentSink::getReceiver(int index) {
+tbb::flow::receiver<TraactMessage> &TraactComponentSyncSink::getReceiver(int index) {
   using namespace tbb::flow;
 
 
@@ -160,7 +170,7 @@ tbb::flow::receiver<TraactMessage> &TraactComponentSink::getReceiver(int index) 
 
 }
 
-    component::ComponentType TraactComponentSink::getComponentType(){
+    component::ComponentType TraactComponentSyncSink::getComponentType(){
     return component::ComponentType::SyncSink;
 }
 }

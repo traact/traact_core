@@ -52,16 +52,14 @@ enum class TRAACT_CORE_EXPORT ComponentType {
   AsyncSource,
   /**
    * synchronous data source component.
-   * Using this component would mean that the dataflow network would request
-   * data for a specific timestamp (like a pull_function( timestamp ) ).
-   * That would greatly hinder the dataflow and should not be used.
-   * Requirements like the pull (e.g. buffer, linear interpolation, kalman filtering with different sync modes)
-   * call are handled through a functional component with one arbitrary input.
+   * Using this component would means that the dataflow network requests
+   * data for a specific timestamp (e.g. buffer, linear interpolation, kalman filtering with different sync modes ).
    * The functional component will be called at the right moment with no valid input and valid output to retrieve the data.
    *
-   * Forcing the network to receive the data with AsyncSource can be done by running the component graph with SourceMode::WaitForBuffer
+   * Use:
+   * Dataflow network calls: processTimePoint(Buffer& buffer)
    */
-  //SyncSource,
+  SyncSource,
   /**
    * standard use case for a traact component.
    * Define inputs and outputs to process input data and generate output data.
@@ -71,6 +69,17 @@ enum class TRAACT_CORE_EXPORT ComponentType {
    * Dataflow network calls: processTimePoint(Buffer& buffer)
    */
   Functional,
+    /**
+       * synchronous data sink component. use this for any component that provides data to programs outside of traact.
+       * e.g. rendering of camera images and poses
+       * Use:
+       * Dataflow network calls: processTimePoint(Buffer& buffer)
+       *
+       * The buffer and its reuse is blocked by the call to processTimePoint. The function should return as fast as possible.
+       */
+    SyncSink,
+    //AsyncSink, // Idea would be to share the buffer with the external program until it is finished. realized by borrowBuffer in SyncSink, not needed anymore
+
   // not implemented yet
   /**
    * Same as Functional but for use cases where the data is not processed in real time (e.g. in a different thread).
@@ -79,18 +88,7 @@ enum class TRAACT_CORE_EXPORT ComponentType {
    * Use:
    * Dataflow network calls: processTimePoint(Buffer& buffer)
    */
-  AsyncFunctional,
-    /**
-       * synchronous data sink component. use this for any component that provides data to programs outside of traact.
-       * e.g. Redering of camera images and poses
-       * Use:
-       * Dataflow network calls: processTimePoint(Buffer& buffer)
-       *
-       * The buffer and its reuse is blocked by the call to processTimePoint. The function should return as fast as possible.
-       * Output will be reworked
-       */
-    SyncSink,
-  //AsyncSink, // Idea would be to share the buffer with the external program until it is finished. realized by borrowBuffer in SyncSink, not needed anymroe
+  //AsyncFunctional
 
 };
 

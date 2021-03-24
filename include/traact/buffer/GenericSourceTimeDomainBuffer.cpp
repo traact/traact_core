@@ -58,8 +58,8 @@ void traact::buffer::GenericSourceTimeDomainBuffer::Init(traact::TimestampType t
     mea_idx_ = mea_idx;
 }
 
-bool traact::buffer::GenericSourceTimeDomainBuffer::Commit() {
-    return td_manager_->CommitSourceBuffer(this);
+bool traact::buffer::GenericSourceTimeDomainBuffer::Commit(bool valid) {
+    return td_manager_->CommitSourceBuffer(this, valid);
 }
 
 size_t traact::buffer::GenericSourceTimeDomainBuffer::GetSourceTDBufferIndex() const {

@@ -86,8 +86,9 @@ std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTim
     for(const auto& pattern : patterns_) {
         switch (pattern.second->getComponentType()) {
             case ComponentType::AsyncSource:
+            case ComponentType::SyncSource:
             case ComponentType::Functional:
-            case ComponentType::AsyncFunctional:
+            //case ComponentType::AsyncFunctional:
             case ComponentType::SyncSink:
             {
                 if(pattern.first->time_domain == time_domain)
@@ -105,25 +106,15 @@ std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTim
     }
   return std::move(result);
 }
-std::set<std::tuple<int, std::string, TimeDurationType> > ComponentGraph::GetTimeDomains() const {
-    std::set<std::tuple<int, std::string, TimeDurationType> > result;
+std::set<int > ComponentGraph::GetTimeDomains() const {
     std::set<int> all_domains;
 
     for(const auto& pattern : patterns_){
         all_domains.emplace(pattern.first->time_domain);
-        if(pattern.first->is_master){
-
-            result.emplace(pattern.first->time_domain, pattern.first->instance_id, pattern.first->max_offset );
-        }
-
     }
 
-    // TODO check that there is exactly one master source for every time domain
-    if(result.size() < all_domains.size()){
-        spdlog::error("not all time domains have a master source");
-    }
 
-  return result;
+  return all_domains;
 }
 
     traact::buffer::TimeDomainManagerConfig ComponentGraph::GetTimeDomainConfig(std::size_t time_domain) const {

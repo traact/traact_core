@@ -69,14 +69,14 @@ class TraactComponentBase {
   virtual ~TraactComponentBase() = default;;
 
   virtual bool init() {
-    //component_base_->init();
+    //component_base_->Init();
     return true;
   }
 
   virtual void connect() = 0;
 
   bool init_component(buffer::GenericComponentBufferConfig* buffer_config) {
-      SPDLOG_DEBUG("init component");
+      SPDLOG_DEBUG("Init component");
       return component_base_->configure(pattern_base_->pattern_pointer.parameter, buffer_config);
   }
 
@@ -106,7 +106,11 @@ class TraactComponentBase {
 
   virtual component::ComponentType getComponentType() = 0;
 
- protected:
+  std::string GetName() const {
+      return component_base_->getName();
+  }
+
+protected:
   DefaultTimeDomainManagerPtr buffer_manager_;
   DefaultComponentPtr component_base_;
   DefaultPatternPtr pattern_base_;

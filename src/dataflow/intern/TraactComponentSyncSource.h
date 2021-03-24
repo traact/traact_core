@@ -29,58 +29,52 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSOURCE_H_
-#define TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSOURCE_H_
+#ifndef TRAACTMULTI_TRAACTCOMPONENTSYNCSOURCE_H
+#define TRAACTMULTI_TRAACTCOMPONENTSYNCSOURCE_H
 
-#include <thread>
+
+
 #include <tbb/flow_graph.h>
 
 #include "TraactComponentBase.h"
+#include "DynamicJoinNode.h"
 
 namespace traact::dataflow::intern {
 
-class TraactComponentSource : public TraactComponentBase, buffer::BufferSource {
- public:
-  TraactComponentSource(DefaultPatternPtr pattern_base,
-                        DefaultComponentPtr component_base,
-                        DefaultTimeDomainManagerPtr buffer_manager,
-                        NetworkGraph *network_graph);
+    class TraactComponentSyncSource : public TraactComponentBase, buffer::BufferSource {
 
+    public:
+        TraactComponentSyncSource(DefaultPatternPtr pattern_base,
+                                  DefaultComponentPtr component_base,
+                                  DefaultTimeDomainManagerPtr buffer_manager,
+                                  NetworkGraph *network_graph);
 
-  bool init() override;
-  bool start() override;
-  bool stop() override;
-  bool teardown() override;
-  component::ComponentType getComponentType() override;
+        bool init() override;
 
-  tbb::flow::sender<TraactMessage> &getSender(int index) override;
+        bool teardown() override;
 
-  void connect() override;
-  void disconnect() override;
+        TraactMessage operator()(const TraactMessage &in);
 
-  int configure_component(TimestampType ts);
+        void connect() override;
 
-    int SendMessage(buffer::GenericTimeDomainBuffer *buffer, bool valid, MessageType msg_type) override;
-    std::string getComponentName() override;
+        void disconnect() override;
 
-    bool isMaster();
+        component::ComponentType getComponentType() override;
 
- protected:
+        tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
 
-  tbb::flow::async_node<TraactMessage, TraactMessage> *node_;
-  tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
+        tbb::flow::sender<TraactMessage> &getSender(int index) override;
 
-  buffer::GenericSourceTimeDomainBuffer* RequestBuffer(TimestampType ts) {
-      auto result =buffer_manager_->RequestBuffer(ts, component_base_->getName());
-      if(result)
-        result->SetMessageType(MessageType::Data);
-    return result;
-  }
+    private:
+        std::string getComponentName() override;
 
+    protected:
+        tbb::flow::function_node<TraactMessage, TraactMessage> *node_;
+        tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
+        DynamicJoinNode *join_node_;
 
-
-};
-
+    };
 }
 
-#endif //TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSOURCE_H_
+
+#endif //TRAACTMULTI_TRAACTCOMPONENTSYNCSOURCE_H

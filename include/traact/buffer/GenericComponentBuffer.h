@@ -42,7 +42,35 @@
 namespace traact::buffer {
 
     class TRAACT_CORE_EXPORT GenericComponentBufferConfig {
+    public:
+        GenericComponentBufferConfig(std::string component_name,
+                                      GenericTimeDomainBuffer &time_domain_buffer,
+                                      std::vector<size_t> input,
+                                      std::vector<size_t> output
+        )
+                : component_name_(std::move(component_name)),
+                  time_domain_buffer_(time_domain_buffer),
+                  input_data_(std::move(input)),
+                  output_data_(std::move(output))
+        {}
 
+        template<typename HeaderType>
+        const std::shared_ptr<HeaderType> GetInputHeader(size_t index) const {
+            return time_domain_buffer_.getInputHeader<HeaderType>(input_data_.at(index));
+        }
+        template<typename HeaderType>
+        const void SetOutputHeader(size_t index, HeaderType header) const {
+            HeaderType* new_header = new HeaderType();
+            *new_header = header;
+            time_domain_buffer_.setOutputHeader(output_data_.at(index), new_header);
+        }
+    private:
+        std::vector<size_t> input_data_;
+        std::vector<size_t> output_data_;
+
+        std::string component_name_;
+
+        GenericTimeDomainBuffer &time_domain_buffer_;
     };
 
     template<typename T>
@@ -50,17 +78,46 @@ namespace traact::buffer {
   public:
      typedef typename std::shared_ptr<BorrowedBuffer<T> > Ptr;
 
-     BorrowedBuffer(const BorrowedBuffer&) = delete;
-     BorrowedBuffer& operator=(BorrowedBuffer const&) = delete;
+     BorrowedBuffer() = delete;
 
-   BorrowedBuffer(GenericTimeDomainBuffer *time_domain_buffer, const T* data) : time_domain_buffer_(time_domain_buffer), data_(data) {
-     time_domain_buffer_->increaseUse();
-   }
-
-   ~BorrowedBuffer() {
-     //SPDLOG_TRACE("destructor, decrease buffer use");
-      time_domain_buffer_->decreaseUse();
+     BorrowedBuffer(GenericTimeDomainBuffer *time_domain_buffer, const T* data) : time_domain_buffer_(time_domain_buffer), data_(data) {
+        time_domain_buffer_->increaseUse();
     }
+
+     BorrowedBuffer(const BorrowedBuffer & obj)
+     {
+         time_domain_buffer_ = obj.time_domain_buffer_;
+         data_ = obj.data_;
+         time_domain_buffer_->increaseUse();
+     }
+
+     ~BorrowedBuffer() {
+         time_domain_buffer_->decreaseUse();
+     }
+
+
+     BorrowedBuffer& operator=(const BorrowedBuffer & obj)
+     {
+         time_domain_buffer_->decreaseUse();
+
+         time_domain_buffer_ = obj.time_domain_buffer_;
+         data_ = obj.data_;
+         time_domain_buffer_->increaseUse();
+     }
+
+     T* operator->() const
+     {
+         return data_;
+     }
+
+     T& operator*() const
+     {
+         return data_;
+     }
+
+
+
+
     const T* GetBuffer() const {
      return data_;
    }
@@ -110,10 +167,10 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
       return time_domain_buffer_.getOutput<ReturnType, HeaderType>(output_data_.at(index));
   }
 
-    template<typename HeaderType>
-    const void setOutputHeader(size_t index, std::shared_ptr<HeaderType> header) const {
-        time_domain_buffer_.setOutputHeader(output_data_.at(index), header);
-    }
+//    template<typename HeaderType>
+//    const void setOutputHeader(size_t index, HeaderType header) const {
+//        time_domain_buffer_.setOutputHeader(output_data_.at(index), &header);
+//    }
 
   const TimestampType &getTimestamp() const {
     return time_domain_buffer_.getTimestamp();
@@ -136,14 +193,18 @@ class TRAACT_CORE_EXPORT GenericComponentBuffer {
         return output_data_.size();
     }
 
- private:
+        size_t GetMeaIdx() {
+            return time_domain_buffer_.GetCurrentMeasurementIndex();
+        }
+
+    private:
   std::vector<size_t> input_data_;
   std::vector<size_t> output_data_;
 
   std::string component_name_;
 
   GenericTimeDomainBuffer &time_domain_buffer_;
-};
+    };
 }
 
 #endif //TRAACT_INCLUDE_TRAACT_BUFFER_GENERIC_GENERICCOMPONENTBUFFER_H_

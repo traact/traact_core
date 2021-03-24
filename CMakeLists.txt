@@ -49,20 +49,20 @@ set(LIB_SOURCES
         src/dataflow/intern/NetworkGraph.h
         src/dataflow/intern/TraactComponentBase.h
         src/dataflow/intern/TraactComponentFunctional.h
-        src/dataflow/intern/TraactComponentSource.h
-        src/dataflow/intern/TraactComponentSink.h
+        src/dataflow/intern/TraactComponentAsyncSource.h
+        src/dataflow/intern/TraactComponentSyncSink.h
         src/pattern/MetaPattern.cpp
         src/buffer/GenericTimeDomainBuffer.cpp
         src/util/PerformanceMonitor.cpp
         src/dataflow/intern/TraactComponentFunctional.cpp
-        src/dataflow/intern/TraactComponentSink.cpp
-        src/dataflow/intern/TraactComponentSource.cpp
+        src/dataflow/intern/TraactComponentSyncSink.cpp
+        src/dataflow/intern/TraactComponentAsyncSource.cpp
         src/dataflow/intern/NetworkGraph.cpp
         src/pattern/instance/PatternInstance.cpp
         src/pattern/instance/PortInstance.cpp
         src/pattern/instance/GraphInstance.cpp
         src/util/Utils.cpp
-        src/dataflow/Network.cpp src/pattern/ParameterUtils.cpp src/component/Component.cpp src/component/ModuleComponent.cpp src/component/ComponentGraph.cpp include/traact/util/Semaphore.h include/traact/buffer/BufferSource.h src/dataflow/intern/TraactDataflowMessage.h include/traact/buffer/GenericSourceTimeDomainBuffer.cpp include/traact/buffer/GenericSourceTimeDomainBuffer.h include/traact/serialization/JsonTimeDomainManagerConfig.h include/traact/util/Logging.h include/traact/util/Logging.cpp)
+        src/dataflow/Network.cpp src/pattern/ParameterUtils.cpp src/component/Component.cpp src/component/ModuleComponent.cpp src/component/ComponentGraph.cpp include/traact/util/Semaphore.h include/traact/buffer/BufferSource.h src/dataflow/intern/TraactDataflowMessage.h include/traact/buffer/GenericSourceTimeDomainBuffer.cpp include/traact/buffer/GenericSourceTimeDomainBuffer.h include/traact/serialization/JsonTimeDomainManagerConfig.h include/traact/util/Logging.h include/traact/util/Logging.cpp include/traact/buffer/TimeDomainMessageBuilder.h src/buffer/TimeDomainMessageBuilder.cpp src/dataflow/intern/TBBTimeDomainManager.cpp src/dataflow/intern/TBBTimeDomainManager.h src/dataflow/intern/SourceMergeNode.h src/dataflow/intern/TraactComponentSyncSource.cpp src/dataflow/intern/TraactComponentSyncSource.h)
 
 
 # conan is required hard, library name, version and description are configured from conan

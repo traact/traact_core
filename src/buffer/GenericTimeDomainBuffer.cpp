@@ -52,35 +52,38 @@ const traact::TimestampType &traact::buffer::GenericTimeDomainBuffer::getTimesta
 bool traact::buffer::GenericTimeDomainBuffer::isFree() const {
   return current_wait_count_ == 0;
 }
-void traact::buffer::GenericTimeDomainBuffer::resetForTimestamp(traact::TimestampType ts, size_t measurement_index) {
-  SPDLOG_DEBUG("resetForTimestamp: {0}  MeaIndex: {1}", ts.time_since_epoch().count(), measurement_index);
-    tbb::queuing_mutex::scoped_lock(source_mutex_);
+void traact::buffer::GenericTimeDomainBuffer::resetForEvent(size_t event_idx) {
 
-    current_measurement_index_ = measurement_index;
-    current_timestamp_ = ts;
+    //LockType::scoped_lock lock(source_mutex_);
+    SPDLOG_TRACE("resetForEvent: before event idx: {0}, now event idx {1}", current_measurement_index_, event_idx);
+
+    current_measurement_index_ = event_idx;
+    //current_timestamp_ = ts;
     current_wait_count_ = maximum_wait_count_;
     for(int i=0;i<td_buffer_sources_valid_.size();++i){
-        td_buffer_sources_valid_[i] = false;
+        //td_buffer_sources_valid_[i] = false;
         td_buffer_sources_[i] = nullptr;
-        td_buffer_sources_send_[i] = false;
+        //td_buffer_sources_send_[i] = false;
     }
     is_used_ = true;
 }
 void traact::buffer::GenericTimeDomainBuffer::decreaseUse() {
-    tbb::queuing_mutex::scoped_lock(source_mutex_);
+    //LockType::scoped_lock lock(source_mutex_);
+    SPDLOG_TRACE("decrease use, count {0}, event idx {1}", current_wait_count_, current_measurement_index_);
   current_wait_count_--;
   if (current_wait_count_ < 0) {
     SPDLOG_ERROR("use count of buffer ts {1} smaller then 0 : {0}", current_wait_count_, current_timestamp_.time_since_epoch().count());
     throw std::runtime_error("use count of buffer smaller then 0");
   }
   if(current_wait_count_ == 0) {
+      SPDLOG_TRACE("release time domain buffer: event idx {0}", current_measurement_index_);
       is_used_ = false;
       timedomain_manager_->ReleaseTimeDomainBuffer(this);
   }
 }
 void traact::buffer::GenericTimeDomainBuffer::increaseUse() {
-    tbb::queuing_mutex::scoped_lock(source_mutex_);
-  current_wait_count_ ++;
+    //LockType::scoped_lock lock(source_mutex_);
+    current_wait_count_ ++;
 }
 
 int traact::buffer::GenericTimeDomainBuffer::getUseCount() const {
@@ -93,7 +96,7 @@ size_t traact::buffer::GenericTimeDomainBuffer::GetCurrentMeasurementIndex() con
 
 
 bool traact::buffer::GenericTimeDomainBuffer::isSourcesSet()  {
-    tbb::queuing_mutex::scoped_lock(source_mutex_);
+    LockType::scoped_lock lock(source_mutex_);
     bool result = true;
     for(bool is_set : td_buffer_sources_valid_){
         result = result && is_set;
@@ -117,7 +120,7 @@ bool traact::buffer::GenericTimeDomainBuffer::SetInvalidSourceBuffer(std::size_t
 
     if(!td_buffer_sources_send_[source_buffer]){
         td_buffer_sources_send_[source_buffer] = true;
-        buffer_sources_[source_buffer]->SendMessage(this, false, MessageType::AbortTs);
+        //buffer_sources_[source_buffer]->SendMessage(this, false, MessageType::Data);
         decreaseUse();
         return true;
     }
@@ -153,11 +156,25 @@ traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(traact::buffer:
         std::vector<size_t> input;
         input.resize(dataComp->getConsumerPorts().size());
         for (PortInstance::ConstPtr port : dataComp->getConsumerPorts()) {
-            input[port->getPortIndex()] = port_to_bufferIndex.at(port->getID());
+            auto port_result = port_to_bufferIndex.find(port->getID());
+            if(port_result != port_to_bufferIndex.end()){
+                input[port->getPortIndex()] = port_result->second;
+            } else {
+                std::stringstream ss;
+                for(const auto& port_buffer : port_to_bufferIndex){
+
+                    ss << port_buffer.first.first << ":" << port_buffer.first.second << "\n";
+                }
+                spdlog::error("could not find buffer index for port: {0}:{1} \n in ports: \n {2}", port->getID().first, port->getID().second, ss.str());
+                throw std::runtime_error("unknown buffer index");
+            }
+
         }
 
         component_buffers_[dataComp->instance_id] =
                 std::make_shared<GenericComponentBuffer>(dataComp->instance_id, *this, input, output);
+        component_buffers_config_[dataComp->instance_id] =
+                std::make_shared<GenericComponentBufferConfig>(dataComp->instance_id, *this, input, output);
 
     }
 
@@ -167,29 +184,33 @@ traact::buffer::GenericTimeDomainBuffer::GenericTimeDomainBuffer(traact::buffer:
     td_buffer_sources_send_.resize(buffer_sources_.size(), false);
     is_used_ = false;
     is_master_set_ = false;
+    current_measurement_index_ = 0;
 
 }
 
 void
 traact::buffer::GenericTimeDomainBuffer::SetSourceBuffer(traact::buffer::GenericSourceTimeDomainBuffer *source_buffer) {
 
+    SPDLOG_TRACE("set source buffer: event idx {0}, source idx {1}, event idx domain buffer {2}", source_buffer->GetMeaIdx(),source_buffer->GetSourceTDBufferIndex(), current_measurement_index_);
 
     if(!is_used_){
-        spdlog::error("trying to set source buffer for invalid time domain buffer");
+        spdlog::error("trying to set source buffer for invalid time domain buffer: event idx {0}, source idx {1}", source_buffer->GetMeaIdx(),source_buffer->GetSourceTDBufferIndex());
         throw std::runtime_error("trying to set source buffer for invalid time domain buffer");
         return;
     }
 
+
+
     const std::size_t source_index = source_buffer->GetSourceTDBufferIndex();
-    MessageType msg_type = source_buffer->GetMessageType();
-    if(td_buffer_sources_valid_[source_index]){
-        spdlog::error("source {0} is already set for buffer idx: {2}", source_index, current_measurement_index_);
-        throw std::runtime_error("trying to set already existing source");
-    }
+    //MessageType msg_type = source_buffer->GetMessageType();
+//    if(td_buffer_sources_valid_[source_index]){
+//        spdlog::error("source {0} is already set for buffer idx: {2}", source_index, current_measurement_index_);
+//        throw std::runtime_error("trying to set already existing source");
+//    }
     // decreaseUse after all messages are send
     {
-        tbb::queuing_mutex::scoped_lock(source_mutex_);
-        td_buffer_sources_valid_[source_index] = true;
+       // LockType::scoped_lock lock(source_mutex_);
+        //td_buffer_sources_valid_[source_index] = true;
         td_buffer_sources_[source_index] = source_buffer;
         const auto& global_buffer_index = source_buffer->GetGlobalBufferIndex();
         void** data = source_buffer->GetBufferData();
@@ -200,10 +221,11 @@ traact::buffer::GenericTimeDomainBuffer::SetSourceBuffer(traact::buffer::Generic
 
         if(source_buffer->IsMaster()){
             is_master_set_ = true;
+            current_timestamp_ = source_buffer->GetTs();
         }
 
-        td_buffer_sources_send_[source_index] = true;
-        buffer_sources_[source_index]->SendMessage(this, true, msg_type);
+        //td_buffer_sources_send_[source_index] = true;
+        //buffer_sources_[source_index]->SendMessage(this, true, msg_type);
 
     }
 
@@ -221,6 +243,16 @@ traact::buffer::GenericTimeDomainBuffer::SetSourceBuffer(traact::buffer::Generic
 const std::vector<traact::buffer::GenericSourceTimeDomainBuffer *> &
 traact::buffer::GenericTimeDomainBuffer::GetSourceTimeDomainBuffer() const {
     return td_buffer_sources_;
+}
+
+traact::buffer::GenericComponentBufferConfig *
+traact::buffer::GenericTimeDomainBuffer::getComponentBufferConfig(const std::string &component_name) {
+    return component_buffers_config_.at(component_name).get();
+}
+
+const void traact::buffer::GenericTimeDomainBuffer::setOutputHeader(size_t index, void *header) {
+    timedomain_manager_->SetOutputHeader(index, header);
+    return;
 }
 
 

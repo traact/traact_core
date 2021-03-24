@@ -42,7 +42,7 @@ class TRAACT_CORE_EXPORT GraphInstance {
   GraphInstance();
   GraphInstance(const std::string &name);
 
-  PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern, bool is_master = false, TimeDurationType max_suboridnate_offset = std::chrono::milliseconds(1));
+  PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern);
 
   PatternInstance::Ptr getPattern(const std::string &pattern_id) const;
 
@@ -61,6 +61,11 @@ class TRAACT_CORE_EXPORT GraphInstance {
   std::map<int, traact::buffer::TimeDomainManagerConfig> timedomain_configs;
 
   void initializeGraphConnections();
+
+  bool checkSourceAndSink(std::string source_component,
+                          std::string producer_port,
+                          std::string sink_component,
+                          std::string consumer_port);
 
 };
 }

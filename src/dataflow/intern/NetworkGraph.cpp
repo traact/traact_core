@@ -31,16 +31,18 @@
 
 #include "NetworkGraph.h"
 
-#include <dataflow/intern/TraactComponentSource.h>
-#include <dataflow/intern/TraactComponentSink.h>
+#include <dataflow/intern/TraactComponentAsyncSource.h>
+#include <dataflow/intern/TraactComponentSyncSource.h>
+#include <dataflow/intern/TraactComponentSyncSink.h>
 #include <dataflow/intern/TraactComponentFunctional.h>
+
+#include <dataflow/intern/TBBTimeDomainManager.h>
 
 namespace traact::dataflow::intern {
 NetworkGraph::NetworkGraph(DefaultComponentGraphPtr component_graph,
-                           int time_domain,
                            std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects)
     : component_graph_(std::move(
-    component_graph)), time_domain_(time_domain), generic_factory_objects_(std::move(generic_factory_objects)) {};
+    component_graph)), generic_factory_objects_(std::move(generic_factory_objects)) {};
 
 void NetworkGraph::init() {
   //component_graph_->checkGraph();
@@ -48,10 +50,10 @@ void NetworkGraph::init() {
   auto time_domains = component_graph_->GetTimeDomains();
   for(auto time_domain : time_domains) {
 
-     auto td_config = component_graph_->GetTimeDomainConfig(std::get<0>(time_domain));
+     auto td_config = component_graph_->GetTimeDomainConfig(time_domain);
 
-    auto new_manager = std::make_shared<buffer::TimeDomainManager>(td_config, generic_factory_objects_);
-    time_domain_manager_.emplace(std::get<0>(time_domain), new_manager);
+    auto new_manager = std::make_shared<buffer::TBBTimeDomainManager>(td_config, generic_factory_objects_, this);
+    time_domain_manager_.emplace(time_domain, new_manager);
   }
 
 
@@ -76,13 +78,21 @@ void NetworkGraph::init() {
 
     switch (component->getComponentType()) {
       case component::ComponentType::AsyncSource: {
-        newComponent = std::make_shared<TraactComponentSource>(pattern,
-                                                               component,
-                                                               tdm_component,
-                                                               this);
+        newComponent = std::make_shared<TraactComponentAsyncSource>(pattern,
+                                                                    component,
+                                                                    tdm_component,
+                                                                    this);
 
         break;
       }
+        case component::ComponentType::SyncSource: {
+            newComponent = std::make_shared<TraactComponentSyncSource>(pattern,
+                                                                        component,
+                                                                        tdm_component,
+                                                                        this);
+
+            break;
+        }
       case component::ComponentType::Functional: {
         newComponent = std::make_shared<TraactComponentFunctional>(pattern,
                                                                    component,
@@ -92,7 +102,7 @@ void NetworkGraph::init() {
       }
       case component::ComponentType::SyncSink: {
         newComponent =
-            std::make_shared<TraactComponentSink>(pattern, component, tdm_component, this);
+            std::make_shared<TraactComponentSyncSink>(pattern, component, tdm_component, this);
         break;
       }
       default: {
@@ -113,69 +123,20 @@ void NetworkGraph::init() {
 
   }
 
-  std::sort(network_components_.begin(),network_components_.end(),[](const TraactComponentBase::Ptr& a, const TraactComponentBase::Ptr& b)
-  {
-      return a->getComponentType() < b->getComponentType();
-  });
-
-
-  for(auto& td_manager : time_domain_manager_){
-      td_manager.second->init(component_graph_);
-  }
-
-
-
-
   for (const auto &component : network_components_) {
     component->init();
   }
 
-    for (const auto &component : network_components_) {
+   for (const auto &component : network_components_) {
         component->connect();
-    }
+   }
 
-
-
-    TimestampType init_ts = TimestampType(std::chrono::nanoseconds (1));
-    // first init master, then other components
-    for (const auto &component : network_components_) {
-        auto source_component = std::dynamic_pointer_cast<TraactComponentSource>(component);
-
-        if(source_component){
-            if(source_component->isMaster())
-                source_component->configure_component(init_ts);
-        }
-
-    }
-
-    for (const auto &component : network_components_) {
-        auto source_component = std::dynamic_pointer_cast<TraactComponentSource>(component);
-
-        if(source_component){
-            if(!source_component->isMaster())
-                source_component->configure_component(init_ts);
-        }
-
-    }
-
-}
-void NetworkGraph::start() {
-
-  for (auto it = network_components_.rbegin(); it != network_components_.rend(); ++it) {
-      (*it)->start();
+  for(auto& td_manager : time_domain_manager_){
+      td_manager.second->Init(component_graph_);
   }
-}
-void NetworkGraph::stop() {
 
-
-    for (auto it = network_components_.begin(); it != network_components_.end(); ++it) {
-        if((*it)->getComponentType() == component::ComponentType::AsyncSource)
-            (*it)->stop();
-
-    }
-
-    for(auto& tdm : time_domain_manager_){
-        tdm.second->stop();
+    for(auto& td_manager : time_domain_manager_){
+        td_manager.second->Configure();
     }
 
     graph_.wait_for_all();
@@ -183,24 +144,36 @@ void NetworkGraph::stop() {
 
 
 
+}
+void NetworkGraph::start() {
 
-    for (auto it = network_components_.begin(); it != network_components_.end(); ++it) {
-        if((*it)->getComponentType() != component::ComponentType::AsyncSource)
-            (*it)->stop();
+    for(auto& tdm : time_domain_manager_){
+        tdm.second->Start();
+    }
+}
+void NetworkGraph::stop() {
 
+
+    for(auto& tdm : time_domain_manager_) {
+        tdm.second->Stop();
     }
 
-  // before: connect/disconnect in start/stop, now connected network is used for parameter calls before start event
-    //for (const auto &component : network_components_) {
-    //    component->disconnect();
-    //}
-
+    graph_.wait_for_all();
 
 }
 void NetworkGraph::teardown() {
-  for (const auto &component : network_components_) {
-    component->teardown();
-  }
+
+    for(auto& tdm : time_domain_manager_){
+        tdm.second->Teardown();
+    }
+
+    graph_.wait_for_all();
+
+    for (const auto &component : network_components_) {
+        component->teardown();
+    }
+
+
   network_components_.clear();
   //graph_.reset();
 }
@@ -215,4 +188,12 @@ tbb::flow::sender<TraactMessage> &NetworkGraph::getSender(PortPtr port) {
 tbb::flow::receiver<TraactMessage> &NetworkGraph::getReceiver(PortPtr port) {
   return port_to_network_component[port]->getReceiver(port->getPortIndex());
 }
+
+    tbb::flow::receiver<TraactMessage> &NetworkGraph::getSourceReceiver(const std::string &component_name) {
+        for (const auto &component : network_components_) {
+            if(component->GetName() == component_name)
+                return component->getReceiver(0);
+        }
+        throw std::invalid_argument(fmt::format("unknown source {0}", component_name));
+    }
 }

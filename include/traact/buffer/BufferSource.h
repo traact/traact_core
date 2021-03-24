@@ -43,7 +43,7 @@ namespace traact::buffer {
             public:
             typedef BufferSource* Ptr;
             virtual ~BufferSource() = default;
-            virtual int SendMessage(GenericTimeDomainBuffer *buffer, bool valid, MessageType msg_type) = 0;
+            //virtual int SendMessage(GenericTimeDomainBuffer *buffer, bool valid, MessageType msg_type) = 0;
             virtual std::string getComponentName() = 0;
     };
 
