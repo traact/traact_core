@@ -27,7 +27,7 @@ class Traact(ConanFile):
         "with_tests": True
     }
 
-    exports_sources = "include/*", "src/*", "util/*", "tests/*", "CMakeLists.txt"
+    exports_sources = "include/*", "src/*", "util/*", "apps/*", "tests/*", "CMakeLists.txt"
 
     def requirements(self):
         if self.options.with_tests:
