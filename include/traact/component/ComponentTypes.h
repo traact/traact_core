@@ -78,7 +78,7 @@ enum class TRAACT_CORE_EXPORT ComponentType {
        * The buffer and its reuse is blocked by the call to processTimePoint. The function should return as fast as possible.
        */
     SyncSink,
-    //AsyncSink, // Idea would be to share the buffer with the external program until it is finished. realized by borrowBuffer in SyncSink, not needed anymore
+    AsyncSink
 
   // not implemented yet
   /**

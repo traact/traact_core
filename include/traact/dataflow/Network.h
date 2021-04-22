@@ -34,14 +34,10 @@
 
 #include <memory>
 #include <map>
-#include <traact/buffer/GenericFactoryObject.h>
+#include <traact/buffer/BufferFactory.h>
 #include <traact/component/ComponentGraph.h>
 
 #include <traact/traact_core_export.h>
-
-namespace traact::dataflow::intern {
-class TRAACT_CORE_EXPORT NetworkGraph;
-}
 
 namespace traact::dataflow {
 
@@ -50,19 +46,20 @@ class TRAACT_CORE_EXPORT Network {
   typedef typename std::shared_ptr<Network> Ptr;
   typedef typename component::ComponentGraph::Ptr ComponentGraphPtr;
 
-  explicit Network(std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
+  Network() = default;
+  virtual ~Network() = default;
 
   void addComponentGraph(ComponentGraphPtr component_graph);
 
-  void start();
+    void setGenericFactoryObjects(const std::set<buffer::BufferFactory::Ptr> &genericFactoryObjects);
 
-  void stop();
- private:
-  typedef typename std::shared_ptr<intern::NetworkGraph> NetworkGraphPtr;
+    virtual bool start() = 0;
+  virtual bool stop() = 0;
+
+ protected:
 
   std::set<ComponentGraphPtr> component_graphs_;
-  std::set<NetworkGraphPtr> network_graphs_;
-  std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
+  std::set<buffer::BufferFactory::Ptr> generic_factory_objects_;
 
 };
 }

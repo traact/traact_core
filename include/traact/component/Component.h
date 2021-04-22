@@ -42,9 +42,9 @@
 #include <rttr/type>
 
 namespace traact::buffer {
-    class TRAACT_CORE_EXPORT GenericSourceTimeDomainBuffer;
-    class TRAACT_CORE_EXPORT GenericComponentBuffer;
-    class TRAACT_CORE_EXPORT GenericComponentBufferConfig;
+    class TRAACT_CORE_EXPORT SourceTimeDomainBuffer;
+    class TRAACT_CORE_EXPORT ComponentBuffer;
+    class TRAACT_CORE_EXPORT ComponentBufferConfig;
 }
 
 namespace traact::component {
@@ -62,7 +62,8 @@ class TRAACT_CORE_EXPORT Component {
   typedef typename std::shared_ptr<Component> Ptr;
 
   // used by source components
-  typedef typename std::function<buffer::GenericSourceTimeDomainBuffer* (TimestampType)> RequestCallback;
+  typedef typename std::function<buffer::SourceTimeDomainBuffer* (TimestampType)> RequestCallback;
+    typedef typename std::function<void (TimestampType)> ReleaseAsyncCallback;
 
 
   Component(std::string name, const ComponentType traact_component_type);
@@ -98,7 +99,7 @@ class TRAACT_CORE_EXPORT Component {
    *
    * @return false if initialization is not possible (e.g. camera not available)
    */
-  virtual bool configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) ;
+  virtual bool configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) ;
   /**
    * Called after all components are initialized, the dataflow network is connected and ready to run
    *
@@ -129,7 +130,7 @@ class TRAACT_CORE_EXPORT Component {
    * @param data
    * @return false if processing failed and output has not meaningful data
    */
-  virtual bool processTimePoint(buffer::GenericComponentBuffer &data);
+  virtual bool processTimePoint(buffer::ComponentBuffer &data);
 
   /**
    * Used by source components.
@@ -137,7 +138,7 @@ class TRAACT_CORE_EXPORT Component {
    * timestamp for the new data call request_callback_(ts) to register the new timestamp
    * in the dataflow network.
    *
-   * Returns a GenericSourceTimeDomainBuffer if successful and you can proceed to set the data.
+   * Returns a SourceTimeDomainBuffer if successful and you can proceed to set the data.
    * In case of nullptr the dataflow network rejects this timestamp for some reason.
    * (examples Overloaded dataflow network, timestamp too old)
    * The reason should be reported by the network to the user.
@@ -149,6 +150,9 @@ class TRAACT_CORE_EXPORT Component {
 
   virtual void invalidTimePoint(TimestampType ts, std::size_t mea_idx);
 
+  void setReleaseAsyncCallback(const ReleaseAsyncCallback& releaseAsyncCallback);
+  virtual void releaseAsyncCall(TimestampType ts);
+
 
   /* Enable RTTR Type Introspection */
   RTTR_ENABLE()
@@ -158,7 +162,8 @@ class TRAACT_CORE_EXPORT Component {
   const ComponentType traact_component_type_;
 
   // used by source components
-  RequestCallback request_callback_;
+  RequestCallback request_callback_{nullptr};
+  ReleaseAsyncCallback releaseAsyncCallback_{nullptr};
 };
 }
 

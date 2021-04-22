@@ -33,6 +33,8 @@
 #define TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_COMPONENT_MODULECOMPONENT_H_
 
 #include <traact/component/Component.h>
+#include <rttr/type>
+
 namespace traact::component {
 
 class TRAACT_CORE_EXPORT ModuleComponent;
@@ -77,7 +79,7 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component{
 
   void SetModule(Module::Ptr module);
 
-  bool configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) override;
+  bool configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) override;
   bool start() override;
   bool stop() override;
   bool teardown() override;
@@ -86,7 +88,7 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component{
   ModuleType module_type_;
   Module::Ptr module_;
 
- RTTR_ENABLE(Component)
+  RTTR_ENABLE(Component)
 };
 
 }

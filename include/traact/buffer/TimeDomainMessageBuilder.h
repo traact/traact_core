@@ -33,8 +33,8 @@
 #define TRAACTMULTI_TIMEDOMAINMESSAGEBUILDER_H
 
 #include <traact/datatypes.h>
-#include <traact/buffer/GenericTimeDomainBuffer.h>
-#include <traact/buffer/GenericComponentBuffer.h>
+#include <traact/buffer/TimeDomainBuffer.h>
+#include <traact/buffer/ComponentBuffer.h>
 #include <traact/buffer/BufferSource.h>
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/concurrent_queue.h>
@@ -49,7 +49,7 @@
 #include <tbb/recursive_mutex.h>
 #include <traact/util/Semaphore.h>
 #include <list>
-#include "GenericSourceTimeDomainBuffer.h"
+#include "SourceTimeDomainBuffer.h"
 
 namespace traact::component {
     class ComponentGraph;

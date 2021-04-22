@@ -31,43 +31,17 @@
 
 #include <traact/dataflow/Network.h>
 
-#include "dataflow/intern/NetworkGraph.h"
 
 namespace traact::dataflow {
 
-Network::Network(std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects)
-    : generic_factory_objects_(std::move(generic_factory_objects)) {}
 
 void Network::addComponentGraph(ComponentGraphPtr component_graph) {
   component_graphs_.emplace(std::move(component_graph));
 }
 
-void Network::start() {
-  network_graphs_.clear();
+    void Network::setGenericFactoryObjects(const std::set<buffer::BufferFactory::Ptr> &genericFactoryObjects) {
+        generic_factory_objects_ = genericFactoryObjects;
+    }
 
-  for (const ComponentGraphPtr &component_graph : component_graphs_) {
-    auto newGraph = std::make_shared<intern::NetworkGraph>(component_graph, generic_factory_objects_);
-    network_graphs_.emplace(newGraph);
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->init();
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->start();
-  }
-}
-
-void Network::stop() {
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->stop();
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-    network_graph->teardown();
-  }
-  network_graphs_.clear();
-}
 
 }

@@ -42,8 +42,8 @@
 #include <traact/dataflow/Network.h>
 #include <traact/buffer/TimeDomainManager.h>
 
-#include <traact/buffer/GenericComponentBuffer.h>
-#include <traact/buffer/GenericTimeDomainBuffer.h>
+#include <traact/buffer/ComponentBuffer.h>
+#include <traact/buffer/TimeDomainBuffer.h>
 #include <traact/util/TraactCoreUtils.h>
 #include <traact/traact_core_export.h>
 

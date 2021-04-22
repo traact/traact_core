@@ -14,7 +14,7 @@ class Traact(ConanFile):
 
     short_paths = True
 
-    generators = "cmake", "virtualenv"
+    generators = "cmake", "traact_virtualrunenv_generator"
     settings = "os", "compiler", "build_type", "arch"
     compiler = "cppstd"
     options = {
@@ -32,10 +32,15 @@ class Traact(ConanFile):
     def requirements(self):
         if self.options.with_tests:
             self.requires("gtest/1.10.0")
-        self.requires("nlohmann_json/3.7.3")
-        self.requires("tbb/2019_u9")
-        self.requires("spdlog/1.4.2")
+            self.requires("fakeit/2.0.7")
+        self.requires("traact_run_env/%s@camposs/stable" % self.version)
+        self.requires("nlohmann_json/3.7.3")        
+        self.requires("spdlog/1.8.2")
+        self.requires("tbb/2020.2")
         self.requires("rttr/0.9.7-dev@camposs/stable")
+        self.requires("Boost/1.75.0@camposs/stable")
+        self.requires("cppfs/1.3.0@camposs/stable")
+
 
     def _configure_cmake(self):
         cmake = CMake(self)
@@ -56,7 +61,7 @@ class Traact(ConanFile):
     def configure(self):
         if self.options.with_tests:
             self.options['gtest'].shared = self.options.shared
-        self.options['tbb'].shared = self.options.shared
+        self.options['Boost'].shared = self.options.shared
 
     def build(self):
         cmake = self._configure_cmake()
@@ -67,5 +72,5 @@ class Traact(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = ["traact_core"]
-        # self.cpp_info.libs = tools.collect_libs(self)
+        self.cpp_info.libs = [self.name]
+        #self.cpp_info.libs = tools.collect_libs(self)

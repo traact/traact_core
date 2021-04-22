@@ -30,18 +30,16 @@
 **/
 
 #include "traact/buffer/TimeDomainManager.h"
-//#include "DefaultTimeDomainMessageBuilder.h"
-#include "dataflow/intern/TBBTimeDomainManager.h"
 
 namespace traact::buffer {
 
 TimeDomainManager::TimeDomainManager(TimeDomainManagerConfig config,
-                                     std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects)
+                                     std::set<BufferFactory::Ptr> factory_objects)
         : config_(config){
 
 
-    for(const auto& factory : generic_factory_objects){
-        generic_factory_objects_.emplace(factory->getTypeName(), factory);
+    for(const auto& factory : factory_objects){
+        factory_objects_.emplace(factory->getTypeName(), factory);
     }
 
 
@@ -111,13 +109,13 @@ void TimeDomainManager::Init(const ComponentGraphPtr &component_graph) {
         td_data.resize(buffer_datatype_.size());
         td_header.resize(buffer_datatype_.size());
         for(int buffer_index=0; buffer_index < buffer_datatype_.size(); ++buffer_index){
-            buffer_data_[ringbuffer_index][buffer_index] = generic_factory_objects_[buffer_datatype_[buffer_index]]->createObject();
+            buffer_data_[ringbuffer_index][buffer_index] = factory_objects_[buffer_datatype_[buffer_index]]->createObject();
             td_data[buffer_index] = buffer_data_[ringbuffer_index][buffer_index];
             td_header[buffer_index] = nullptr;
         }
 
         // create time domain buffer, source data pointer are set but not used
-        td_ringbuffer_list_.push_back(new GenericTimeDomainBuffer(this, buffer_sources_, td_data, td_header, port_to_bufferIndex_,pattern_instances));
+        td_ringbuffer_list_.push_back(new TimeDomainBuffer(this, buffer_sources_, td_data, td_header, port_to_bufferIndex_,pattern_instances));
     }
 
 
@@ -175,7 +173,7 @@ void TimeDomainManager::Init(const ComponentGraphPtr &component_graph) {
                 std::size_t buffer_index = port_to_bufferIndex_[port->getID()];
                 bufferData[port->getPortIndex()] = buffer_data_[ringbuffer_index][buffer_index];
             }
-            GenericSourceTimeDomainBuffer* buffer_ptr = new GenericSourceTimeDomainBuffer(bufferData,this, isMaster, source_buffer_index, source_td_buffer_index, global_buffer_index);
+            SourceTimeDomainBuffer* buffer_ptr = new SourceTimeDomainBuffer(bufferData,this, isMaster, source_buffer_index, source_td_buffer_index, global_buffer_index);
             all_source_buffer_[source_buffer_index].push_back(buffer_ptr);
         }
 
@@ -207,7 +205,7 @@ SourceMode TimeDomainManager::GetSourceMode() const {
 
         for(auto& td_buffer_data : buffer_data_){
             for(int i=0;i< td_buffer_data.size();++i){
-                generic_factory_objects_[buffer_datatype_[i]]->deleteObject(td_buffer_data[i]);
+                factory_objects_[buffer_datatype_[i]]->deleteObject(td_buffer_data[i]);
                 td_buffer_data[i] = nullptr;
             }
         }
@@ -225,7 +223,7 @@ SourceMode TimeDomainManager::GetSourceMode() const {
         }
 
         buffer_header_[ring_idx][buffer_index] = header;
-        generic_factory_objects_.at(type_name)->initObject(header, data_ptr);
+        factory_objects_.at(type_name)->initObject(header, data_ptr);
         //void* header_ptr =
     }
 

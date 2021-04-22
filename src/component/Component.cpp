@@ -49,7 +49,7 @@ Component::Component(std::string name, const ComponentType traact_component_type
   }
 
 
-  bool Component::configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) {
+  bool Component::configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) {
     return true;
   }
 
@@ -66,7 +66,7 @@ Component::Component(std::string name, const ComponentType traact_component_type
   }
 
 
-  bool Component::processTimePoint(buffer::GenericComponentBuffer &data) {
+  bool Component::processTimePoint(buffer::ComponentBuffer &data) {
     return true;
   }
 
@@ -77,6 +77,15 @@ Component::Component(std::string name, const ComponentType traact_component_type
 
     void Component::invalidTimePoint(TimestampType ts, std::size_t mea_idx) {
 
+    }
+
+    void Component::releaseAsyncCall(TimestampType ts) {
+        if(releaseAsyncCallback_)
+            releaseAsyncCallback_(ts);
+    }
+
+    void Component::setReleaseAsyncCallback(const Component::ReleaseAsyncCallback &releaseAsyncCallback) {
+        releaseAsyncCallback_ = releaseAsyncCallback;
     }
 
 

@@ -48,7 +48,7 @@ namespace traact::component {
   }
 
   void ComponentGraph::addPattern(const std::string &pattern_id, ComponentPtr component) {
-    SPDLOG_INFO("Graph: {0} Component: {1} add", getName(), component->getName());
+    SPDLOG_INFO("Graph add: {0} Component: {1}", getName(), component->getName());
 
     ModuleComponent::Ptr module_comp_tmp = std::dynamic_pointer_cast<ModuleComponent, Component>(component);
 
@@ -86,6 +86,7 @@ std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTim
     for(const auto& pattern : patterns_) {
         switch (pattern.second->getComponentType()) {
             case ComponentType::AsyncSource:
+            case ComponentType::AsyncSink:
             case ComponentType::SyncSource:
             case ComponentType::Functional:
             //case ComponentType::AsyncFunctional:

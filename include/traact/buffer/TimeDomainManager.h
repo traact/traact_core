@@ -33,19 +33,13 @@
 #define TRAACTTEST_INCLUDE_TRAACT_TIMEPOINTBUFFER_TIMEDOMAINMANAGER_H_
 
 #include <traact/datatypes.h>
-#include <traact/buffer/GenericTimeDomainBuffer.h>
-#include <traact/buffer/GenericComponentBuffer.h>
+#include <traact/buffer/TimeDomainBuffer.h>
+#include <traact/buffer/ComponentBuffer.h>
 #include <traact/buffer/BufferSource.h>
-#include <tbb/concurrent_hash_map.h>
-#include <tbb/concurrent_queue.h>
-#include <mutex>
-#include <shared_mutex>
 #include <traact/util/Logging.h>
-#include <thread>
 #include <traact/traact_core_export.h>
-#include <tbb/flow_graph.h>
 #include <list>
-#include "GenericSourceTimeDomainBuffer.h"
+#include "SourceTimeDomainBuffer.h"
 
 namespace traact::component {
 class ComponentGraph;
@@ -58,32 +52,32 @@ namespace traact::buffer {
 class TRAACT_CORE_EXPORT TimeDomainManager {
  public:
   typedef typename std::shared_ptr<TimeDomainManager> Ptr;
-  typedef GenericTimeDomainBuffer DefaultTimeDomainBuffer;
-  typedef typename GenericTimeDomainBuffer::ComponentBuffer DefaultComponentBuffer;
+  typedef TimeDomainBuffer DefaultTimeDomainBuffer;
+  typedef ComponentBuffer DefaultComponentBuffer;
 
   typedef typename component::ComponentGraph ComponentGraph;
   typedef typename component::ComponentGraph::Ptr ComponentGraphPtr;
 
 
   TimeDomainManager(TimeDomainManagerConfig config,
-                    std::set<buffer::GenericFactoryObject::Ptr> generic_factory_objects);
+                    std::set<buffer::BufferFactory::Ptr> factory_objects);
 
     virtual ~TimeDomainManager();
 
     void RegisterBufferSource(BufferSource::Ptr buffer_source);
 
-  //GenericSourceTimeDomainBuffer* RequestBuffer(const TimestampType ts, const std::string &component_name);
-  //bool CommitSourceBuffer(GenericSourceTimeDomainBuffer *buffer, bool valid);
-  //void ReleaseTimeDomainBuffer(GenericTimeDomainBuffer* td_buffer);
+  //SourceTimeDomainBuffer* RequestBuffer(const TimestampType ts, const std::string &component_name);
+  //bool CommitSourceBuffer(SourceTimeDomainBuffer *buffer, bool valid);
+  //void ReleaseTimeDomainBuffer(TimeDomainBuffer* td_buffer);
 
     virtual void Init(const ComponentGraphPtr &component_graph);
 
 
-    virtual GenericSourceTimeDomainBuffer *RequestSourceBuffer(const TimestampType ts, const std::string &component_name) = 0;
+    virtual SourceTimeDomainBuffer *RequestSourceBuffer(const TimestampType ts, const std::string &component_name) = 0;
 
-    virtual bool CommitSourceBuffer(GenericSourceTimeDomainBuffer *buffer, bool valid) =0 ;
+    virtual bool CommitSourceBuffer(SourceTimeDomainBuffer *buffer, bool valid) =0 ;
 
-    virtual void ReleaseTimeDomainBuffer(GenericTimeDomainBuffer *td_buffer) = 0;
+    virtual void ReleaseTimeDomainBuffer(TimeDomainBuffer *td_buffer) = 0;
 
 
 
@@ -103,7 +97,7 @@ protected:
 
     TimeDomainManagerConfig config_;
 
-    std::map<std::string, buffer::GenericFactoryObject::Ptr> generic_factory_objects_;
+    std::map<std::string, buffer::BufferFactory::Ptr> factory_objects_;
 
     ComponentGraphPtr component_graph_;
 
@@ -111,9 +105,9 @@ protected:
     std::vector<BufferSource*> buffer_sources_;
     std::map<std::string, size_t> name_to_buffer_source_;
 
-    std::vector<GenericTimeDomainBuffer*> td_ringbuffer_list_;
+    std::vector<TimeDomainBuffer*> td_ringbuffer_list_;
 
-    std::vector<std::vector<GenericSourceTimeDomainBuffer*> > all_source_buffer_;
+    std::vector<std::vector<SourceTimeDomainBuffer*> > all_source_buffer_;
 
     std::vector<std::string> buffer_datatype_;
     std::vector<std::vector<void*> > buffer_data_;

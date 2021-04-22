@@ -37,13 +37,13 @@
 
 namespace traact::buffer {
 
-    class TRAACT_CORE_EXPORT GenericTimeDomainBuffer;
+    class TRAACT_CORE_EXPORT TimeDomainBuffer;
 
     class TRAACT_CORE_EXPORT BufferSource{
             public:
             typedef BufferSource* Ptr;
             virtual ~BufferSource() = default;
-            //virtual int SendMessage(GenericTimeDomainBuffer *buffer, bool valid, MessageType msg_type) = 0;
+            //virtual int SendMessage(TimeDomainBuffer *buffer, bool valid, MessageType msg_type) = 0;
             virtual std::string getComponentName() = 0;
     };
 

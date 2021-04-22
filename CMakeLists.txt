@@ -23,19 +23,42 @@ set(LIB_HEADERS
         include/traact/pattern/MetaPattern.h
         include/traact/component/ComponentGraph.h
         include/traact/util/PerformanceMonitor.h
-        include/traact/buffer/GenericComponentBuffer.h
-        include/traact/buffer/GenericTimeDomainBuffer.h
-        include/traact/buffer/GenericBufferTypeConversion.h
-        include/traact/buffer/GenericFactoryObject.h
+        include/traact/buffer/ComponentBuffer.h
+        include/traact/buffer/TimeDomainBuffer.h
+        include/traact/buffer/BufferTypeConversion.h
+        include/traact/buffer/BufferFactory.h
         include/traact/pattern/instance/PatternInstance.h
         include/traact/pattern/instance/PortInstance.h
         include/traact/pattern/instance/GraphInstance.h
         include/traact/util/Utils.h
+        include/traact/facade/Facade.cpp
+        include/traact/facade/Facade.h
+        include/traact/component/facade/ApplicationAsyncSource.h
+        include/traact/component/facade/ApplicationSyncSink.h
+        include/traact/component/PlayerBaseComponent.cpp
+        include/traact/component/PlayerBaseComponent.h
+        include/traact/buffer/SourceTimeDomainBuffer.h
+        include/traact/buffer/SourceTimeDomainBuffer.cpp
+        include/traact/component/FileWriter.cpp
+        include/traact/component/FileWriter.h
+        include/traact/component/FileReader.cpp
+        include/traact/component/FileReader.h
+        include/traact/component/FilePlayer.cpp
+        include/traact/component/FilePlayer.h
+        include/traact/component/FileRecorder.h
+        include/traact/facade/PluginFactory.h
         include/traact/serialization/JsonPattern.h
         include/traact/serialization/JsonPatternInstance.h
         include/traact/serialization/JsonPort.h
         include/traact/serialization/JsonPortInstance.h
         include/traact/serialization/JsonSpatialPattern.h
+        include/traact/dataflow/tbb/TBBNetwork.cpp
+        include/traact/dataflow/tbb/TBBNetwork.h
+        include/traact/util/FileUtil.h
+        include/traact/util/Logging.cpp
+        include/traact/util/Logging.h
+        include/traact/facade/rttr/RTTRPluginFactory.cpp
+        include/traact/facade/rttr/RTTRPluginFactory.h
         include/traact/serialization/JsonGraphInstance.h include/traact/pattern/ParameterUtils.h include/traact/component/ModuleComponent.h include/traact/util/TraactCoreUtils.h include/traact/util/TraactCoreUtils.cpp)
 
 # rest of source code
@@ -45,24 +68,41 @@ set(LIB_SOURCES
         src/pattern/spatial/SpatialPattern.cpp
         src/pattern/spatial/CoordinateSystem.cpp
         src/buffer/TimeDomainManager.cpp
-        src/dataflow/intern/DynamicJoinNode.h
-        src/dataflow/intern/NetworkGraph.h
-        src/dataflow/intern/TraactComponentBase.h
-        src/dataflow/intern/TraactComponentFunctional.h
-        src/dataflow/intern/TraactComponentAsyncSource.h
-        src/dataflow/intern/TraactComponentSyncSink.h
         src/pattern/MetaPattern.cpp
-        src/buffer/GenericTimeDomainBuffer.cpp
+        src/buffer/TimeDomainBuffer.cpp
         src/util/PerformanceMonitor.cpp
-        src/dataflow/intern/TraactComponentFunctional.cpp
-        src/dataflow/intern/TraactComponentSyncSink.cpp
-        src/dataflow/intern/TraactComponentAsyncSource.cpp
-        src/dataflow/intern/NetworkGraph.cpp
         src/pattern/instance/PatternInstance.cpp
         src/pattern/instance/PortInstance.cpp
         src/pattern/instance/GraphInstance.cpp
         src/util/Utils.cpp
-        src/dataflow/Network.cpp src/pattern/ParameterUtils.cpp src/component/Component.cpp src/component/ModuleComponent.cpp src/component/ComponentGraph.cpp include/traact/util/Semaphore.h include/traact/buffer/BufferSource.h src/dataflow/intern/TraactDataflowMessage.h include/traact/buffer/GenericSourceTimeDomainBuffer.cpp include/traact/buffer/GenericSourceTimeDomainBuffer.h include/traact/serialization/JsonTimeDomainManagerConfig.h include/traact/util/Logging.h include/traact/util/Logging.cpp include/traact/buffer/TimeDomainMessageBuilder.h src/buffer/TimeDomainMessageBuilder.cpp src/dataflow/intern/TBBTimeDomainManager.cpp src/dataflow/intern/TBBTimeDomainManager.h src/dataflow/intern/SourceMergeNode.h src/dataflow/intern/TraactComponentSyncSource.cpp src/dataflow/intern/TraactComponentSyncSource.h)
+        src/dataflow/Network.cpp
+        src/buffer/tbb/TBBTimeDomainManager.cpp
+        src/buffer/tbb/TBBTimeDomainManager.h
+        src/dataflow/tbb/DynamicJoinNode.h
+        src/dataflow/tbb/NetworkGraph.cpp
+        src/dataflow/tbb/NetworkGraph.h
+        src/dataflow/tbb/SourceMergeNode.h
+        src/dataflow/tbb/ComponentAsyncSource.cpp
+        src/dataflow/tbb/ComponentAsyncSource.h
+        src/dataflow/tbb/ComponentBase.h
+        src/dataflow/tbb/ComponentFunctional.cpp
+        src/dataflow/tbb/ComponentFunctional.h
+        src/dataflow/tbb/ComponentSyncSink.cpp
+        src/dataflow/tbb/ComponentSyncSink.h
+        src/dataflow/tbb/ComponentSyncSource.cpp
+        src/dataflow/tbb/ComponentSyncSource.h
+        src/dataflow/tbb/DataflowMessage.h
+        src/dataflow/tbb/SourceMergeNode.h
+
+
+        src/pattern/ParameterUtils.cpp
+        src/component/Component.cpp
+        src/component/ModuleComponent.cpp
+        src/component/ComponentGraph.cpp
+        include/traact/util/Semaphore.h
+        include/traact/buffer/BufferSource.h
+        include/traact/facade/DefaultFacade.cpp
+        include/traact/facade/DefaultFacade.h src/dataflow/tbb/ComponentAsyncSink.cpp src/dataflow/tbb/ComponentAsyncSink.h)
 
 
 # conan is required hard, library name, version and description are configured from conan
@@ -146,6 +186,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/traact" # source director
 
 #install(FILES "${PROJECT_BINARY_DIR}/traact_export.h" DESTINATION "include")
 
+add_subdirectory(apps)
 
 if (WITH_TESTS)
     add_subdirectory(tests)

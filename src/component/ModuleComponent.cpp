@@ -65,7 +65,7 @@ void ModuleComponent::SetModule(Module::Ptr module) {
   module_ = module;
 }
 
-bool ModuleComponent::configure(const nlohmann::json &parameter, buffer::GenericComponentBufferConfig *data) {
+bool ModuleComponent::configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) {
 return module_->init(this);
 }
 bool ModuleComponent::start() {
