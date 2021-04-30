@@ -1,8 +1,8 @@
 name: "CITraact"
-on:
+on: [push]
   # issue_comment triggers this action on each comment on issues and pull requests
-  issue_comment:
-    types: [push]
+  #issue_comment:
+  #  types: [push]
   #pull_request_target:
   #  types: [opened,synchronize]
 
