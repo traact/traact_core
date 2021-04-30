@@ -1,0 +1,21 @@
+name: "CITraact"
+on:
+  # issue_comment triggers this action on each comment on issues and pull requests
+  issue_comment:
+    types: [push]
+  #pull_request_target:
+  #  types: [opened,synchronize]
+
+jobs:
+  CITraact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v1.2.0
+        env:
+          JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET_1 }}    
+      - run: |
+          # Set the Artifactory server to use by providing the server ID (configured by the 'jfrog c add' command).
+          jfrog rt use TraactJfrog
+          # Ping TraactJfrog
+          jfrog rt ping
