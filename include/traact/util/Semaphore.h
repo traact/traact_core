@@ -39,8 +39,8 @@
 namespace traact {
 class Semaphore {
  public:
-  Semaphore (int max_count=1, int count = 0)
-      : max_count_(max_count), count_(count)
+  Semaphore (int max_count=1, int count = 0, std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
+      : max_count_(max_count), count_(count), timeout_(timeout)
   {
   }
 
@@ -52,13 +52,16 @@ class Semaphore {
     cv_.notify_one();
   }
 
-  inline void wait() {
+  inline bool wait() {
     std::unique_lock<std::mutex> lock(mtx_);
     while(count_ == 0) {
       //wait on the mutex until notify is called
-      cv_.wait(lock);
+      if(cv_.wait_for(lock, timeout_) == std::cv_status::timeout) {
+          return false;
+      }
     }
     count_--;
+    return true;
   }
 
   inline int count() {
@@ -69,6 +72,7 @@ class Semaphore {
  private:
   std::mutex mtx_;
   std::condition_variable cv_;
+  std::chrono::milliseconds timeout_;
   int count_;
   int max_count_;
 };
@@ -76,8 +80,8 @@ class Semaphore {
 class WaitForMasterTs {
 
     public:
-    WaitForMasterTs ()
-                : current_ts(TimestampType::min())
+    WaitForMasterTs (std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
+                : timeout_(timeout), current_ts(TimestampType::min())
         {
         }
 
@@ -99,14 +103,15 @@ class WaitForMasterTs {
     private:
         std::mutex mtx_;
         std::condition_variable cv_;
+        std::chrono::milliseconds timeout_;
         TimestampType current_ts;
     };
 
     class WaitForInit {
 
     public:
-        WaitForInit ()
-                : is_init(false)
+        WaitForInit (std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
+                : timeout_(timeout), is_init(false)
         {
         }
 
@@ -116,18 +121,22 @@ class WaitForMasterTs {
             cv_.notify_all();
         }
 
-        inline void Wait() {
+        inline bool Wait() {
             std::unique_lock<std::mutex> lock(mtx_);
             while(!is_init) {
                 //wait on the mutex until notify is called
-                cv_.wait(lock);
+                if(cv_.wait_for(lock, timeout_) == std::cv_status::timeout) {
+                    return false;
+                }
             }
+            return true;
         }
 
 
     private:
         std::mutex mtx_;
         std::condition_variable cv_;
+        std::chrono::milliseconds timeout_;
         bool is_init;
     };
 

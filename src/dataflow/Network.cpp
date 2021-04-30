@@ -43,5 +43,9 @@ void Network::addComponentGraph(ComponentGraphPtr component_graph) {
         generic_factory_objects_ = genericFactoryObjects;
     }
 
+    void Network::setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback) {
+        master_source_finished_callback_ = callback;
+    }
+
 
 }

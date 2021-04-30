@@ -56,10 +56,13 @@ class TRAACT_CORE_EXPORT Network {
     virtual bool start() = 0;
   virtual bool stop() = 0;
 
+  void setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback);
+
  protected:
 
   std::set<ComponentGraphPtr> component_graphs_;
   std::set<buffer::BufferFactory::Ptr> generic_factory_objects_;
+  component::Component::SourceFinishedCallback master_source_finished_callback_;
 
 };
 }

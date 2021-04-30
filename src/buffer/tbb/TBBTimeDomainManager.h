@@ -102,7 +102,9 @@ namespace traact::buffer {
         std::atomic<bool> index_calc_init_{false};
         std::atomic<bool> running_{false};
         WaitForInit wait_for_init_lock;
-        WaitForInit wait_for_init_finished_lock;
+        WaitForInit wait_for_start_finished_lock;
+        WaitForInit wait_for_stop_finished_lock;
+        WaitForInit wait_for_teardown_finished_lock;
 
         tbb::concurrent_queue<TimeDomainBuffer*> free_time_domain_buffer_;
         std::vector<tbb::concurrent_queue<SourceTimeDomainBuffer*> > free_source_buffer_;

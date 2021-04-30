@@ -36,6 +36,7 @@
 #include <rttr/registration>
 #include <traact/traact.h>
 #include <fmt/format.h>
+#include <traact/util/FileUtil.h>
 
 namespace traact::component {
 
@@ -67,9 +68,13 @@ namespace traact::component {
 
         bool configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) override {
             bool result = pattern::setValueFromParameter(parameter, "file", filename_, "");
-            SPDLOG_INFO("{0}: read file {1}", getName(), filename_);
-            if(result)
-                return ReadValue(data_);
+            if(result) {
+                if(util::FileExists(filename_, getName()))
+                    ReadValue(data_);
+            } else {
+                SPDLOG_ERROR("{0}: missing file property", getName());
+            }
+
             return false;
         }
 

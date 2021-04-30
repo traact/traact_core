@@ -30,7 +30,7 @@
 **/
 
 #include <traact/component/Component.h>
-
+#include <spdlog/spdlog.h>
 
 namespace traact::component {
 
@@ -82,10 +82,23 @@ Component::Component(std::string name, const ComponentType traact_component_type
     void Component::releaseAsyncCall(TimestampType ts) {
         if(releaseAsyncCallback_)
             releaseAsyncCallback_(ts);
+        else
+            SPDLOG_ERROR("releaseAsyncCallback_ not set");
     }
 
     void Component::setReleaseAsyncCallback(const Component::ReleaseAsyncCallback &releaseAsyncCallback) {
         releaseAsyncCallback_ = releaseAsyncCallback;
+    }
+
+    void Component::setSourceFinishedCallback(const Component::SourceFinishedCallback &finished_callback) {
+        finished_callback_ = finished_callback;
+    }
+
+    void Component::setSourceFinished() {
+        if(finished_callback_)
+            finished_callback_();
+        else
+            SPDLOG_ERROR("finished_callback_ not set");
     }
 
 

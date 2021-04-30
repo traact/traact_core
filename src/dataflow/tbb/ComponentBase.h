@@ -110,6 +110,10 @@ class ComponentBase {
       return component_base_->getName();
   }
 
+  void setSourceFinishedCallback(const component::Component::SourceFinishedCallback callback){
+      component_base_->setSourceFinishedCallback(callback);
+  }
+
 protected:
   DefaultTimeDomainManagerPtr buffer_manager_;
   DefaultComponentPtr component_base_;

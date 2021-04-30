@@ -70,6 +70,8 @@ class NetworkGraph {
   void stop();
   void teardown();
 
+  bool IsRunning();
+
   tbb::flow::graph &getTBBGraph();
 
   tbb::flow::sender<TraactMessage> &getSender(PortPtr port);
@@ -78,8 +80,10 @@ class NetworkGraph {
     tbb::flow::receiver<TraactMessage> &getSourceReceiver(const std::string& component_name);
     tbb::flow::sender<TraactMessage> &getSender(const std::string& component_name);
 
- private:
+    void setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback);
 
+private:
+    bool running_{false};
   DefaultComponentGraphPtr component_graph_;
   std::map<int,DefaultTimeDomainManagerPtr> time_domain_manager_;
   tbb::flow::graph graph_;
@@ -88,6 +92,10 @@ class NetworkGraph {
   std::map<PortPtr, TraactComponentBasePtr> port_to_network_component;
 
   std::set<buffer::BufferFactory::Ptr> generic_factory_objects_;
+
+  std::atomic_flag source_finished_{ATOMIC_FLAG_INIT};
+  component::Component::SourceFinishedCallback source_finished_callback;
+  void MasterSourceFinished();
 };
 
 }

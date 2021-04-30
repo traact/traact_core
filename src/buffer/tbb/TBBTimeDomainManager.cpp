@@ -173,7 +173,14 @@ void traact::buffer::TBBTimeDomainManager::Start() {
     spdlog::info("send start message");
     EmitNonDataEvent(MessageType::Start);
 
-    wait_for_init_finished_lock.Wait();
+    while(running_) {
+        if(wait_for_start_finished_lock.Wait()) {
+            break;
+        } else {
+            spdlog::info("waiting for start message to finish");
+        }
+    }
+
 
     spdlog::info("start sources");
     for(const auto& pattern_component : source_components_){
@@ -188,6 +195,16 @@ void traact::buffer::TBBTimeDomainManager::Stop() {
     spdlog::info("Send Stop message to all components");
     EmitNonDataEvent(MessageType::Stop);
 
+    while(running_) {
+        if(wait_for_stop_finished_lock.Wait()) {
+            break;
+        } else {
+            spdlog::info("waiting for start message to finish");
+        }
+    }
+
+
+
 
 }
 
@@ -195,7 +212,14 @@ void traact::buffer::TBBTimeDomainManager::Stop() {
 void traact::buffer::TBBTimeDomainManager::Teardown() {
     spdlog::info("Send Teardown message to all components");
     EmitNonDataEvent(MessageType::Teardown);
-
+    while(running_) {
+        if(wait_for_teardown_finished_lock.Wait()) {
+            break;
+        } else {
+            spdlog::info("waiting for teardown message to finish");
+        }
+    }
+    running_ =false;
 }
 
 traact::buffer::SourceTimeDomainBuffer *
@@ -222,7 +246,14 @@ traact::buffer::TBBTimeDomainManager::RequestSourceBuffer(const traact::Timestam
             index_calc_init_ = true;
             wait_for_init_lock.SetInit(true);
         } else {
-            wait_for_init_lock.Wait();
+            while(running_) {
+                if(wait_for_init_lock.Wait()) {
+                    break;
+                } else {
+                    SPDLOG_INFO("wait for master source to initialize");
+                }
+            }
+
         }
     }
 
@@ -241,13 +272,14 @@ traact::buffer::TBBTimeDomainManager::RequestSourceBuffer(const traact::Timestam
     }
 
 
+    auto buffer_result =RequestSourceBuffer(ts, event_idx, source_index );
 
-    if(component_name == config_.master_source){
+    if(buffer_result && component_name == config_.master_source){
         EmitSyncSourceEvent(event_idx, ts);
     }
 
 
-    return RequestSourceBuffer(ts, event_idx, source_index );
+    return buffer_result;
 }
 
 traact::buffer::SourceTimeDomainBuffer *
@@ -273,7 +305,19 @@ traact::buffer::TBBTimeDomainManager::RequestSourceBuffer(const TimestampType ts
             return nullptr;
         }
         case SourceMode::WaitForBuffer: {
-            free_source_buffer_lock_[source_index]->wait();
+            while(graph_->IsRunning()) {
+                if(free_source_buffer_lock_[source_index]->wait()) {
+                    break;
+                }
+                // no problem here, we wait forever or until program stops
+//                else {
+//                    SPDLOG_ERROR("timeout when trying to get free source buffer");
+//                };
+            }
+
+            if(!graph_->IsRunning())
+                return nullptr;
+
             SourceTimeDomainBuffer* buffer = nullptr;
             if(free_source_buffer_[source_index].try_pop(buffer)) {
                 buffer->Init(ts, event_index);
@@ -481,12 +525,22 @@ void traact::buffer::TBBTimeDomainManager::EmitSyncSourceEvent(std::size_t event
 
 void traact::buffer::TBBTimeDomainManager::FinishEvent(const traact::dataflow::TraactMessage &in) {
     TimeDomainBuffer* td_buffer = in.domain_buffer;
-    SPDLOG_TRACE("finish event, event idx {0}, ts {1}, {2}", td_buffer->GetCurrentMeasurementIndex(), td_buffer->getTimestamp().time_since_epoch().count(), reinterpret_cast<uint64_t>(td_buffer));
+    SPDLOG_INFO("finish event, event idx {0}, ts {1}, {2}", td_buffer->GetCurrentMeasurementIndex(), td_buffer->getTimestamp().time_since_epoch().count(), reinterpret_cast<uint64_t>(td_buffer));
 
     switch (in.message_type) {
         case MessageType::Start:{
             spdlog::info("start message finished");
-            wait_for_init_finished_lock.SetInit(true);
+            wait_for_start_finished_lock.SetInit(true);
+            break;
+        }
+        case MessageType::Stop:{
+            spdlog::info("stop message finished");
+            wait_for_stop_finished_lock.SetInit(true);
+            break;
+        }
+        case MessageType::Teardown:{
+            spdlog::info("teardown message finished");
+            wait_for_teardown_finished_lock.SetInit(true);
             break;
         }
         default: {

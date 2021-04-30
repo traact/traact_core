@@ -36,7 +36,7 @@
 #include <traact/dataflow/Network.h>
 #include <traact/component/ComponentGraph.h>
 #include <traact/facade/PluginFactory.h>
-
+#include <future>
 
 namespace traact::facade {
 
@@ -49,6 +49,10 @@ class TRAACT_CORE_EXPORT Facade {
   void loadDataflow(std::string filename);
 
   bool start();
+  bool blockingStart();
+
+  std::shared_future<void> getFinishedFuture();
+
   bool stop();
 
   pattern::Pattern::Ptr instantiatePattern(const std::string &pattern_name);
@@ -60,8 +64,11 @@ class TRAACT_CORE_EXPORT Facade {
   pattern::instance::GraphInstance::Ptr graph_instance_;
   component::ComponentGraph::Ptr component_graph_;
   dataflow::Network::Ptr network_;
+  bool should_stop_{false};
+  std::promise<void> finished_promise_;
+  std::shared_future<void> finished_future_;
 
-
+  void MasterSourceFinished();
 };
 }
 

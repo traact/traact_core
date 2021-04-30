@@ -51,9 +51,13 @@ void NetworkGraph::init() {
   //component_graph_->checkGraph();
 
   auto time_domains = component_graph_->GetTimeDomains();
+  std::set<std::string> master_sources;
   for(auto time_domain : time_domains) {
 
      auto td_config = component_graph_->GetTimeDomainConfig(time_domain);
+
+     master_sources.emplace(td_config.master_source);
+
 
     auto new_manager = std::make_shared<buffer::TBBTimeDomainManager>(td_config, generic_factory_objects_, this);
     time_domain_manager_.emplace(time_domain, new_manager);
@@ -85,7 +89,7 @@ void NetworkGraph::init() {
                                                                     component,
                                                                     tdm_component,
                                                                     this);
-
+        newComponent->setSourceFinishedCallback(std::bind(&NetworkGraph::MasterSourceFinished, this));
         break;
       }
         case component::ComponentType::SyncSource: {
@@ -127,6 +131,11 @@ void NetworkGraph::init() {
       port_to_network_component[port] = newComponent;
     }
 
+
+    //if(master_sources.count(component->getName())) {
+    //    newComponent->setSourceFinishedCallback(std::bind(&NetworkGraph::MasterSourceFinished, this));
+    //}
+
     network_components_.emplace_back(newComponent);
 
   }
@@ -154,13 +163,14 @@ void NetworkGraph::init() {
 
 }
 void NetworkGraph::start() {
-
+    running_ = true;
     for(auto& tdm : time_domain_manager_){
         tdm.second->Start();
     }
 }
 void NetworkGraph::stop() {
 
+    running_ = false;
 
     for(auto& tdm : time_domain_manager_) {
         tdm.second->Stop();
@@ -211,5 +221,24 @@ tbb::flow::receiver<TraactMessage> &NetworkGraph::getReceiver(PortPtr port) {
                 return component->getSender(0);
         }
         throw std::invalid_argument(fmt::format("unknown source {0}", component_name));
+    }
+
+    bool NetworkGraph::IsRunning() {
+        return running_;
+    }
+
+    void NetworkGraph::setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback) {
+        source_finished_callback = callback;
+    }
+
+    void NetworkGraph::MasterSourceFinished() {
+    // first finished call ends playback
+    if(source_finished_.test_and_set()) {
+            return;
+        }
+
+        //finished_count_++;
+        //if(finished_count_ == time_domain_manager_.size())
+            source_finished_callback();
     }
 }

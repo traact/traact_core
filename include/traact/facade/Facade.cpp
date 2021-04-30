@@ -41,7 +41,7 @@
 
 
 traact::facade::Facade::Facade(PluginFactory::Ptr plugin_factory, dataflow::Network::Ptr dataflow_network)
-        : factory_(plugin_factory), network_(dataflow_network) {
+        : factory_(plugin_factory), network_(dataflow_network), finished_promise_(), finished_future_(finished_promise_.get_future()) {
 
     std::set<PluginFactory::FactoryObjectPtr> factory_objects;
 
@@ -49,6 +49,7 @@ traact::facade::Facade::Facade(PluginFactory::Ptr plugin_factory, dataflow::Netw
          factory_objects.emplace(factory_->instantiateDataType(datatype_name));
     }
     network_->setGenericFactoryObjects(factory_objects);
+    network_->setMasterSourceFinishedCallback(std::bind(&Facade::MasterSourceFinished, this));
 
 }
 traact::facade::Facade::~Facade() {
@@ -106,13 +107,13 @@ bool traact::facade::Facade::start() {
 
   network_->addComponentGraph(component_graph_);
 
-  network_->start();
-
-  return true;
+  return network_->start();
 }
 bool traact::facade::Facade::stop() {
-  network_->stop();
-  return true;
+    should_stop_ = true;
+    bool result = network_->stop();
+    finished_promise_.set_value();
+  return result;
 }
 traact::component::Component::Ptr traact::facade::Facade::getComponent(std::string id) {
   return component_graph_->getComponent(id);
@@ -124,5 +125,26 @@ traact::pattern::Pattern::Ptr traact::facade::Facade::instantiatePattern(const s
     throw std::invalid_argument("exception trying to instantiate pattern: "+pattern_name);
   }
 
+}
+
+std::shared_future<void> traact::facade::Facade::getFinishedFuture() {
+    return finished_future_;
+}
+
+bool traact::facade::Facade::blockingStart() {
+    if(!start())
+        return false;
+
+    auto finished = getFinishedFuture();
+    while (finished.wait_for(std::chrono::seconds(1)) != std::future_status::ready) {
+        if(should_stop_){
+            spdlog::info("waiting for dataflow to stop");
+        }
+    }
+    return true;
+}
+
+void traact::facade::Facade::MasterSourceFinished() {
+    stop();
 }
 

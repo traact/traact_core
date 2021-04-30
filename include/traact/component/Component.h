@@ -64,6 +64,7 @@ class TRAACT_CORE_EXPORT Component {
   // used by source components
   typedef typename std::function<buffer::SourceTimeDomainBuffer* (TimestampType)> RequestCallback;
     typedef typename std::function<void (TimestampType)> ReleaseAsyncCallback;
+    typedef typename std::function<void (void)> SourceFinishedCallback;
 
 
   Component(std::string name, const ComponentType traact_component_type);
@@ -151,11 +152,11 @@ class TRAACT_CORE_EXPORT Component {
   virtual void invalidTimePoint(TimestampType ts, std::size_t mea_idx);
 
   void setReleaseAsyncCallback(const ReleaseAsyncCallback& releaseAsyncCallback);
-  virtual void releaseAsyncCall(TimestampType ts);
 
+  void releaseAsyncCall(TimestampType ts);
 
-  /* Enable RTTR Type Introspection */
-  RTTR_ENABLE()
+  void setSourceFinishedCallback(const SourceFinishedCallback& finished_callback );
+  void setSourceFinished();
 
  protected:
   const std::string name_;
@@ -164,6 +165,10 @@ class TRAACT_CORE_EXPORT Component {
   // used by source components
   RequestCallback request_callback_{nullptr};
   ReleaseAsyncCallback releaseAsyncCallback_{nullptr};
+  SourceFinishedCallback finished_callback_{nullptr};
+
+    /* Enable RTTR Type Introspection */
+    RTTR_ENABLE()
 };
 }
 

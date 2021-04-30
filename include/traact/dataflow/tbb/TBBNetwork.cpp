@@ -43,6 +43,7 @@ bool traact::dataflow::TBBNetwork::start() {
 
   for (const ComponentGraphPtr &component_graph : component_graphs_) {
     auto newGraph = std::make_shared<NetworkGraph>(component_graph, generic_factory_objects_);
+      newGraph->setMasterSourceFinishedCallback(std::bind(&TBBNetwork::MasterSourceFinished, this));
       network_graphs_.emplace(newGraph);
   }
 
@@ -71,4 +72,17 @@ bool traact::dataflow::TBBNetwork::stop() {
   }
   network_graphs_.clear();
   return result;
+}
+
+void traact::dataflow::TBBNetwork::MasterSourceFinished() {
+    finished_count_++;
+    if(finished_count_ == network_graphs_.size()){
+        stop_signal_thread_ = std::thread(master_source_finished_callback_);
+    }
+}
+
+traact::dataflow::TBBNetwork::~TBBNetwork() {
+    if(stop_signal_thread_.joinable())
+        stop_signal_thread_.join();
+
 }

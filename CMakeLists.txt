@@ -102,7 +102,7 @@ set(LIB_SOURCES
         include/traact/util/Semaphore.h
         include/traact/buffer/BufferSource.h
         include/traact/facade/DefaultFacade.cpp
-        include/traact/facade/DefaultFacade.h src/dataflow/tbb/ComponentAsyncSink.cpp src/dataflow/tbb/ComponentAsyncSink.h)
+        include/traact/facade/DefaultFacade.h src/dataflow/tbb/ComponentAsyncSink.cpp src/dataflow/tbb/ComponentAsyncSink.h include/traact/util/FileUtil.cpp)
 
 
 # conan is required hard, library name, version and description are configured from conan

@@ -35,64 +35,20 @@
 #include <boost/filesystem.hpp>
 #include <set>
 #include <vector>
+#include <cppfs/fs.h>
+#include <cppfs/FileHandle.h>
 
 namespace traact::util {
 
-bool hasEnding(std::string const &fullString, std::string const &ending) {
-	if (fullString.length() >= ending.length()) {
-		return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-	}
-	else {
-		return false;
-	}
-}
+    bool FileExists(const std::string& filename, const std::string& component_name);
 
-std::vector<std::string> glob_files(const std::string &path) {
-  std::vector<std::string> result;
-  if (!path.empty()) {
-    namespace fs = boost::filesystem;
+bool hasEnding(std::string const &fullString, std::string const &ending);
 
-    fs::path bpath(path);
-    fs::recursive_directory_iterator end;
+std::vector<std::string> glob_files(const std::string &path);
 
-    for (fs::recursive_directory_iterator i(bpath); i != end; ++i) {
-      const fs::path cp = (*i);
+    std::vector<std::string> glob_dirs(const std::string &path);
 
-      result.emplace_back(cp.string());
-    }
-  }
-  return std::move(result);
-}
-
-    std::vector<std::string> glob_dirs(const std::string &path) {
-        std::vector<std::string> result;
-        if (!path.empty()) {
-            namespace fs = boost::filesystem;
-
-            fs::path bpath(path);
-            fs::recursive_directory_iterator end;
-
-            for (fs::recursive_directory_iterator i(bpath); i != end; ++i) {
-                const fs::path cp = (*i);
-                if(is_directory(cp))
-                    result.emplace_back(cp.string());
-            }
-        }
-        return std::move(result);
-    }
-
-std::vector<std::string> glob_files(const std::string &path, const std::string &file_ending) {
-	std::vector<std::string> result;
-
-	for (std::string path : glob_files(path)) {
-		if (hasEnding(path, file_ending))
-			result.emplace_back(path);
-	}
-	
-
-
-	return std::move(result);
-}
+std::vector<std::string> glob_files(const std::string &path, const std::string &file_ending);
 
 }
 
