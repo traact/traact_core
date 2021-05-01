@@ -8,11 +8,9 @@ class Traact(ConanFile):
     version = "0.0.1"    
 
     description = "Convenience wrapper around tbb for realtime tracking in heterogeneous, distributed sensor environments"
-    url = ""
+    url = "https://github.com/traact/traact_core"
     license = "BSD 3-Clause"
     author = "Frieder Pankratz"
-
-    short_paths = True
 
     generators = "cmake", "traact_virtualrunenv_generator"
     settings = "os", "compiler", "build_type", "arch"
@@ -38,7 +36,7 @@ class Traact(ConanFile):
         self.requires("spdlog/1.8.2")
         self.requires("tbb/2020.2")
         self.requires("rttr/0.9.7-dev@camposs/stable")
-        self.requires("Boost/1.75.0@camposs/stable")
+        #self.requires("Boost/1.75.0@camposs/stable")
         self.requires("cppfs/1.3.0@camposs/stable")
 
 

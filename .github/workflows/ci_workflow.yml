@@ -1,21 +1,52 @@
-name: "CITraact"
-on: [push]
-  # issue_comment triggers this action on each comment on issues and pull requests
-  #issue_comment:
-  #  types: [push]
-  #pull_request_target:
-  #  types: [opened,synchronize]
+name: Build Conan Pakages
+on: push
+
 
 jobs:
-  CITraact:
-    runs-on: ubuntu-latest
+  conan_package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04]
+        include:
+          - os: ubuntu-18.04
+            python-arch: "x64"
+            python-version: "3.6.x" 
+            install-headerfiles: true
+            prepare-python: true
+            conan_base_profile : "linux-gcc7-amd64"
+
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v1.2.0
-        env:
-          JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_SECRET_1 }}    
-      - run: |
-          # Set the Artifactory server to use by providing the server ID (configured by the 'jfrog c add' command).
-          jfrog rt use TraactJfrog
-          # Ping TraactJfrog
-          jfrog rt ping
+    - uses: actions/checkout@master
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.python-arch }}
+      if: matrix.prepare-python
+    - name: Install C and C++ header files
+      run: |
+        sudo apt-get update && sudo apt-get install -y gcc-multilib
+      if: matrix.install-headerfiles
+    - name: Install conan && conan package tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install conan
+        pip install conan_package_tools    
+    - name: Generating conan user directory and building the solution
+      run: |
+        conan user
+        python build.py
+      env:
+        CONAN_LOGIN_USERNAME: "ci_user"
+        CONAN_PASSWORD: ${{ secrets.CI_PASSWORD }}
+        CONAN_CONFIG_URL: "https://github.com/traact/bincrafters-config.git"
+        CONAN_USERNAME: "camposs"      
+        CONAN_UPLOAD_DEPENDENCIES: True  
+        CONAN_CHANNEL: "latest"
+        CONAN_STABLE_BRANCH_PATTERN: "release/*"  
+        CONAN_UPLOAD: "https://traact.jfrog.io/artifactory/api/conan/traact@True@traact"    
+        CONAN_BUILD_POLICY: "outdated"          
+        CONAN_BASE_PROFILE: ${{ matrix.conan_base_profile }}
+        CONAN_REVISIONS_ENABLED: 1
