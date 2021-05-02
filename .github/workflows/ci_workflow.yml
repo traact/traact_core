@@ -1,5 +1,9 @@
 name: Build Conan Pakages
-on: push
+on:
+  push:
+    branches:
+      - 'releases/**'
+      - 'main'
 
 
 jobs:
@@ -45,7 +49,7 @@ jobs:
         CONAN_USERNAME: "camposs"      
         CONAN_UPLOAD_DEPENDENCIES: "all"
         CONAN_CHANNEL: "latest"
-        CONAN_STABLE_BRANCH_PATTERN: "release/*"  
+        CONAN_STABLE_BRANCH_PATTERN: "releases/*"
         CONAN_UPLOAD: "https://traact.jfrog.io/artifactory/api/conan/traact@True@traact"    
         CONAN_BUILD_POLICY: "outdated"          
         CONAN_BASE_PROFILE: ${{ matrix.conan_base_profile }}
