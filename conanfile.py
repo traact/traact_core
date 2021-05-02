@@ -36,7 +36,7 @@ class Traact(ConanFile):
         self.requires("spdlog/1.8.2")
         self.requires("tbb/2020.2")
         self.requires("rttr/0.9.7-dev@camposs/stable")
-        #self.requires("Boost/1.75.0@camposs/stable")
+        self.requires("Boost/1.75.0@camposs/stable")
         self.requires("cppfs/1.3.0@camposs/stable")
 
 

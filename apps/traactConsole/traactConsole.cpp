@@ -31,6 +31,8 @@
 
 #include <iostream>
 #include <signal.h>
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 //#include <cppfs/FileHandle.h>
 #include <traact/traact.h>
 #include <traact/facade/DefaultFacade.h>
@@ -72,20 +74,39 @@ int main(int argc, char **argv) {
 
   // program options
   std::string dataflow_file;
-  std::string log_level = "info";
-
-
+  std::string log_level;
+  std::string plugin_dirs;
   try {
-      if(argc < 2){
-          std::cout << "Syntax: traactConsole [--loglevel info|debug|trace] <dataflow_file.json>" << std::endl << std::endl;
-          return 1;
-      }
-      if(argc == 4) {
-          log_level = std::string(argv[2]);
-          dataflow_file = std::string(argv[3]);
-      } else {
-          dataflow_file = std::string(argv[1]);
-      }
+     //describe program options
+    namespace po = boost::program_options;
+    po::options_description poDesc("Allowed options", 80);
+    poDesc.add_options()
+        ("help", "print this help message")
+        ("config", po::value<std::string>(&dataflow_file), "Dataflow file for traact network")
+        ("loglevel",
+         po::value<std::string>(&log_level)->default_value("info"),
+         "Set level of verbosity for logging [info|debug|trace].")
+        ("plugin_paths",
+         po::value<std::string>(&plugin_dirs),//->default_value(default_plugin_dir),
+         "path to traact plugin directory");
+
+    // specify default options
+    po::positional_options_description inputOptions;
+    inputOptions.add("config", 1);
+
+    // parse options from command line and environment
+    po::variables_map poOptions;
+    po::store(po::command_line_parser(argc, argv).options(poDesc).positional(inputOptions).run(), poOptions);
+    po::store(po::parse_environment(poDesc, "TRAACT_"), poOptions);
+    po::notify(poOptions);
+
+
+    // print help message if nothing specified
+    if (poOptions.count("help") || dataflow_file.empty()) {
+      std::cout << "Syntax: traactConsole [options]  [--config] <dataflow_file.json>" << std::endl << std::endl;
+      std::cout << poDesc << std::endl;
+      return 1;
+    }
   }
   catch (std::exception &e) {
     std::cerr << "Error parsing command line parameters : " << e.what() << std::endl;
@@ -113,9 +134,14 @@ int main(int argc, char **argv) {
 
 
 
+  boost::filesystem::path dataflow_filepath(dataflow_file);
+  if (!boost::filesystem::is_regular_file(dataflow_filepath)) {
+    spdlog::error("traactConsole: error: - invalid dataflow file: {0}", dataflow_filepath.string());
+    return 1;
+  }
 
-
-  DefaultFacade facade;
+  spdlog::info("using plugin directories: {0}", plugin_dirs);
+  DefaultFacade facade(plugin_dirs);
 
   facade.loadDataflow(dataflow_file);
 
