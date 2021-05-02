@@ -43,7 +43,7 @@ jobs:
         CONAN_PASSWORD: ${{ secrets.CI_PASSWORD }}
         CONAN_CONFIG_URL: "https://github.com/traact/bincrafters-config.git"
         CONAN_USERNAME: "camposs"      
-        CONAN_UPLOAD_DEPENDENCIES: True  
+        CONAN_UPLOAD_DEPENDENCIES: "all"
         CONAN_CHANNEL: "latest"
         CONAN_STABLE_BRANCH_PATTERN: "release/*"  
         CONAN_UPLOAD: "https://traact.jfrog.io/artifactory/api/conan/traact@True@traact"    
