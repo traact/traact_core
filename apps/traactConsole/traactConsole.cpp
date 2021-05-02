@@ -40,11 +40,13 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <thread>
 #include "spdlog/sinks/basic_file_sink.h"
-bool bStop = false;
+
+traact::facade::Facade* myfacade{nullptr};
 
 void ctrlC(int i) {
-  spdlog::info("User requested exit (Ctrl-C).");
-  bStop = true;
+    spdlog::info("User requested exit (Ctrl-C).");
+    if(myfacade)
+        myfacade->stop();
 }
 
 int main(int argc, char **argv) {
@@ -140,18 +142,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  spdlog::info("using plugin directories: {0}", plugin_dirs);
-  DefaultFacade facade(plugin_dirs);
+    spdlog::info("using plugin directories: {0}", plugin_dirs);
 
-  facade.loadDataflow(dataflow_file);
+    myfacade = new DefaultFacade(plugin_dirs);
 
-  facade.start();
+    myfacade->loadDataflow(dataflow_file);
 
-  while (!bStop) {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
+    myfacade->blockingStart();
 
-  facade.stop();
+    delete myfacade;
 
   spdlog::info("exit program");
 
