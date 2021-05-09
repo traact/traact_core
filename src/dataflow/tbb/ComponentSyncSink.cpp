@@ -97,10 +97,11 @@ TraactMessage ComponentSyncSink::operator()(const TraactMessage &in) {
     DefaultComponentBuffer
             &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
 
-    SPDLOG_DEBUG("Component {0}; ts {1}; {2}",component_base_->getName(),component_buffer.getTimestamp().time_since_epoch().count(), in.toString());
+    SPDLOG_INFO("Component {0}; ts {1}; {2}",component_base_->getName(),component_buffer.getTimestamp().time_since_epoch().count(), in.toString());
     switch (in.message_type) {
         case MessageType::Configure:{
-            component_base_->configure(pattern_base_->pattern_pointer.parameter, nullptr);
+            bool configure_result = component_base_->configure(pattern_base_->pattern_pointer.parameter, nullptr);
+            spdlog::info("{0}: configure {1}", GetName(), configure_result);
             break;
         }
         case MessageType::Start:{

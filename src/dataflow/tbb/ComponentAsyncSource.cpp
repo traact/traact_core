@@ -115,11 +115,12 @@ namespace traact::dataflow {
 
         //DefaultComponentBuffer &component_buffer = in.domain_buffer->getComponentBuffer(component_base_->getName());
 
-        SPDLOG_TRACE("ComponentAsyncSource {0}: {1}",component_base_->getName(), in.toString());
+        SPDLOG_INFO("ComponentAsyncSource {0}: {1}",component_base_->getName(), in.toString());
 
         switch (in.message_type) {
             case MessageType::Configure:{
-                component_base_->configure(pattern_base_->pattern_pointer.parameter, nullptr);
+                bool configure_result = component_base_->configure(pattern_base_->pattern_pointer.parameter, nullptr);
+                spdlog::info("{0}: configure {1}", GetName(), configure_result);
                 break;
             }
             case MessageType::Start:{

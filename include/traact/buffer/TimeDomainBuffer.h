@@ -60,7 +60,7 @@ class TRAACT_CORE_EXPORT TimeDomainBuffer {
   const TimestampType &getTimestamp() const;
   bool isFree() const;
 
-  void resetForEvent(size_t event_idx);
+  void resetForEvent(size_t event_idx, TimestampType ts);
 
   size_t GetCurrentMeasurementIndex() const;
   void decreaseUse();

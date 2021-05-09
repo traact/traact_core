@@ -52,13 +52,13 @@ const traact::TimestampType &traact::buffer::TimeDomainBuffer::getTimestamp() co
 bool traact::buffer::TimeDomainBuffer::isFree() const {
   return current_wait_count_ == 0;
 }
-void traact::buffer::TimeDomainBuffer::resetForEvent(size_t event_idx) {
+void traact::buffer::TimeDomainBuffer::resetForEvent(size_t event_idx, TimestampType ts) {
 
     //LockType::scoped_lock lock(source_mutex_);
     SPDLOG_TRACE("resetForEvent: before event idx: {0}, now event idx {1}", current_measurement_index_, event_idx);
 
     current_measurement_index_ = event_idx;
-    //current_timestamp_ = ts;
+    current_timestamp_ = ts;
     current_wait_count_ = maximum_wait_count_;
     for(int i=0;i<td_buffer_sources_valid_.size();++i){
         //td_buffer_sources_valid_[i] = false;
@@ -218,10 +218,10 @@ traact::buffer::TimeDomainBuffer::SetSourceBuffer(traact::buffer::SourceTimeDoma
             buffer_data_[global_buffer_index[index]] = data[index];
         }
 
-        if(source_buffer->IsMaster()){
-            is_master_set_ = true;
-            current_timestamp_ = source_buffer->GetTs();
-        }
+//        if(source_buffer->IsMaster()){
+//            is_master_set_ = true;
+//            current_timestamp_ = source_buffer->GetTs();
+//        }
 
         //td_buffer_sources_send_[source_index] = true;
         //buffer_sources_[source_index]->SendMessage(this, true, msg_type);

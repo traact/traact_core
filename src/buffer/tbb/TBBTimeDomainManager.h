@@ -102,6 +102,7 @@ namespace traact::buffer {
         std::atomic<bool> index_calc_init_{false};
         std::atomic<bool> running_{false};
         WaitForInit wait_for_init_lock;
+        WaitForInit wait_for_configure_finished_lock;
         WaitForInit wait_for_start_finished_lock;
         WaitForInit wait_for_stop_finished_lock;
         WaitForInit wait_for_teardown_finished_lock;

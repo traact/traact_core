@@ -115,8 +115,11 @@ void traact::buffer::TBBTimeDomainManager::Init(
             if(port->IsConnected())
                 is_endpoint = false;
         }
-        if(is_endpoint)
+        if(is_endpoint) {
+            spdlog::info("found dataflow endpoint: {0}", pattern_component.second->getName());
             endpoints.push_back(pattern_component.second->getName());
+        }
+
     }
 
     emit_td_node_ = std::make_shared<FunctionNode>(graph_->getTBBGraph(),
@@ -159,10 +162,15 @@ void traact::buffer::TBBTimeDomainManager::Init(
 
 void traact::buffer::TBBTimeDomainManager::Configure() {
     spdlog::info("Send Configure message to all components");
-
-
-
     EmitNonDataEvent(MessageType::Configure);
+
+    while(running_) {
+        if(wait_for_configure_finished_lock.Wait()) {
+            break;
+        } else {
+            spdlog::info("waiting for configure message to finish");
+        }
+    }
 }
 
 void traact::buffer::TBBTimeDomainManager::Start() {
@@ -348,7 +356,7 @@ traact::buffer::TBBTimeDomainManager::CommitSourceBuffer(traact::buffer::SourceT
 void traact::buffer::TBBTimeDomainManager::ReleaseTimeDomainBuffer(
         traact::buffer::TimeDomainBuffer *td_buffer) {
 
-    SPDLOG_TRACE("release time domain buffer, event idx {0}, ts {1}", td_buffer->GetCurrentMeasurementIndex(), td_buffer->getTimestamp().time_since_epoch().count());
+    SPDLOG_INFO("release time domain buffer, event idx {0}, ts {1}", td_buffer->GetCurrentMeasurementIndex(), td_buffer->getTimestamp().time_since_epoch().count());
 
     // return source buffers
     const auto& source_buffer = td_buffer->GetSourceTimeDomainBuffer();
@@ -457,9 +465,9 @@ void traact::buffer::TBBTimeDomainManager::EmitEvent(traact::buffer::TimeDomainB
     TD_Lock::scoped_lock lock(event_idx_lock_);
     std::size_t next_idx = next_td_buffer_event_idx_++;
 
-    SPDLOG_TRACE("emit time domain event, event idx {0}", next_idx);
+    SPDLOG_INFO("emit time domain event, event idx {0}, ts {1}", next_idx, GetMeaIdxTs(next_idx).time_since_epoch().count());
 
-    td_buffer->resetForEvent(next_idx);
+    td_buffer->resetForEvent(next_idx, GetMeaIdxTs(next_idx));
 
 
     TimeDomainEventMessage msg;
@@ -497,7 +505,7 @@ void traact::buffer::TBBTimeDomainManager::CancelOlderEvents(std::size_t source_
 
     for(std::size_t next_idx = latest_source_event_idx_[source_index]+1; next_idx < current_event;++next_idx){
         cancel_msg.event_idx = next_idx;
-        SPDLOG_TRACE("emit source event abort message, event idx {0}, source idx {1}, aborted idx {2}", current_event, source_index, next_idx);
+        SPDLOG_INFO("emit source event abort message, event idx {0}, source idx {1}, aborted idx {2}", current_event, source_index, next_idx);
 
         if(!all_source_nodes_[source_index]->getSourceEventMessageReceiver().try_put(cancel_msg)) {
             SPDLOG_ERROR("unable to put abort ts source event message into graph for source index {0}, event idx {1}", source_index, cancel_msg.event_idx);
@@ -525,9 +533,14 @@ void traact::buffer::TBBTimeDomainManager::EmitSyncSourceEvent(std::size_t event
 
 void traact::buffer::TBBTimeDomainManager::FinishEvent(const traact::dataflow::TraactMessage &in) {
     TimeDomainBuffer* td_buffer = in.domain_buffer;
-    SPDLOG_INFO("finish event, event idx {0}, ts {1}, {2}", td_buffer->GetCurrentMeasurementIndex(), td_buffer->getTimestamp().time_since_epoch().count(), reinterpret_cast<uint64_t>(td_buffer));
+    SPDLOG_INFO("finish event, event idx {0}, ts {1}, type {2}", td_buffer->GetCurrentMeasurementIndex(), td_buffer->getTimestamp().time_since_epoch().count(), (int)in.message_type);
 
     switch (in.message_type) {
+        case MessageType::Configure: {
+            spdlog::info("configure message finished");
+            wait_for_configure_finished_lock.SetInit(true);
+            break;
+        }
         case MessageType::Start:{
             spdlog::info("start message finished");
             wait_for_start_finished_lock.SetInit(true);

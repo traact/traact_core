@@ -71,6 +71,7 @@ namespace traact::component {
             if(result) {
                 if(util::FileExists(filename_, getName()))
                     ReadValue(data_);
+                    return true;
             } else {
                 SPDLOG_ERROR("{0}: missing file property", getName());
             }
