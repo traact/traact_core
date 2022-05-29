@@ -33,7 +33,7 @@
 #define TRAACTMULTI_TRAACT_FACADE_INCLUDE_TRAACT_COMPONENT_FACADE_APPLICATIONASYNCSOURCE_H_
 
 #include <traact/traact.h>
-#include <traact/buffer/SourceTimeDomainBuffer.h>
+#include <traact/buffer/SourceComponentBuffer.h>
 namespace traact::component::facade {
 
 template<typename HeaderType>
@@ -48,9 +48,10 @@ class ApplicationAsyncSource : public Component {
 
   pattern::Pattern::Ptr GetPattern() const{
       std::string pattern_name = "ApplicationAsyncSource_"+std::string(HeaderType::NativeTypeName);
-      pattern::spatial::SpatialPattern::Ptr
-              pattern = std::make_shared<pattern::spatial::SpatialPattern>(pattern_name, 1);
+      pattern::Pattern::Ptr
+              pattern = std::make_shared<pattern::Pattern>(pattern_name, 1);
       pattern->addProducerPort("output", HeaderType::MetaType);
+      pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A","B","output");
       return pattern;
   }
 
@@ -58,14 +59,17 @@ class ApplicationAsyncSource : public Component {
 
     //spdlog::info("acquire buffer");
     auto buffer = request_callback_(ts);
-    if (buffer == nullptr)
+    buffer.wait();
+    auto buffer_p = buffer.get();
+    if (buffer_p == nullptr)
           return false;
+
     //spdlog::info("get outout");
-    auto &newData = buffer->template getOutput<NativeType, HeaderType>(0);
+    auto &newData = buffer_p->template getOutput<NativeType, HeaderType>(0);
     //spdlog::info("write value");
     newData = value;
     //spdlog::info("commit data");
-      buffer->Commit(true);
+      buffer_p->Commit(true);
 
 	return true;
 

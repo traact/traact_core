@@ -148,3 +148,11 @@ void traact::facade::Facade::MasterSourceFinished() {
     stop();
 }
 
+std::vector<traact::pattern::Pattern::Ptr> traact::facade::Facade::GetAllAvailablePatterns() {
+    std::vector<pattern::Pattern::Ptr> result;
+    for (const auto& pattern_name : factory_->getPatternNames()) {
+        result.push_back(factory_->instantiatePattern(pattern_name));
+    }
+    return result;
+}
+

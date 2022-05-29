@@ -68,7 +68,8 @@ enum class TRAACT_CORE_EXPORT ComponentType {
    * Use:
    * Dataflow network calls: processTimePoint(Buffer& buffer)
    */
-  Functional,
+  SyncFunctional,
+  AsyncFunctional,
     /**
        * synchronous data sink component. use this for any component that provides data to programs outside of traact.
        * e.g. rendering of camera images and poses

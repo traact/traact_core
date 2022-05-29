@@ -29,26 +29,43 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "traact/pattern/spatial/SpatialPattern.h"
-traact::pattern::spatial::SpatialPattern::SpatialPattern(const std::string &name, size_t concurrency)
-    : Pattern(name, concurrency) {}
-traact::pattern::spatial::SpatialPattern::SpatialPattern(const traact::pattern::Pattern &value) : Pattern(value) {
+#ifndef TRAACTMULTI_TRAACT_DATAFLOW_TASKFLOWGRAPH_H
+#define TRAACTMULTI_TRAACT_DATAFLOW_TASKFLOWGRAPH_H
 
-}
-traact::pattern::spatial::SpatialPattern &traact::pattern::spatial::SpatialPattern::addCoordianteSystem(const std::string &name, bool is_multi) {
-  CoordinateSystem newCoord(name, is_multi);
-  coordinate_systems_.emplace(std::make_pair(name, std::move(newCoord)));
-  return *this;
-}
-traact::pattern::spatial::SpatialPattern &traact::pattern::spatial::SpatialPattern::addEdge(const std::string &source,
-                                                                                            const std::string &destination,
-                                                                                            const std::string &port) {
+#include <traact/component/Component.h>
+#include <traact/buffer/BufferFactory.h>
+#include <traact/traact.h>
+#include <taskflow/taskflow.hpp>
+#include "TaskFlowTimeDomain.h"
+#include "traact/util/Semaphore.h"
 
-  //TODO check for valid input
-  edges_.emplace(std::make_tuple(source, destination, port));
-  return *this;
-}
-traact::pattern::spatial::SpatialPattern::SpatialPattern() : Pattern("Invalid", -1) {
+namespace traact::dataflow {
 
-}
+    class TaskFlowGraph {
+    public:
+        TaskFlowGraph(std::set<buffer::BufferFactory::Ptr> genericFactoryObjects,
+                      DefaultComponentGraphPtr componentGraph,
+                      const component::Component::SourceFinishedCallback &callback);
 
+        void Init();
+        void Start();
+        void Stop();
+        void Teardown();
+
+    private:
+
+        std::set<buffer::BufferFactory::Ptr> generic_factory_objects_;
+        DefaultComponentGraphPtr component_graph_;
+
+        std::atomic_flag source_finished_{ATOMIC_FLAG_INIT};
+        component::Component::SourceFinishedCallback source_finished_callback;
+        void MasterSourceFinished();
+
+        tf::Executor executor_;
+        std::vector<std::shared_ptr<TaskFlowTimeDomain>> task_flow_time_domains_;
+
+    };
+
+} // traact
+
+#endif //TRAACTMULTI_TRAACT_DATAFLOW_TASKFLOWGRAPH_H

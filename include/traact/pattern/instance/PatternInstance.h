@@ -53,6 +53,7 @@ class TRAACT_CORE_EXPORT PatternInstance {
   size_t getConcurrency() const;
 
 
+
   PortInstance::ConstPtr getProducerPort(const std::string &name) const;
   PortInstance::ConstPtr getConsumerPort(const std::string &name) const;
   PortInstance::ConstPtr getPort(const std::string &name) const;
@@ -61,7 +62,7 @@ class TRAACT_CORE_EXPORT PatternInstance {
 
   std::string instance_id;
   GraphInstance *parent_graph;
-  Pattern pattern_pointer;
+  Pattern local_pattern;
   std::vector<PortInstance> producer_ports;
   std::vector<PortInstance> consumer_ports;
   int time_domain{0};

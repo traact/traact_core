@@ -29,19 +29,8 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
-#define TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
+#include "traact/pattern/CoordinateSystem.h"
+traact::pattern::spatial::CoordinateSystem::CoordinateSystem(std::string name, bool is_multi) : name(std::move(name)), is_multi(is_multi) {}
+traact::pattern::spatial::CoordinateSystem::CoordinateSystem() : name("Invalid"), is_multi(false) {
 
-#include <traact/serialization/JsonPort.h>
-#include <traact/pattern/Pattern.h>
-#include <traact/traact_core_export.h>
-namespace ns {
-
-using nlohmann::json;
-
-void to_json(json &jobj, const traact::pattern::Pattern &obj);
-void from_json(const json &jobj, traact::pattern::Pattern &obj);
-
-} // namespace ns
-
-#endif //TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
+}

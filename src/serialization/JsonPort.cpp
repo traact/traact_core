@@ -29,52 +29,24 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_COMPONENTSYNCSOURCE_H
-#define TRAACTMULTI_COMPONENTSYNCSOURCE_H
+#include <traact/serialization/JsonPort.h>
 
+namespace ns {
 
+    using nlohmann::json;
 
-#include <tbb/flow_graph.h>
+    void to_json(json &jobj, const traact::pattern::Port &obj) {
+        jobj["name"] = obj.name;
+        jobj["datatype"] = obj.datatype;
+        jobj["porttype"] = obj.porttype;
+        jobj["port_index"] = obj.port_index;
+    }
 
-#include "ComponentBase.h"
-#include "DynamicJoinNode.h"
+    void from_json(const json &jobj, traact::pattern::Port &obj) {
+        jobj.at("name").get_to(obj.name);
+        jobj.at("datatype").get_to(obj.datatype);
+        jobj.at("porttype").get_to(obj.porttype);
+        jobj.at("port_index").get_to(obj.port_index);
+    }
 
-namespace traact::dataflow {
-
-    class ComponentSyncSource : public ComponentBase, buffer::BufferSource {
-
-    public:
-        ComponentSyncSource(DefaultPatternPtr pattern_base,
-                                  DefaultComponentPtr component_base,
-                                  DefaultTimeDomainManagerPtr buffer_manager,
-                                  NetworkGraph *network_graph);
-
-        bool init() override;
-
-        bool teardown() override;
-
-        TraactMessage operator()(const TraactMessage &in);
-
-        void connect() override;
-
-        void disconnect() override;
-
-        component::ComponentType getComponentType() override;
-
-        tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
-
-        tbb::flow::sender<TraactMessage> &getSender(int index) override;
-
-    private:
-        std::string getComponentName() override;
-
-    protected:
-        tbb::flow::function_node<TraactMessage, TraactMessage> *node_;
-        tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
-        DynamicJoinNode *join_node_;
-
-    };
-}
-
-
-#endif //TRAACTMULTI_COMPONENTSYNCSOURCE_H
+} // namespace ns

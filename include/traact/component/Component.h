@@ -40,11 +40,11 @@
 #include <traact/datatypes.h>
 #include <traact/traact_core_export.h>
 #include <rttr/type>
-
+#include <future>
 namespace traact::buffer {
-    class TRAACT_CORE_EXPORT SourceTimeDomainBuffer;
-    class TRAACT_CORE_EXPORT ComponentBuffer;
-    class TRAACT_CORE_EXPORT ComponentBufferConfig;
+    class SourceComponentBuffer;
+    class ComponentBuffer;
+    class ComponentBufferConfig;
 }
 
 namespace traact::component {
@@ -55,15 +55,14 @@ namespace traact::component {
  * Override as needed according to traact::component::ComponentType
  * and needs of component
  *
- * @tparam Buffer Provides input and output buffer to the user
  */
 class TRAACT_CORE_EXPORT Component {
  public:
   typedef typename std::shared_ptr<Component> Ptr;
 
   // used by source components
-  typedef typename std::function<buffer::SourceTimeDomainBuffer* (TimestampType)> RequestCallback;
-    typedef typename std::function<void (TimestampType)> ReleaseAsyncCallback;
+  typedef typename std::function<std::future<buffer::SourceComponentBuffer*> (TimestampType)> RequestCallback;
+    typedef typename std::function<void (TimestampType, bool)> ReleaseAsyncCallback;
     typedef typename std::function<void (void)> SourceFinishedCallback;
 
 
@@ -128,7 +127,7 @@ class TRAACT_CORE_EXPORT Component {
    * The component should return true when the processing succeeded and output buffers
    * are filled with new data for this timestamp
    *
-   * @param data
+   * @tparam data Provides input and output buffer to the user
    * @return false if processing failed and output has not meaningful data
    */
   virtual bool processTimePoint(buffer::ComponentBuffer &data);
@@ -153,7 +152,7 @@ class TRAACT_CORE_EXPORT Component {
 
   void setReleaseAsyncCallback(const ReleaseAsyncCallback& releaseAsyncCallback);
 
-  void releaseAsyncCall(TimestampType ts);
+  void releaseAsyncCall(TimestampType ts, bool valid);
 
   void setSourceFinishedCallback(const SourceFinishedCallback& finished_callback );
   void setSourceFinished();

@@ -29,60 +29,33 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "TBBNetwork.h"
+#include "ComponentBuffer.h"
 
-#include <dataflow/tbb/NetworkGraph.h>
+namespace traact::buffer {
+    ComponentBuffer::ComponentBuffer(
+            LocalDataBufferType input_buffer,
+            LocalDataBufferType output_buffer
+    )
+            : local_input_buffer_(std::move(input_buffer)),
+              local_output_buffer_(std::move(output_buffer))
+    {
 
-traact::dataflow::TBBNetwork::TBBNetwork()
-        : Network() {}
 
-
-bool traact::dataflow::TBBNetwork::start() {
-  network_graphs_.clear();
-  bool result = true;
-
-  for (const ComponentGraphPtr &component_graph : component_graphs_) {
-    auto newGraph = std::make_shared<NetworkGraph>(component_graph, generic_factory_objects_);
-      newGraph->setMasterSourceFinishedCallback(std::bind(&TBBNetwork::MasterSourceFinished, this));
-      network_graphs_.emplace(newGraph);
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-      //result = result && network_graph->init();
-      network_graph->init();
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-      //result = result && network_graph->start();
-      network_graph->start();
-  }
-  return result;
-}
-
-bool traact::dataflow::TBBNetwork::stop() {
-    bool result = true;
-  for (const auto &network_graph : network_graphs_) {
-      //result = result && network_graph->stop();
-      network_graph->stop();
-  }
-
-  for (const auto &network_graph : network_graphs_) {
-      //result = result && network_graph->teardown();
-      network_graph->teardown();
-  }
-  network_graphs_.clear();
-  return result;
-}
-
-void traact::dataflow::TBBNetwork::MasterSourceFinished() {
-    finished_count_++;
-    if(finished_count_ == network_graphs_.size()){
-        stop_signal_thread_ = std::thread(master_source_finished_callback_);
     }
-}
 
-traact::dataflow::TBBNetwork::~TBBNetwork() {
-    if(stop_signal_thread_.joinable())
-        stop_signal_thread_.join();
+    TimestampType ComponentBuffer::GetTimestamp() {
+        return local_ts_;
+    }
 
+    void ComponentBuffer::SetTimestamp(TimestampType ts) {
+        local_ts_ = ts;
+    }
+
+    std::size_t ComponentBuffer::GetInputCount() {
+        return local_input_buffer_.size();
+    }
+
+    std::size_t ComponentBuffer::GetOutputCount() {
+        return local_output_buffer_.size();
+    };
 }

@@ -88,8 +88,8 @@ std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTim
             case ComponentType::AsyncSource:
             case ComponentType::AsyncSink:
             case ComponentType::SyncSource:
-            case ComponentType::Functional:
-            //case ComponentType::AsyncFunctional:
+            case ComponentType::SyncFunctional:
+            case ComponentType::AsyncFunctional:
             case ComponentType::SyncSink:
             {
                 if(pattern.first->time_domain == time_domain)

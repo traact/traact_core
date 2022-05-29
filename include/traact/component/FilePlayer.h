@@ -39,6 +39,7 @@
 #include <traact/traact.h>
 #include <fmt/format.h>
 #include <thread>
+#include <traact/buffer/SourceComponentBuffer.h>
 
 namespace traact::component {
 
@@ -57,13 +58,16 @@ namespace traact::component {
 
             std::string pattern_name = fmt::format("FilePlayer_{0}_{1}", serializer_name_, T::MetaType);
 
-            traact::pattern::spatial::SpatialPattern::Ptr
+            traact::pattern::Pattern::Ptr
                     pattern =
-                    std::make_shared<traact::pattern::spatial::SpatialPattern>(pattern_name, serial);
+                    std::make_shared<traact::pattern::Pattern>(pattern_name, serial);
 
             pattern->addProducerPort("output", T::MetaType);
-
             pattern->addStringParameter("file", "file.json");
+
+            pattern->addCoordinateSystem("A")
+            .addCoordinateSystem("B")
+            .addEdge("A", "B", "output");
 
             return pattern;
         }
@@ -121,10 +125,12 @@ namespace traact::component {
                 }
 
                 auto buffer = request_callback_(ts);
-                if(buffer != nullptr) {
-                    auto &newData = buffer->template getOutput<typename T::NativeType, T>(0);
+                buffer.wait();
+                auto buffer_p = buffer.get();
+                if (buffer_p != nullptr){
+                    auto &newData = buffer_p->template getOutput<typename T::NativeType, T>(0);
                     ReadValue(newData);
-                    buffer->Commit(true);
+                    buffer_p->Commit(true);
                 } else {
                     spdlog::error("request to get next buffer failed");
                     std::this_thread::yield();

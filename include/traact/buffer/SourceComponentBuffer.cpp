@@ -29,55 +29,34 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSOURCE_H_
-#define TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSOURCE_H_
 
-#include <thread>
-#include <tbb/flow_graph.h>
-
-#include "ComponentBase.h"
-
-namespace traact::dataflow {
-
-class ComponentAsyncSource : public ComponentBase, buffer::BufferSource {
- public:
-  ComponentAsyncSource(DefaultPatternPtr pattern_base,
-                             DefaultComponentPtr component_base,
-                             DefaultTimeDomainManagerPtr buffer_manager,
-                             NetworkGraph *network_graph);
+#include "SourceComponentBuffer.h"
+namespace traact::buffer {
+    SourceComponentBuffer::SourceComponentBuffer(ComponentBuffer &output_buffer, const CommitCallback &callback)
+            : local_output_buffer_(output_buffer), commit_callback_(callback){
 
 
-  bool init() override;
-  bool start() override;
-  bool stop() override;
-  bool teardown() override;
-  component::ComponentType getComponentType() override;
+    }
 
-    tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
-
-    tbb::flow::sender<TraactMessage> &getSender(int index) override;
-
-  void connect() override;
-  void disconnect() override;
-
-    std::string getComponentName() override;
-
-    TraactMessage operator()(const TraactMessage &in);
- protected:
-
-    tbb::flow::function_node<TraactMessage, TraactMessage> *node_;
-    tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
-
-  buffer::SourceTimeDomainBuffer* RequestBuffer(TimestampType ts) {
-      auto result =buffer_manager_->RequestSourceBuffer(ts, component_base_->getName());
-      if(result)
-        result->SetMessageType(MessageType::Data);
-    return result;
-  }
+    TimestampType SourceComponentBuffer::GetTimestamp() {
+        return local_output_buffer_.GetTimestamp();
+    }
 
 
-};
+    std::size_t SourceComponentBuffer::GetOutputCount() {
+        return local_output_buffer_.GetOutputCount();
+    }
 
+    void SourceComponentBuffer::Commit(bool valid) {
+        source_lock_.set_value(valid);
+        //commit_callback_(this, valid);
+    }
+
+    std::future<bool> SourceComponentBuffer::GetSourceLock() {
+        return source_lock_.get_future();
+    }
+
+    void SourceComponentBuffer::ResetLock() {
+        source_lock_ = {};
+    };
 }
-
-#endif //TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSOURCE_H_

@@ -38,6 +38,7 @@
 #include <traact/pattern/Pattern.h>
 #include <traact/buffer/BufferFactory.h>
 #include <traact/buffer/ComponentBuffer.h>
+#include <traact/component/Component.h>
 #include <traact/traact_core_export.h>
 
 namespace traact::facade {

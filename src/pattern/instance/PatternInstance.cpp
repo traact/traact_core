@@ -35,21 +35,21 @@
 
 traact::pattern::instance::PatternInstance::PatternInstance(std::string id,
                                                             traact::pattern::Pattern pattern_pointer, traact::pattern::instance::GraphInstance *graph)
-    : pattern_pointer(std::move(pattern_pointer)), instance_id(std::move(id)), parent_graph(graph)
+    : local_pattern(std::move(pattern_pointer)), instance_id(std::move(id)), parent_graph(graph)
     {
-  for (const auto &consumer_port : pattern_pointer.consumer_ports) {
-    PortInstance newPort(consumer_port, this);
-    consumer_ports.emplace_back(std::move(newPort));
-  }
-  for (const auto &producer_port : pattern_pointer.producer_ports) {
-    PortInstance newPort(producer_port, this);
-    producer_ports.emplace_back(std::move(newPort));
-  }
+        for (const auto &consumer_port : pattern_pointer.consumer_ports) {
+            PortInstance newPort(consumer_port, this);
+            consumer_ports.emplace_back(std::move(newPort));
+        }
+        for (const auto &producer_port : pattern_pointer.producer_ports) {
+            PortInstance newPort(producer_port, this);
+            producer_ports.emplace_back(std::move(newPort));
+        }
 
 }
 
 traact::pattern::instance::PatternInstance::PatternInstance()
-    : pattern_pointer(), instance_id(""), parent_graph(nullptr) {
+    : local_pattern(), instance_id(""), parent_graph(nullptr) {
 
 }
 
@@ -78,7 +78,7 @@ std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::ins
   return result;
 }
 size_t traact::pattern::instance::PatternInstance::getConcurrency() const {
-  return pattern_pointer.concurrency;
+  return local_pattern.concurrency;
 }
 traact::pattern::instance::PortInstance::ConstPtr traact::pattern::instance::PatternInstance::getPort(const std::string &name) const {
 
@@ -89,6 +89,6 @@ traact::pattern::instance::PortInstance::ConstPtr traact::pattern::instance::Pat
   return nullptr;
 }
 std::string traact::pattern::instance::PatternInstance::getPatternName() const {
-  return pattern_pointer.name;
+  return local_pattern.name;
 }
 

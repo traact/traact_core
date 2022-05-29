@@ -63,3 +63,7 @@ std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::ins
 bool traact::pattern::instance::PortInstance::IsConnected() const {
     return !connectedToPtr().empty();
 }
+
+traact::pattern::PortType traact::pattern::instance::PortInstance::GetPortType() const {
+    return port.porttype;
+}

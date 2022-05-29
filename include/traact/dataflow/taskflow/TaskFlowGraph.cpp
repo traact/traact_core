@@ -29,63 +29,62 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_COMPONENTASYNCSINK_H
-#define TRAACTMULTI_COMPONENTASYNCSINK_H
-
-
-
-#include <tbb/flow_graph.h>
-#include <tbb/concurrent_hash_map.h>
-
-#include "ComponentBase.h"
-#include "DynamicJoinNode.h"
+#include "TaskFlowGraph.h"
+#include "TaskFlowTaskFunctions.h"
+#include <utility>
 
 namespace traact::dataflow {
 
-    class ComponentAsyncSink : public ComponentBase {
-    public:
 
 
-        ComponentAsyncSink(DefaultPatternPtr pattern_base,
-                          DefaultComponentPtr component_base,
-                          DefaultTimeDomainManagerPtr buffer_manager,
-                          NetworkGraph *network_graph);
-
-        bool init() override;
-        bool teardown() override;
+    void TaskFlowGraph::Init() {
 
 
-        void connect() override;
-        void disconnect() override;
-        component::ComponentType getComponentType() override;
+        for(const auto& time_domain : component_graph_->GetTimeDomains()){
+            task_flow_time_domains_.emplace_back(std::make_shared<TaskFlowTimeDomain>(generic_factory_objects_, component_graph_, time_domain, source_finished_callback));
 
-        tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
+        }
 
-        tbb::flow::sender<TraactMessage> &getSender(int index) override;
-
-        void ReleaseGateway(TimestampType ts);
-
-    protected:
-        typedef tbb::flow::async_node<TraactMessage, TraactMessage> AsyncNodeType;
+        for(auto& task_flow_time_domain : task_flow_time_domains_){
+            task_flow_time_domain->Init();
+        }
 
 
-        struct work_type {
-            TraactMessage input;
-            AsyncNodeType::gateway_type* gateway;
-        };
 
-        typedef tbb::concurrent_hash_map<TimestampType , work_type, TimestampHashCompare> MapDataType;
-
-        void submit(TraactMessage in, AsyncNodeType::gateway_type& gateway);
-        AsyncNodeType *node_;
-        DynamicJoinNode *join_node_;
-        tbb::flow::sequencer_node<TraactMessage> *sequencer_node_;
-
-        MapDataType async_messages_;
-
-    };
-
-}
+    }
 
 
-#endif //TRAACTMULTI_COMPONENTASYNCSINK_H
+
+    void TaskFlowGraph::Start() {
+
+    }
+
+    void TaskFlowGraph::Stop() {
+        for(auto& task_flow_time_domain : task_flow_time_domains_){
+            task_flow_time_domain->Stop();
+        }
+
+    }
+
+    void TaskFlowGraph::Teardown() {
+
+    }
+
+    void TaskFlowGraph::MasterSourceFinished() {
+        // first finished call ends playback
+        if(source_finished_.test_and_set()) {
+            return;
+        }
+
+        source_finished_callback();
+    }
+
+    TaskFlowGraph::TaskFlowGraph(std::set<buffer::BufferFactory::Ptr> genericFactoryObjects,
+                                 DefaultComponentGraphPtr componentGraph,
+                                 const component::Component::SourceFinishedCallback &callback) : generic_factory_objects_(std::move(
+            genericFactoryObjects)), component_graph_(std::move(componentGraph)), source_finished_callback(callback) {
+
+    }
+
+
+} // traact

@@ -59,6 +59,8 @@ class TRAACT_CORE_EXPORT Facade {
 
   component::Component::Ptr getComponent(std::string id);
 
+  std::vector<pattern::Pattern::Ptr> GetAllAvailablePatterns();
+
  private:
   std::shared_ptr<PluginFactory> factory_;
   pattern::instance::GraphInstance::Ptr graph_instance_;

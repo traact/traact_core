@@ -32,7 +32,6 @@
 #ifndef TRAACTMULTI_LOGGING_H
 #define TRAACTMULTI_LOGGING_H
 
-#define SPDLOG_ACTIVE_LEVEL 0
 #include <spdlog/spdlog.h>
 
 #include <traact/traact_core_export.h>

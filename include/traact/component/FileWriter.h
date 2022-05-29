@@ -53,13 +53,14 @@ namespace traact::component {
 
             std::string pattern_name = fmt::format("FileWriter_{0}_{1}", serializer_name_, T::MetaType);
 
-            traact::pattern::spatial::SpatialPattern::Ptr
+            traact::pattern::Pattern::Ptr
                     pattern =
-                    std::make_shared<traact::pattern::spatial::SpatialPattern>(pattern_name, serial);
+                    std::make_shared<traact::pattern::Pattern>(pattern_name, serial);
 
             pattern->addConsumerPort("input", T::MetaType);
-
             pattern->addStringParameter("file", "file.json");
+
+            pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A","B","input");
 
             return pattern;
         }
@@ -79,7 +80,7 @@ namespace traact::component {
 
             const typename T::NativeType& input = data.getInput<typename T::NativeType, T>(0);
 
-            return saveValue(data.getTimestamp(), input);
+            return saveValue(data.GetTimestamp(), input);
         }
 
         virtual bool OpenFile() = 0;

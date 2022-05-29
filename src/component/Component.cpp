@@ -79,9 +79,9 @@ Component::Component(std::string name, const ComponentType traact_component_type
 
     }
 
-    void Component::releaseAsyncCall(TimestampType ts) {
+    void Component::releaseAsyncCall(TimestampType ts, bool valid) {
         if(releaseAsyncCallback_)
-            releaseAsyncCallback_(ts);
+            releaseAsyncCallback_(ts, valid);
         else
             SPDLOG_ERROR("releaseAsyncCallback_ not set");
     }

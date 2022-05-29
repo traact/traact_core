@@ -29,37 +29,50 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_TBBNETWORK_H
-#define TRAACTMULTI_TBBNETWORK_H
+#ifndef TRAACTMULTI_TIMESTEPBUFFER_H
+#define TRAACTMULTI_TIMESTEPBUFFER_H
 
-#include <traact/dataflow/Network.h>
-#include <atomic>
-#include <thread>
+#include <tuple>
+#include <vector>
+#include <map>
+#include "ComponentBuffer.h"
+#include "SourceComponentBuffer.h"
+#include <traact/component/ComponentTypes.h>
 
-namespace traact::dataflow {
-    class NetworkGraph;
-}
+namespace traact::buffer{
 
-namespace traact::dataflow {
 
-    class TBBNetwork : public Network {
+    struct BufferConfig {
+        component::ComponentType component_type;
+        std::vector<std::pair<int, int>> buffer_to_port_inputs;
+        std::vector<std::pair<int, int>> buffer_to_port_output;
+    };
+    using BufferType = std::vector<void*>;
+
+    class TimeStepBuffer {
     public:
-        TBBNetwork();
-        ~TBBNetwork();
 
-        bool start() override;
+        TimeStepBuffer(BufferType bufferData, std::map<int, std::pair<BufferConfig, std::string>> buffer_config, const SourceComponentBuffer::CommitCallback& callback);
+        std::size_t GetComponentIndex(const std::string &component_name);
+        ComponentBuffer &GetComponentBuffer(std::size_t component_idx);
+        ComponentBuffer &GetComponentBuffer(const std::string &component_name);
+        SourceComponentBuffer *GetSourceComponentBuffer(std::size_t component_idx);
+        std::future<bool> GetSourceLock(std::size_t component_idx);
 
-        bool stop() override;
+        void ResetForTimestamp(TimestampType ts);
+        TimestampType GetTimestamp();
+
+
     private:
-        std::set< std::shared_ptr<NetworkGraph> > network_graphs_;
-        std::atomic<int> finished_count_{0};
-        std::thread stop_signal_thread_;
-        void MasterSourceFinished();
+        TimestampType current_ts_;
+        std::map<std::string, std::size_t > component_buffer_to_index_;
+        std::vector< ComponentBuffer > component_buffers_list_;
+        std::vector< std::shared_ptr<SourceComponentBuffer> > source_buffer_list_;
+        BufferType buffer_data_;
 
     };
 }
 
 
 
-
-#endif //TRAACTMULTI_TBBNETWORK_H
+#endif //TRAACTMULTI_TIMESTEPBUFFER_H

@@ -64,6 +64,18 @@ class Semaphore {
     return true;
   }
 
+    inline bool try_wait() {
+        std::unique_lock<std::mutex> lock(mtx_);
+        while(count_ == 0) {
+            //wait on the mutex until notify is called
+            if(cv_.wait_for(lock, std::chrono::nanoseconds(0)) == std::cv_status::timeout) {
+                return false;
+            }
+        }
+        count_--;
+        return true;
+    }
+
   inline int count() {
       std::unique_lock<std::mutex> lock(mtx_);
       return count_;
@@ -110,7 +122,7 @@ class WaitForMasterTs {
     class WaitForInit {
 
     public:
-        WaitForInit (std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
+        WaitForInit (std::chrono::milliseconds timeout = std::chrono::milliseconds(1000))
                 : timeout_(timeout), is_init(false)
         {
         }
@@ -157,10 +169,19 @@ class WaitForMasterTs {
 
         inline void wait(const T value) {
             std::unique_lock<std::mutex> lock(mtx_);
-            while(current_value > value) {
+            while(current_value < value) {
                 //wait on the mutex until notify is called
                 cv_.wait(lock);
             }
+        }
+
+        inline T waitValue(const T value) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            while(current_value < value) {
+                //wait on the mutex until notify is called
+                cv_.wait(lock);
+            }
+            return current_value;
         }
 
 

@@ -38,12 +38,11 @@
 namespace traact {
 
 typedef std::chrono::duration<uint64_t, std::nano> TimeDurationType;
-typedef typename std::chrono::time_point<std::chrono::steady_clock, TimeDurationType> TimestampType;
+typedef typename std::chrono::time_point<std::chrono::system_clock, TimeDurationType> TimestampType;
 
 struct TRAACT_CORE_EXPORT TimestampHashCompare {
   static size_t hash(const TimestampType &x) {
-    // TODO it might be better to cast to micro for better hashcode (assuming no input is faster then 1 micro second), but there should be at most as many messages in the queue as there are timedomainbuffers (should be 3) so does it matter?
-    return x.time_since_epoch().count();
+    return std::hash<size_t >{}(x.time_since_epoch().count());
   }
   static bool equal(const TimestampType &x, const TimestampType &y) {
     return x == y;
@@ -51,7 +50,7 @@ struct TRAACT_CORE_EXPORT TimestampHashCompare {
 };
 
 inline static TimestampType now() {
-  return std::chrono::steady_clock::now();
+  return std::chrono::system_clock::now();
 }
 
 enum class MessageDataMode {
@@ -84,6 +83,12 @@ enum class MissingSourceEventMode {
 enum concurrency { unlimited = 0, serial = 1 };
 
 namespace buffer {
+    template<typename HeaderType, std::size_t PortValue> class PortConfig {
+    public:
+        using Header = HeaderType;
+        enum { PortIdx = PortValue };
+    };
+
     struct TRAACT_CORE_EXPORT TimeDomainManagerConfig {
         int time_domain{-1};
         std::size_t ringbuffer_size{0};

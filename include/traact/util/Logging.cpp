@@ -41,24 +41,23 @@ void
 traact::util::init_logging(spdlog::level::level_enum log_level, bool use_file_sink, std::string file) {
     try {
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        console_sink->set_level(spdlog::level::trace);
-        console_sink->set_pattern("[%^%l%$] %v");
+        console_sink->set_level(log_level);
+        //console_sink->set_pattern("[%^%l%$] %v");
+
+        console_sink->set_pattern("[%Y-%m-%d %H:%M:%S:%e] - [%^%l%$] - %s:%# \n%v");
 
         std::shared_ptr<spdlog::logger> logger;
         if(use_file_sink){
             auto filesink = std::make_shared<spdlog::sinks::basic_file_sink_mt >(file);
             spdlog::sinks_init_list sinks{filesink, console_sink};
-            logger = std::make_shared<spdlog::logger>("console", sinks);
+            logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
         } else {
             spdlog::sinks_init_list sinks{console_sink};
-            logger = std::make_shared<spdlog::logger>("console", sinks);
+            logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
         }
 
-
-
-
-        spdlog::set_default_logger(logger);
-        setup_logger(logger);
+        spdlog::register_logger(logger);
+        spdlog::set_default_logger(spdlog::get("multi_sink"));
 
     }
     catch (const spdlog::spdlog_ex &ex) {

@@ -5,7 +5,7 @@ from conans import ConanFile, CMake, tools
 
 class Traact(ConanFile):
     name = "traact_core"
-    version = "0.0.1"    
+    version = "0.0.1"
 
     description = "Convenience wrapper around tbb for realtime tracking in heterogeneous, distributed sensor environments"
     url = "https://github.com/traact/traact_core"
@@ -32,13 +32,13 @@ class Traact(ConanFile):
             self.requires("gtest/1.10.0")
             self.requires("fakeit/2.0.7")
         self.requires("traact_run_env/%s@camposs/stable" % self.version)
-        self.requires("nlohmann_json/3.7.3")        
+        self.requires("nlohmann_json/3.7.3")
         self.requires("spdlog/1.8.2")
-        self.requires("tbb/2020.2")
+        self.requires("onetbb/2020.3")
         self.requires("rttr/0.9.7-dev@camposs/stable")
-        self.requires("Boost/1.75.0@camposs/stable")
+        self.requires("Boost/1.75.0-r3@camposs/stable")
         self.requires("cppfs/1.3.0@camposs/stable")
-
+        self.requires("taskflow/3.3.0")
 
     def _configure_cmake(self):
         cmake = CMake(self)
@@ -71,4 +71,4 @@ class Traact(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = [self.name]
-        #self.cpp_info.libs = tools.collect_libs(self)
+        # self.cpp_info.libs = tools.collect_libs(self)

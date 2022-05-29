@@ -33,89 +33,39 @@
 #define TRAACT_INCLUDE_TRAACT_BUFFER_GENERIC_GENERICTIMEDOMAINBUFFER_H_
 
 #include <atomic>
-
-#include <traact/component/ComponentGraph.h>
-#include <traact/buffer/BufferFactory.h>
 #include <traact/traact_core_export.h>
-#include "BufferTypeConversion.h"
-#include "BufferSource.h"
-#include "SourceTimeDomainBuffer.h"
+#include "TimeStepBuffer.h"
+#include "BufferFactory.h"
+#include <traact/component/ComponentGraph.h>
 
 namespace traact::buffer {
 
-class TRAACT_CORE_EXPORT ComponentBuffer;
 
 class TRAACT_CORE_EXPORT TimeDomainBuffer {
  public:
-  typedef typename std::vector<void *> BufferType;
-  TimeDomainBuffer(TimeDomainManager *timedomainManager, std::vector<BufferSource*> bufferSources,
-                            BufferType bufferData, BufferType bufferHeader,
-                            const std::map<pattern::instance::ComponentID_PortName, int>& port_to_bufferIndex, const std::set<pattern::instance::PatternInstance::Ptr>& components);
+    TimeDomainBuffer(int time_domain, std::set<buffer::BufferFactory::Ptr> factory_objects);
+    ~TimeDomainBuffer();
+    void Init(const component::ComponentGraph &component_graph, const SourceComponentBuffer::CommitCallback& callback);
+    void Clear();
+    TimeStepBuffer& GetTimeStepBuffer(size_t concurrent_index );
 
+    int GetComponentIndex(const std::string &instance_id);
+    int GetCountAsyncSources()const;
+    int GetCountSyncSources()const;
+    int GetCountSources()const;
 
-    virtual ~TimeDomainBuffer();
-
-    ComponentBufferConfig* getComponentBufferConfig(const std::string &component_name);
-  ComponentBuffer &getComponentBuffer(const std::string &component_name);
-  const TimestampType &getTimestamp() const;
-  bool isFree() const;
-
-  void resetForEvent(size_t event_idx, TimestampType ts);
-
-  size_t GetCurrentMeasurementIndex() const;
-  void decreaseUse();
-  void increaseUse();
-  int getUseCount() const;
-  bool isSourcesSet();
-  bool isUsed() const;
-  void invalidateBuffer();
-
-
-    template<typename ReturnType, typename HeaderType>
-    const ReturnType& getInput(size_t index) {
-        return type_conversion_.asImmutable<ReturnType, HeaderType>(buffer_data_[index], 0);
-
-    }
-
-    template<typename HeaderType>
-    const HeaderType getInputHeader(size_t index) const {
-        return static_cast<HeaderType >(buffer_header_[index]);
-    }
-
-    template<typename ReturnType, typename HeaderType>
-    ReturnType &getOutput(size_t index) {
-        return type_conversion_.asMutable<ReturnType, HeaderType>(buffer_data_[index], 0);
-    }
-
-
-    const void setOutputHeader(size_t index, void* header);
-
-    void SetSourceBuffer(traact::buffer::SourceTimeDomainBuffer *source_buffer);
-    bool SetInvalidSourceBuffer(std::size_t source_buffer);
-
-    const std::vector<SourceTimeDomainBuffer*>& GetSourceTimeDomainBuffer() const;
-
- private:
-    TimeDomainManager* timedomain_manager_;
-    std::vector<BufferSource*> buffer_sources_;
-    std::vector<bool> td_buffer_sources_valid_;
-    std::vector<bool> td_buffer_sources_send_;
-    std::vector<SourceTimeDomainBuffer*> td_buffer_sources_;
-    bool is_used_;
-    bool is_master_set_;
-
-
-    std::atomic<int> current_wait_count_;
-    int maximum_wait_count_;
-
-    TimestampType current_timestamp_;
-    size_t current_measurement_index_;
-
-    std::map<std::string, std::shared_ptr<ComponentBuffer> > component_buffers_;
-    std::map<std::string, std::shared_ptr<ComponentBufferConfig> > component_buffers_config_;
-    BufferType buffer_data_;
-    BufferType buffer_header_;
-    BufferTypeConversion type_conversion_;
+private:
+    int time_domain_;
+    int count_async_sources_{0};
+    int count_sync_sources_{0};
+    int count_sources_{0};
+    TimeDomainManagerConfig config_;
+    std::map<std::string, buffer::BufferFactory::Ptr> factory_objects_;
+    std::vector<TimeStepBuffer> time_step_buffer_;
+    std::vector<BufferType> buffer_data_;
+    std::vector<std::string> buffer_datatype_;
+    std::map<int, std::pair<BufferConfig, std::string>> buffer_config_;
+    std::map<pattern::instance::ComponentID_PortName, int> port_to_bufferIndex_;
 };
 }
 

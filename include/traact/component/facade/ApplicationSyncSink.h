@@ -50,24 +50,19 @@ class ApplicationSyncSink : public Component {
 
     pattern::Pattern::Ptr GetPattern() const{
         std::string pattern_name = "ApplicationSyncSink_"+std::string(HeaderType::NativeTypeName);
-        pattern::spatial::SpatialPattern::Ptr
-                pattern = std::make_shared<pattern::spatial::SpatialPattern>(pattern_name, 1);
+        pattern::Pattern::Ptr
+                pattern = std::make_shared<pattern::Pattern>(pattern_name, 1);
         pattern->addConsumerPort("input", HeaderType::MetaType);
+        pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A","B","input");
         return pattern;
     }
-
-  static void fillPattern(traact::pattern::Pattern::Ptr& pattern) {
-    std::string pattern_name = "ApplicationSyncSink_"+std::string(HeaderType::NativeTypeName);
-    pattern->name = pattern_name;
-    pattern->addConsumerPort("input", HeaderType::MetaType);
-  }
 
 
   bool processTimePoint(traact::DefaultComponentBuffer &data) override {
 
     if(callback_){
         const auto &input = data.getInput<NativeType, HeaderType>(0);
-        callback_(data.getTimestamp(), input);
+        callback_(data.GetTimestamp(), input);
     } else {
         spdlog::warn("ApplicationSyncSink {0}: missing callback function", getName());
     }

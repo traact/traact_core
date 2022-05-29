@@ -29,19 +29,27 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
-#define TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
+#ifndef TRAACTMULTI_TRAACT_DATAFLOW_TASKFLOW_TASKFLOWNETWORK_H
+#define TRAACTMULTI_TRAACT_DATAFLOW_TASKFLOW_TASKFLOWNETWORK_H
 
-#include <traact/serialization/JsonPort.h>
-#include <traact/pattern/Pattern.h>
-#include <traact/traact_core_export.h>
-namespace ns {
+#include <traact/dataflow/Network.h>
+#include <atomic>
+#include "TaskFlowGraph.h"
 
-using nlohmann::json;
+namespace traact::dataflow {
+    class TRAACT_CORE_EXPORT TaskFlowNetwork : public Network{
+    public:
+        ~TaskFlowNetwork();
+        bool start() override;
 
-void to_json(json &jobj, const traact::pattern::Pattern &obj);
-void from_json(const json &jobj, traact::pattern::Pattern &obj);
+        bool stop() override;
+    private:
+        std::vector<std::shared_ptr<TaskFlowGraph>> task_graphs_;
 
-} // namespace ns
+    };
+}
 
-#endif //TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
+
+
+
+#endif //TRAACTMULTI_TRAACT_DATAFLOW_TASKFLOW_TASKFLOWNETWORK_H

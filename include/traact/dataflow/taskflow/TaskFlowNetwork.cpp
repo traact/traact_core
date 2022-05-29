@@ -29,8 +29,31 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "traact/pattern/spatial/CoordinateSystem.h"
-traact::pattern::spatial::CoordinateSystem::CoordinateSystem(std::string name, bool is_multi) : name(std::move(name)), is_multi(is_multi) {}
-traact::pattern::spatial::CoordinateSystem::CoordinateSystem() : name("Invalid"), is_multi(false) {
+#include "TaskFlowNetwork.h"
 
+bool traact::dataflow::TaskFlowNetwork::start() {
+
+    bool result = true;
+
+    for (const ComponentGraphPtr &component_graph : component_graphs_) {
+        task_graphs_.emplace_back(std::make_shared<TaskFlowGraph>(generic_factory_objects_, component_graph, master_source_finished_callback_));
+    }
+    for (auto& graph : task_graphs_)
+        graph->Init();
+
+    for (auto& graph : task_graphs_)
+        graph->Start();
+
+    return result;
+}
+
+bool traact::dataflow::TaskFlowNetwork::stop() {
+    for (auto& graph : task_graphs_)
+        graph->Stop();
+    return true;
+}
+
+traact::dataflow::TaskFlowNetwork::~TaskFlowNetwork() {
+    for (auto& graph : task_graphs_)
+        graph->Teardown();
 }

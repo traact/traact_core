@@ -35,119 +35,64 @@
 #include <tuple>
 
 #include <traact/datatypes.h>
-#include <traact/buffer/TimeDomainBuffer.h>
-#include <traact/buffer/BufferTypeConversion.h>
 #include <traact/traact_core_export.h>
 #include <traact/util/Logging.h>
 namespace traact::buffer {
 
-    class TRAACT_CORE_EXPORT ComponentBufferConfig {
-    public:
-        ComponentBufferConfig(std::string component_name,
-                              TimeDomainBuffer &time_domain_buffer,
-                              std::vector<size_t> input,
-                              std::vector<size_t> output
-        )
-                : component_name_(std::move(component_name)),
-                  time_domain_buffer_(time_domain_buffer),
-                  input_data_(std::move(input)),
-                  output_data_(std::move(output))
-        {}
-
-        template<typename HeaderType>
-        std::shared_ptr<HeaderType> GetInputHeader(size_t index) const {
-            return time_domain_buffer_.getInputHeader<HeaderType>(input_data_.at(index));
-        }
-        template<typename HeaderType>
-        void SetOutputHeader(size_t index, HeaderType header) const {
-            HeaderType* new_header = new HeaderType();
-            *new_header = header;
-            time_domain_buffer_.setOutputHeader(output_data_.at(index), new_header);
-        }
-    private:
-        std::vector<size_t> input_data_;
-        std::vector<size_t> output_data_;
-
-        std::string component_name_;
-
-        TimeDomainBuffer &time_domain_buffer_;
-    };
 
 
 
 class TRAACT_CORE_EXPORT ComponentBuffer {
  public:
-  typedef typename std::shared_ptr<ComponentBuffer> Ptr;
-  typedef typename TimeDomainBuffer::BufferType TDBufferType;
-  ComponentBuffer(std::string
-                         component_name,
-                         TimeDomainBuffer &time_domain_buffer,
-                         std::vector<size_t> input,
-                         std::vector<size_t> output
-  )
-      : component_name_(std::move(component_name)),
-        time_domain_buffer_(time_domain_buffer),
-        input_data_(std::move(input)),
-        output_data_(std::move(output))
-        {
-
-
-  };
+    using LocalDataBufferType = std::vector<void*>;
+    ComponentBuffer(LocalDataBufferType input_buffer, LocalDataBufferType output_buffer);
+    ComponentBuffer() = default;
 
   template<typename ReturnType, typename HeaderType>
-  const ReturnType& getInput(size_t index) {
-    return time_domain_buffer_.getInput<ReturnType, HeaderType>(input_data_.at(index));
+  const ReturnType& getInput(size_t index) const{
+    return getInput<HeaderType>(index);
 
   }
 
-  template<typename HeaderType>
-    const std::shared_ptr<HeaderType> getInputHeader(size_t index) const {
-        return time_domain_buffer_.getInputHeader<HeaderType>(input_data_.at(index));
+  template<typename ReturnType, typename HeaderType>
+  ReturnType &getOutput(size_t index) const{
+      return getOutput<HeaderType>(index);
+  }
+
+    template<typename HeaderType>
+    const typename HeaderType::NativeType& getInput(size_t index) const{
+        return *static_cast<typename HeaderType::NativeType *>(local_input_buffer_[index]);
+    }
+
+    template<typename HeaderType>
+    typename HeaderType::NativeType &getOutput(size_t index) const{
+        return *static_cast<typename HeaderType::NativeType *>(local_output_buffer_[index]);
     }
 
 
-  template<typename ReturnType, typename HeaderType>
-  ReturnType &getOutput(size_t index) {
-      return time_domain_buffer_.getOutput<ReturnType, HeaderType>(output_data_.at(index));
-  }
+    template<typename Port>
+    const typename Port::Header::NativeType& getInput() const{
+        return *static_cast<typename Port::Header::NativeType *>(local_input_buffer_[Port::PortIdx]);
 
-//    template<typename HeaderType>
-//    const void setOutputHeader(size_t index, HeaderType header) const {
-//        time_domain_buffer_.setOutputHeader(output_data_.at(index), &header);
-//    }
-
-  const TimestampType &getTimestamp() const {
-    return time_domain_buffer_.getTimestamp();
-  }
-
-  int commit() {
-      time_domain_buffer_.decreaseUse();
-      return 0;
-  }
-
-  bool isValid() const {
-      return true;//time_domain_buffer_.isUsed();
-  }
-
-  std::size_t GetInputCount() {
-      return input_data_.size();
-  }
-
-    std::size_t GetOutputCount() {
-        return output_data_.size();
     }
 
-        size_t GetMeaIdx() {
-            return time_domain_buffer_.GetCurrentMeasurementIndex();
-        }
+    template<typename Port>
+    typename Port::Header::NativeType &getOutput() const{
+        return *static_cast<typename Port::Header::NativeType *>(local_output_buffer_[Port::PortIdx]);
+    }
+
+    std::size_t GetInputCount();
+
+    std::size_t GetOutputCount();
+
+    void SetTimestamp(TimestampType ts);
+
+    TimestampType GetTimestamp();
 
     private:
-  std::vector<size_t> input_data_;
-  std::vector<size_t> output_data_;
-
-  std::string component_name_;
-
-  TimeDomainBuffer &time_domain_buffer_;
+        TimestampType local_ts_;
+        LocalDataBufferType local_input_buffer_;
+        LocalDataBufferType local_output_buffer_;
     };
 }
 

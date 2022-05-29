@@ -4,6 +4,7 @@ include(GenerateExportHeader)
 
 option(WITH_TESTS "Build Tests" ON)
 option(WITH_COVERAGE "" ON)
+option(WITH_COZ "With Coz Profiler" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -17,14 +18,14 @@ set(LIB_HEADERS
         include/traact/dataflow/Network.h
         include/traact/pattern/Pattern.h
         include/traact/pattern/Port.h
-        include/traact/pattern/spatial/SpatialPattern.h
-        include/traact/pattern/spatial/CoordinateSystem.h
-        include/traact/buffer/TimeDomainManager.h
+        include/traact/pattern/CoordinateSystem.h
+
         include/traact/pattern/MetaPattern.h
         include/traact/component/ComponentGraph.h
         include/traact/util/PerformanceMonitor.h
         include/traact/buffer/ComponentBuffer.h
         include/traact/buffer/TimeDomainBuffer.h
+        include/traact/buffer/TimeDomainBuffer.cpp
         include/traact/buffer/BufferTypeConversion.h
         include/traact/buffer/BufferFactory.h
         include/traact/pattern/instance/PatternInstance.h
@@ -37,8 +38,7 @@ set(LIB_HEADERS
         include/traact/component/facade/ApplicationSyncSink.h
         include/traact/component/PlayerBaseComponent.cpp
         include/traact/component/PlayerBaseComponent.h
-        include/traact/buffer/SourceTimeDomainBuffer.h
-        include/traact/buffer/SourceTimeDomainBuffer.cpp
+
         include/traact/component/FileWriter.cpp
         include/traact/component/FileWriter.h
         include/traact/component/FileReader.cpp
@@ -51,50 +51,34 @@ set(LIB_HEADERS
         include/traact/serialization/JsonPatternInstance.h
         include/traact/serialization/JsonPort.h
         include/traact/serialization/JsonPortInstance.h
-        include/traact/serialization/JsonSpatialPattern.h
-        include/traact/dataflow/tbb/TBBNetwork.cpp
-        include/traact/dataflow/tbb/TBBNetwork.h
+
         include/traact/util/FileUtil.h
         include/traact/util/Logging.cpp
         include/traact/util/Logging.h
         include/traact/facade/rttr/RTTRPluginFactory.cpp
         include/traact/facade/rttr/RTTRPluginFactory.h
-        include/traact/serialization/JsonGraphInstance.h include/traact/pattern/ParameterUtils.h include/traact/component/ModuleComponent.h include/traact/util/TraactCoreUtils.h include/traact/util/TraactCoreUtils.cpp)
+        include/traact/serialization/JsonGraphInstance.h
+        include/traact/pattern/ParameterUtils.h
+        include/traact/component/ModuleComponent.h
+        include/traact/util/TraactCoreUtils.h
+        include/traact/util/TraactCoreUtils.cpp
+        include/traact/buffer/TimeStepBuffer.h
+        include/traact/buffer/TimeStepBuffer.cpp)
 
 # rest of source code
 set(LIB_SOURCES
         src/pattern/Pattern.cpp
         src/pattern/Port.cpp
-        src/pattern/spatial/SpatialPattern.cpp
-        src/pattern/spatial/CoordinateSystem.cpp
-        src/buffer/TimeDomainManager.cpp
+        src/pattern/CoordinateSystem.cpp
+
         src/pattern/MetaPattern.cpp
-        src/buffer/TimeDomainBuffer.cpp
+
         src/util/PerformanceMonitor.cpp
         src/pattern/instance/PatternInstance.cpp
         src/pattern/instance/PortInstance.cpp
         src/pattern/instance/GraphInstance.cpp
         src/util/Utils.cpp
         src/dataflow/Network.cpp
-        src/buffer/tbb/TBBTimeDomainManager.cpp
-        src/buffer/tbb/TBBTimeDomainManager.h
-        src/dataflow/tbb/DynamicJoinNode.h
-        src/dataflow/tbb/NetworkGraph.cpp
-        src/dataflow/tbb/NetworkGraph.h
-        src/dataflow/tbb/SourceMergeNode.h
-        src/dataflow/tbb/ComponentAsyncSource.cpp
-        src/dataflow/tbb/ComponentAsyncSource.h
-        src/dataflow/tbb/ComponentBase.h
-        src/dataflow/tbb/ComponentFunctional.cpp
-        src/dataflow/tbb/ComponentFunctional.h
-        src/dataflow/tbb/ComponentSyncSink.cpp
-        src/dataflow/tbb/ComponentSyncSink.h
-        src/dataflow/tbb/ComponentSyncSource.cpp
-        src/dataflow/tbb/ComponentSyncSource.h
-        src/dataflow/tbb/DataflowMessage.h
-        src/dataflow/tbb/SourceMergeNode.h
-
-
         src/pattern/ParameterUtils.cpp
         src/component/Component.cpp
         src/component/ModuleComponent.cpp
@@ -102,7 +86,22 @@ set(LIB_SOURCES
         include/traact/util/Semaphore.h
         include/traact/buffer/BufferSource.h
         include/traact/facade/DefaultFacade.cpp
-        include/traact/facade/DefaultFacade.h src/dataflow/tbb/ComponentAsyncSink.cpp src/dataflow/tbb/ComponentAsyncSink.h include/traact/util/FileUtil.cpp)
+        include/traact/facade/DefaultFacade.h
+        include/traact/util/FileUtil.cpp
+        src/serialization/JsonGraphInstance.cpp
+        src/serialization/JsonPortInstance.cpp
+        src/serialization/JsonPattern.cpp
+        src/serialization/JsonPatternInstance.cpp
+        src/serialization/JsonPort.cpp
+        src/serialization/JsonTimeDomainManagerConfig.cpp
+        include/traact/util/RingBuffer.h
+        include/traact/dataflow/taskflow/TaskFlowNetwork.cpp
+        include/traact/dataflow/taskflow/TaskFlowNetwork.h
+        include/traact/dataflow/taskflow/TaskFlowGraph.cpp
+        include/traact/dataflow/taskflow/TaskFlowGraph.h
+        include/traact/buffer/ComponentBuffer.cpp
+        include/traact/buffer/SourceComponentBuffer.cpp
+        include/traact/buffer/SourceComponentBuffer.h include/traact/dataflow/taskflow/TaskFlowTaskFunctions.h include/traact/dataflow/taskflow/TaskFlowTimeDomain.cpp include/traact/dataflow/taskflow/TaskFlowTimeDomain.h)
 
 
 # conan is required hard, library name, version and description are configured from conan
@@ -123,6 +122,8 @@ endif ()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DTBB_USE_DEBUG=1)
+    add_compile_definitions(SPDLOG_DEBUG_ON SPDLOG_TRACE_ON SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+
 endif ()
 
 add_definitions(-DTBB_PREVIEW_FLOW_GRAPH_FEATURES=1)
@@ -153,11 +154,15 @@ if (MSVC)
     add_definitions(-D_DISABLE_EXTENDED_ALIGNED_STORAGE -DHAVE_SNPRINTF)
 endif()
 
+
 add_library(${CONAN_PACKAGE_NAME} SHARED
         ${LIB_HEADERS}
         ${LIB_SOURCES}
         )
 
+if(WITH_COZ)
+    find_package(coz-profiler)
+endif()
 
 conan_target_link_libraries(${CONAN_PACKAGE_NAME})
 

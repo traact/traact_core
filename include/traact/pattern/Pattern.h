@@ -38,6 +38,7 @@
 #include <map>
 #include <nlohmann/json.hpp>
 #include <traact/pattern/Port.h>
+#include <traact/pattern/CoordinateSystem.h>
 
 namespace traact::pattern {
 
@@ -52,6 +53,9 @@ struct TRAACT_CORE_EXPORT Pattern {
 
   Pattern &addProducerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1);
   Pattern &addConsumerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1);
+
+    Pattern &beginPortGroup(const std::string &name);
+    Pattern &endPortGroup();
 
   template<typename T>
   Pattern &addParameter(std::string name,
@@ -71,11 +75,36 @@ struct TRAACT_CORE_EXPORT Pattern {
   Pattern &addParameter(const std::string &name,
                         const nlohmann::json &json_value);
 
+    /**
+    * Add a node to spatial relationship graph
+    * @param name name of node
+    */
+    Pattern &addCoordinateSystem(const std::string &name, bool is_multi = false);
+
+    /**
+     * Add edge between two coordinate systems.
+     * Depending on port for:
+     * -producer or consumer
+     * -data meta type
+     * @param source origin of transformation e.g. camera
+     * @param destination destination of transformation e.g. marker
+     * @param port transformation as data meta type
+     */
+    Pattern &addEdge(const std::string &source, const std::string &destination, const std::string &port);
+
+    std::map<std::string, spatial::CoordinateSystem> coordinate_systems_;
+    // set of edges: source name, destination name, port name
+    std::set<std::tuple<std::string, std::string, std::string> > edges_;
+
   std::string name;
   size_t concurrency;
   std::vector<Port> producer_ports;
   std::vector<Port> consumer_ports;
+  std::vector<PortGroup> group_ports;
   nlohmann::json parameter;
+
+private:
+    bool is_group_port{false};
 
 };
 

@@ -51,9 +51,9 @@ class TRAACT_CORE_EXPORT Network {
 
   void addComponentGraph(ComponentGraphPtr component_graph);
 
-    void setGenericFactoryObjects(const std::set<buffer::BufferFactory::Ptr> &genericFactoryObjects);
+  void setGenericFactoryObjects(const std::set<buffer::BufferFactory::Ptr> &genericFactoryObjects);
 
-    virtual bool start() = 0;
+  virtual bool start() = 0;
   virtual bool stop() = 0;
 
   void setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback);

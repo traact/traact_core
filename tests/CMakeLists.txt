@@ -9,7 +9,10 @@ endif()
 # public header
 set(TEST_SOURCES
         test_main.cpp
-        dataflow/Test_DynamicJoinNode.cpp dataflow/DataflowMessageReceiver.cpp dataflow/DataflowMessageReceiver.h)
+        #dataflow/Test_DynamicJoinNode.cpp
+        #dataflow/DataflowMessageReceiver.cpp
+        #dataflow/DataflowMessageReceiver.h
+        )
 
 add_executable(core_tests ${TEST_SOURCES})
 

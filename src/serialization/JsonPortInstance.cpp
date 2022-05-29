@@ -29,44 +29,26 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_SPATIALPATTERN_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_SPATIALPATTERN_H_
+#include <traact/serialization/JsonPortInstance.h>
+namespace ns {
 
-#include <string>
-#include <map>
-#include <traact/pattern/Pattern.h>
-#include <traact/pattern/spatial/CoordinateSystem.h>
-#include <traact/traact_core_export.h>
-namespace traact::pattern::spatial {
-struct TRAACT_CORE_EXPORT SpatialPattern : public Pattern {
- public:
-  typedef typename std::shared_ptr<SpatialPattern> Ptr;
-  SpatialPattern(const std::string &name, size_t concurrency);
-  SpatialPattern(const Pattern &value);
-  SpatialPattern();
-  /**
-   * Add a node to spatial relationship graph
-   * @param name name of node
-   */
-  SpatialPattern &addCoordianteSystem(const std::string &name, bool is_multi = false);
+    using nlohmann::json;
 
-  /**
-   * Add edge between two coordinate systems.
-   * Depending on port for:
-   * -producer or consumer
-   * -data meta type
-   * @param source origin of transformation e.g. camera
-   * @param destination destination of transformation e.g. marker
-   * @param port transformation as data meta type
-   */
-  SpatialPattern &addEdge(const std::string &source, const std::string &destination, const std::string &port);
+    void to_json(json &jobj, const traact::pattern::instance::PortInstance &obj) {
+        to_json(jobj, obj.port);
+        if (obj.port.porttype == traact::pattern::PortType::Consumer)
+            jobj["connected_to"] = json(obj.connected_to);
 
-  std::map<std::string, CoordinateSystem> coordinate_systems_;
-  // set of edges, source name, destination name, port name
-  std::set<std::tuple<std::string, std::string, std::string> > edges_;
+    }
 
-};
+    void from_json(const json &jobj, traact::pattern::instance::PortInstance &obj) {
+        from_json(jobj, obj.port);
+        if (obj.port.porttype == traact::pattern::PortType::Consumer) {
+            auto find_it = jobj.find("connected_to");
+            if (find_it != jobj.end())
+                find_it->get_to(obj.connected_to);
+        }
 
-}
+    }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_SPATIAL_SPATIALPATTERN_H_
+} // namespace ns

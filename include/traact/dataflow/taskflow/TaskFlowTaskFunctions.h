@@ -29,19 +29,26 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
-#define TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
+#ifndef TRAACTMULTI_TASKFLOWTASKFUNCTIONS_H
+#define TRAACTMULTI_TASKFLOWTASKFUNCTIONS_H
 
-#include <traact/serialization/JsonPort.h>
-#include <traact/pattern/Pattern.h>
-#include <traact/traact_core_export.h>
-namespace ns {
+#include <traact/buffer/ComponentBuffer.h>
+#include "traact/component/Component.h"
 
-using nlohmann::json;
+namespace traact::dataflow {
+    inline void TaskAsyncSource(traact::component::Component *const component, buffer::ComponentBuffer& buffer) {
 
-void to_json(json &jobj, const traact::pattern::Pattern &obj);
-void from_json(const json &jobj, traact::pattern::Pattern &obj);
+    }
+    void TaskAsyncSink();
+    void TaskSyncSource();
+    void TaskSyncFunctional();
+    void TaskAsyncFunctional();
+    inline void TaskSyncSink(component::Component *const component, buffer::ComponentBuffer& buffer){
+        component->processTimePoint(buffer);
+    }
+    void TaskInvalid();
+}
 
-} // namespace ns
 
-#endif //TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERN_H_
+
+#endif //TRAACTMULTI_TASKFLOWTASKFUNCTIONS_H

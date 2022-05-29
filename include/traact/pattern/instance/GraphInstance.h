@@ -52,6 +52,7 @@ class TRAACT_CORE_EXPORT GraphInstance {
                std::string producer_port,
                std::string sink_component,
                std::string consumer_port);
+    bool disconnect(std::string sink_component, std::string consumer_port);
 
   traact::pattern::instance::PortInstance::ConstPtr getPort(const ComponentID_PortName &id) const;
   std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr(const ComponentID_PortName &id) const;
@@ -62,11 +63,12 @@ class TRAACT_CORE_EXPORT GraphInstance {
 
   void initializeGraphConnections();
 
-  bool checkSourceAndSink(std::string source_component,
-                          std::string producer_port,
-                          std::string sink_component,
-                          std::string consumer_port);
-
+  std::optional<std::string> checkSourceAndSinkConnectionError(const std::string& source_component,
+                                                               const std::string& producer_port,
+                                                               const                       std::string& sink_component,
+                                                               const std::string& consumer_port);
+    std::optional<std::string> checkSourceAndSinkConnectionError(const traact::pattern::instance::ComponentID_PortName& source,
+                                                                 const traact::pattern::instance::ComponentID_PortName& sink);
 };
 }
 

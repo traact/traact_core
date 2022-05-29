@@ -37,7 +37,7 @@
 
 namespace traact::buffer {
 
-    class TRAACT_CORE_EXPORT TimeDomainBuffer;
+    //class TRAACT_CORE_EXPORT TimeDomainBuffer;
 
     class TRAACT_CORE_EXPORT BufferSource{
             public:

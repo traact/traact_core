@@ -55,13 +55,14 @@ namespace traact::component {
 
             std::string pattern_name = fmt::format("FileReader_{0}_{1}", serializer_name_, T::MetaType);
 
-            traact::pattern::spatial::SpatialPattern::Ptr
+            traact::pattern::Pattern::Ptr
                     pattern =
-                    std::make_shared<traact::pattern::spatial::SpatialPattern>(pattern_name, serial);
+                    std::make_shared<traact::pattern::Pattern>(pattern_name, serial);
 
             pattern->addProducerPort("output", T::MetaType);
-
             pattern->addStringParameter("file", "file.json");
+
+            pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A","B","output");
 
             return pattern;
         }

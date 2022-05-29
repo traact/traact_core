@@ -34,6 +34,7 @@
 
 #include <traact/pattern/Port.h>
 #include <traact/traact_core_export.h>
+#include <optional>
 namespace traact::pattern::instance {
 
 class TRAACT_CORE_EXPORT PatternInstance;
@@ -59,6 +60,8 @@ struct TRAACT_CORE_EXPORT PortInstance {
   ComponentID_PortName getID() const;
 
   bool IsConnected() const;
+
+  PortType GetPortType() const;
 
   Port port;
   bool is_active;
