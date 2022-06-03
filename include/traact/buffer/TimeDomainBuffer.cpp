@@ -40,11 +40,14 @@ namespace traact::buffer {
     }
 
     TimeDomainBuffer::~TimeDomainBuffer() {
-        Clear();
+        for(auto& td_buffer_data : buffer_data_){
+            for(int i=0;i< td_buffer_data.size();++i){
+                factory_objects_[buffer_datatype_[i]]->deleteObject(td_buffer_data[i]);
+            }
+        }
     }
 
     void TimeDomainBuffer::Init(const component::ComponentGraph &component_graph, const SourceComponentBuffer::CommitCallback& callback) {
-        Clear();
         using namespace pattern::instance;
 
         config_ = component_graph.GetTimeDomainConfig(time_domain_);
@@ -127,19 +130,6 @@ namespace traact::buffer {
 
     }
 
-    void TimeDomainBuffer::Clear() {
-        for(auto& td_buffer_data : buffer_data_){
-            for(int i=0;i< td_buffer_data.size();++i){
-                factory_objects_[buffer_datatype_[i]]->deleteObject(td_buffer_data[i]);
-            }
-        }
-        buffer_data_.clear();
-        time_step_buffer_.clear();
-        buffer_datatype_.clear();
-        buffer_config_.clear();
-        port_to_bufferIndex_.clear();
-    }
-
     TimeStepBuffer &TimeDomainBuffer::GetTimeStepBuffer(size_t concurrent_index) {
         return time_step_buffer_[concurrent_index];
     }
@@ -168,5 +158,17 @@ namespace traact::buffer {
 
     int TimeDomainBuffer::GetCountSources() const {
         return GetCountAsyncSources()+GetCountSyncSources();
+    }
+
+    void TimeDomainBuffer::CancelAll() {
+        for(int ringbuffer_index=0; ringbuffer_index < config_.ringbuffer_size; ++ringbuffer_index){
+            CancelAllSources(ringbuffer_index, true);
+        }
+    }
+
+    void TimeDomainBuffer::CancelAllSources(int ringbuffer_index, bool valid) {
+        for (int source_index = 0; source_index < GetCountSources(); ++source_index) {
+            time_step_buffer_[ringbuffer_index].GetSourceComponentBuffer(source_index)->Cancel();
+        }
     }
 }

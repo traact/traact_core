@@ -29,62 +29,52 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_SOURCECOMPONENTBUFFER_H
-#define TRAACTMULTI_SOURCECOMPONENTBUFFER_H
+#ifndef TRAACTMULTI_COMPONENTSYNCSOURCE_H
+#define TRAACTMULTI_COMPONENTSYNCSOURCE_H
 
-#include <traact/datatypes.h>
-#include <vector>
-#include "ComponentBuffer.h"
-#include <future>
-namespace traact::buffer {
-    class TRAACT_CORE_EXPORT SourceComponentBuffer {
+
+
+#include <tbb/flow_graph.h>
+
+#include "ComponentBase.h"
+#include "DynamicJoinNode.h"
+
+namespace traact::dataflow {
+
+    class ComponentSyncSource : public ComponentBase{
+
     public:
-        using CommitCallback = std::function<void (SourceComponentBuffer*,bool)>;
+        ComponentSyncSource(DefaultPatternPtr pattern_base,
+                                  DefaultComponentPtr component_base,
+                                  TBBTimeDomainManager* buffer_manager,
+                                  NetworkGraph *network_graph);
 
-        explicit SourceComponentBuffer(ComponentBuffer &output_buffer, const CommitCallback &callback);
+        bool init() override;
 
-        SourceComponentBuffer(SourceComponentBuffer&& rhs) = default;
-        SourceComponentBuffer& operator=(SourceComponentBuffer&& rhs) = default;
+        bool teardown() override;
 
-        SourceComponentBuffer(const SourceComponentBuffer& rhs) = delete;
-        SourceComponentBuffer& operator=(SourceComponentBuffer rhs) = delete;
+        TraactMessage operator()(const TraactMessage &in);
 
+        void connect() override;
 
+        void disconnect() override;
 
+        component::ComponentType getComponentType() override;
 
-        template<typename ReturnType, typename HeaderType>
-        ReturnType &getOutput(size_t index) {
-            return getOutput<HeaderType>(index);
-        }
+        tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
 
-        template<typename HeaderType>
-        typename HeaderType::NativeType &getOutput(size_t index) {
-            return local_output_buffer_.template getOutput<HeaderType>(index);
-        }
-
-        template<typename Port>
-        typename Port::Header::NativeType &getOutput() {
-            return local_output_buffer_.template getOutput<Port>();
-        }
-
-        std::size_t GetOutputCount();
-
-        TimestampType GetTimestamp();
-
-        void Commit(bool valid);
-        void Cancel();
-
-        void ResetLock();
-        std::future<bool> GetSourceLock();
+        tbb::flow::sender<TraactMessage> &getSender(int index) override;
 
     private:
-        ComponentBuffer& local_output_buffer_;
-        std::promise<bool> source_lock_;
-        bool lock_set_{false};
-        CommitCallback commit_callback_;
+        std::string getComponentName() ;
+
+    protected:
+        tbb::flow::function_node<TraactMessage, TraactMessage> *node_;
+        tbb::flow::broadcast_node<TraactMessage> *broadcast_node_;
+        DynamicJoinNode *join_node_;
+
     };
 }
 
 
-
-#endif //TRAACTMULTI_SOURCECOMPONENTBUFFER_H
+#endif //TRAACTMULTI_COMPONENTSYNCSOURCE_H

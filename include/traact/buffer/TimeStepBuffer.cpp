@@ -95,15 +95,13 @@ namespace traact::buffer {
         return component_buffers_list_[component_idx];
     }
 
-    void TimeStepBuffer::ResetForTimestamp(traact::TimestampType ts) {
+    void TimeStepBuffer::SetEvent(TimestampType ts, MessageType message_type) {
         current_ts_ = ts;
+        message_type_ = message_type;
         for (auto& comp_buffer : component_buffers_list_) {
             comp_buffer.SetTimestamp(ts);
         }
-        for (auto& comp_buffer : source_buffer_list_) {
-            if(comp_buffer)
-                comp_buffer->ResetLock();
-        }
+
     }
 
     traact::TimestampType TimeStepBuffer::GetTimestamp() {
@@ -120,6 +118,17 @@ namespace traact::buffer {
 
     std::future<bool> TimeStepBuffer::GetSourceLock(std::size_t component_idx) {
         return source_buffer_list_[component_idx]->GetSourceLock();
+    }
+
+    void TimeStepBuffer::ResetLock() {
+        for (auto& comp_buffer : source_buffer_list_) {
+            if(comp_buffer)
+                comp_buffer->ResetLock();
+        }
+    }
+
+    MessageType TimeStepBuffer::GetEventType() {
+        return message_type_;
     }
 }
 

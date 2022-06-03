@@ -56,7 +56,9 @@ namespace traact::dataflow {
 
 
     void TaskFlowGraph::Start() {
-
+        for(auto& task_flow_time_domain : task_flow_time_domains_){
+            task_flow_time_domain->Start();
+        }
     }
 
     void TaskFlowGraph::Stop() {

@@ -29,52 +29,60 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_TIMESTEPBUFFER_H
-#define TRAACTMULTI_TIMESTEPBUFFER_H
+#include "TBBNetwork.h"
 
-#include <tuple>
-#include <vector>
-#include <map>
-#include "ComponentBuffer.h"
-#include "SourceComponentBuffer.h"
-#include <traact/component/ComponentTypes.h>
+#include "NetworkGraph.h"
 
-namespace traact::buffer{
+traact::dataflow::TBBNetwork::TBBNetwork()
+        : Network() {}
 
 
-    struct BufferConfig {
-        component::ComponentType component_type;
-        std::vector<std::pair<int, int>> buffer_to_port_inputs;
-        std::vector<std::pair<int, int>> buffer_to_port_output;
-    };
-    using BufferType = std::vector<void*>;
+bool traact::dataflow::TBBNetwork::start() {
+  network_graphs_.clear();
+  bool result = true;
 
-    class TimeStepBuffer {
-    public:
+  for (const ComponentGraphPtr &component_graph : component_graphs_) {
+    auto newGraph = std::make_shared<NetworkGraph>(component_graph, generic_factory_objects_);
+      newGraph->setMasterSourceFinishedCallback(std::bind(&TBBNetwork::MasterSourceFinished, this));
+      network_graphs_.emplace(newGraph);
+  }
 
-        TimeStepBuffer(BufferType bufferData, std::map<int, std::pair<BufferConfig, std::string>> buffer_config, const SourceComponentBuffer::CommitCallback& callback);
-        std::size_t GetComponentIndex(const std::string &component_name);
-        ComponentBuffer &GetComponentBuffer(std::size_t component_idx);
-        ComponentBuffer &GetComponentBuffer(const std::string &component_name);
-        SourceComponentBuffer *GetSourceComponentBuffer(std::size_t component_idx);
-        std::future<bool> GetSourceLock(std::size_t component_idx);
-        void ResetLock();
-        void SetEvent(TimestampType ts, MessageType message_type);
-        TimestampType GetTimestamp();
-        MessageType GetEventType();
+  for (const auto &network_graph : network_graphs_) {
+      //result = result && network_graph->init();
+      network_graph->init();
+  }
 
-
-    private:
-        TimestampType current_ts_;
-        MessageType message_type_;
-        std::map<std::string, std::size_t > component_buffer_to_index_;
-        std::vector< ComponentBuffer > component_buffers_list_;
-        std::vector< std::shared_ptr<SourceComponentBuffer> > source_buffer_list_;
-        BufferType buffer_data_;
-
-    };
+  for (const auto &network_graph : network_graphs_) {
+      //result = result && network_graph->start();
+      network_graph->start();
+  }
+  return result;
 }
 
+bool traact::dataflow::TBBNetwork::stop() {
+    bool result = true;
+  for (const auto &network_graph : network_graphs_) {
+      //result = result && network_graph->stop();
+      network_graph->stop();
+  }
 
+  for (const auto &network_graph : network_graphs_) {
+      //result = result && network_graph->teardown();
+      network_graph->teardown();
+  }
+  network_graphs_.clear();
+  return result;
+}
 
-#endif //TRAACTMULTI_TIMESTEPBUFFER_H
+void traact::dataflow::TBBNetwork::MasterSourceFinished() {
+    finished_count_++;
+    if(finished_count_ == network_graphs_.size()){
+        stop_signal_thread_ = std::thread(master_source_finished_callback_);
+    }
+}
+
+traact::dataflow::TBBNetwork::~TBBNetwork() {
+    if(stop_signal_thread_.joinable())
+        stop_signal_thread_.join();
+
+}

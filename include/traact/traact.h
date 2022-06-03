@@ -44,6 +44,7 @@
 #include <traact/buffer/ComponentBuffer.h>
 //#include <traact/buffer/TimeDomainBuffer.h>
 #include <traact/util/TraactCoreUtils.h>
+#include <traact/buffer/SourceComponentBuffer.h>
 
 
 namespace traact {

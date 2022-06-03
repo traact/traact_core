@@ -39,6 +39,7 @@
 #include <traact/buffer/TimeDomainBuffer.h>
 #include "traact/util/Semaphore.h"
 #include <taskflow/algorithm/pipeline.hpp>
+#include "TaskFlowTaskFunctions.h"
 
 namespace traact::dataflow {
     class TaskFlowTimeDomain {
@@ -48,6 +49,7 @@ namespace traact::dataflow {
                            const component::Component::SourceFinishedCallback &callback);
 
         void Init();
+        void Start();
         void Stop();
 
 
@@ -60,61 +62,61 @@ namespace traact::dataflow {
         component::Component::SourceFinishedCallback source_finished_callback;
 
         // data for taskflow
-        struct SourceData {
-            buffer::TimeStepBuffer* buffer;
-            int component_index;
-        };
-        struct ComponentData {
-            buffer::ComponentBuffer* buffer;
-            component::Component* component;
-        };
-        struct TimeStepData {
-            std::map<std::string, SourceData> source_data;
-            std::map<std::string, ComponentData> component_data;
-            std::map<std::string, tf::Task> component_id_to_task;
-        };
-
         tf::Executor executor_;
-        std::vector<tf::Taskflow> taskflow_;
+        tf::Taskflow taskflow_;
+        tf::Future<void> taskflow_future_;
         std::vector<TimeStepData> time_step_data_;
+        std::map<std::string, tf::Task> inter_time_step_tasks_;
         std::map<std::string, std::set<std::string>> component_to_successors_;
         std::set<std::string> component_end_points_;
+        std::set<std::string> component_start_points_;
         buffer::TimeDomainBuffer time_domain_buffer_;
-
+        std::atomic<bool> running_;
+        std::vector<std::vector<bool>> source_set_input;
+        Semaphore teardown_wait_{1, 0, std::chrono::seconds(10)};
+        int time_step_count_;
+        int time_step_latest_;
+        tf::SmallVector<int,10> start_entries_;
+        bool stop_called{false};
         // time domain data
+        std::set<component::ComponentGraph::PatternComponentPair> components_;
         traact::buffer::TimeDomainManagerConfig time_domain_config_;
         std::atomic_flag source_finished_{ATOMIC_FLAG_INIT};
         void MasterSourceFinished();
+        traact::WaitForInit configure_finished_;
+        traact::WaitForInit start_finished_;
 
         // concurrent running time steps
         std::mutex flow_mutex_;
-        tf::SmallVector<bool, 10> running_taskflows_;
+        //tf::SmallVector<bool, 10> running_taskflows_;
+        std::vector<bool> running_taskflows_;
         std::vector<tf::Future<void>> taskflow_execute_future_;
         Semaphore free_taskflows_semaphore_;
-        WaitForValue<TimestampType> latest_running_ts_;
-        std::set<TimestampType> queued_timestamps_;
+        WaitForTimestamp latest_running_ts_;
+        std::queue<std::pair<TimestampType, MessageType>> queued_messages_;
+        TimestampType latest_scheduled_ts_;
 
         std::mutex running_mutex_;
-        tf::SmallVector<TimestampType, 10> running_timestamps_;
+        //tf::SmallVector<TimestampType, 10> running_timestamps_;
+        std::vector<TimestampType> running_timestamps_;
+        traact::Semaphore taskflow_started_{1,0,std::chrono::seconds(10)};
 
 
         int IsTimestampRunning(const TimestampType& ts);
         void
         ScheduleEvent(MessageType message_type, TimestampType timestamp);
 
-        void FreeTaskflow(int taskflow_id);
+        void FreeTimeStep(int time_step_index);
 
         void CreateBuffer();
 
         void Prepare();
 
-        void CreateGraphTasks(const int concurrent_index);
+        void CreateTimeStepTasks(const int time_step_index);
 
-        void RunTaskFlowFromQueue(int taskflow_id);
+        void RunTaskFlowFromQueue();
 
-        int GetFreeTaskFlow();
-
-        void SetTaskflowFree(int taskflow_id);
+        void SetTaskflowFree(int time_step_index);
 
         void
         TakeTaskflow(int taskflow_id, std::chrono::time_point<std::chrono::system_clock, TimeDurationType> &next_ts);
@@ -122,6 +124,25 @@ namespace traact::dataflow {
         void PrepareComponents();
 
         void PrepareTaskData();
+
+        void CreateTask(const int time_step_index, TimeStepData &time_step_data,
+                        const std::pair<component::ComponentGraph::PatternPtr, component::ComponentGraph::ComponentPtr> &component);
+
+        void CreateInterTimeStepDependencies();
+
+        void GlobalTaskflowStart();
+
+        void GlobalTaskflowEnd();
+
+        tf::Task CreateLocalStartTask(int time_step_index, std::string name);
+
+        tf::Task CreateLocalEndTask(int time_step_index, std::string name);
+
+        std::string GetTaskName(const int time_step_index, const std::string &instance_id) const;
+
+        void CancelOlderEvents(TimestampType ts, int component_index);
+
+        tf::Task CreateSeamEntryTask(int time_step_index, const std::string &seam_entry_name);
     };
 }
 

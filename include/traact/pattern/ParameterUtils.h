@@ -61,7 +61,8 @@ bool setValueFromParameter(const nlohmann::json& parameter, std::string paramete
     paramter_out = key_value.at(default_value);
     return false;
   } else {
-    paramter_out = key_value.at(parameter[parameter_name]["value"]);
+      std::string key_name = parameter[parameter_name]["value"];
+    paramter_out = key_value.at(key_name);
   }
     return true;
 }

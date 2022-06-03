@@ -57,21 +57,29 @@ class ApplicationAsyncSource : public Component {
 
   bool newValue(TimestampType ts, const NativeType& value) {
 
-    //spdlog::info("acquire buffer");
-    auto buffer = request_callback_(ts);
-    buffer.wait();
-    auto buffer_p = buffer.get();
-    if (buffer_p == nullptr)
-          return false;
+      try{
+          //spdlog::info("acquire buffer");
+          auto buffer = request_callback_(ts);
+          buffer.wait();
+          auto buffer_p = buffer.get();
+          if (buffer_p == nullptr)
+              return false;
 
-    //spdlog::info("get outout");
-    auto &newData = buffer_p->template getOutput<NativeType, HeaderType>(0);
-    //spdlog::info("write value");
-    newData = value;
-    //spdlog::info("commit data");
-      buffer_p->Commit(true);
+          //spdlog::info("get outout");
+          auto &newData = buffer_p->template getOutput<NativeType, HeaderType>(0);
+          //spdlog::info("write value");
+          newData = value;
+          //spdlog::info("commit data");
+          buffer_p->Commit(true);
 
-	return true;
+          return true;
+      } catch(std::future_error e) {
+          SPDLOG_ERROR(e.what());
+          throw e;
+      }
+
+      return false;
+
 
   }
 

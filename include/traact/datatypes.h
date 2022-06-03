@@ -65,7 +65,9 @@ enum class MessageType {
     Start,
     Data ,
     Stop,
-    Teardown
+    Teardown,
+    DataflowNoOp,
+    DataflowStop
 
 };
 
@@ -79,8 +81,7 @@ enum class MissingSourceEventMode {
     CancelOldest
 };
 
-// redefine tbb concurrency to avoid dependency in components just for this enum
-enum concurrency { unlimited = 0, serial = 1 };
+enum Concurrency { unlimited = 0, serial = 1 };
 
 namespace buffer {
     template<typename HeaderType, std::size_t PortValue> class PortConfig {

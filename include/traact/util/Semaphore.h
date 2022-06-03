@@ -184,11 +184,51 @@ class WaitForMasterTs {
             return current_value;
         }
 
+        inline T currentValue() const {
+            return current_value;
+        }
+
 
     private:
         std::mutex mtx_;
         std::condition_variable cv_;
         T current_value;
+    };
+
+    class WaitForTimestamp {
+
+    public:
+        WaitForTimestamp (TimeDurationType max_offset)
+                : current_value_(TimestampType::min()), max_offset_(max_offset)
+        {
+        }
+
+        inline void notifyAll(const TimestampType value) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            current_value_ = value;
+            cv_.notify_all();
+        }
+
+        inline void wait(const TimestampType value) {
+            std::unique_lock<std::mutex> lock(mtx_);
+            auto min_val = value - (max_offset_*2);
+
+            while(current_value_ < min_val) {
+                //wait on the mutex until notify is called
+                cv_.wait(lock);
+            }
+        }
+
+        inline TimestampType currentValue() const {
+            return current_value_;
+        }
+
+
+    private:
+        std::mutex mtx_;
+        std::condition_variable cv_;
+        TimestampType current_value_;
+        TimeDurationType max_offset_;
     };
 
 }

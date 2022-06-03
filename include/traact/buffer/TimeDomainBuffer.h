@@ -46,13 +46,15 @@ class TRAACT_CORE_EXPORT TimeDomainBuffer {
     TimeDomainBuffer(int time_domain, std::set<buffer::BufferFactory::Ptr> factory_objects);
     ~TimeDomainBuffer();
     void Init(const component::ComponentGraph &component_graph, const SourceComponentBuffer::CommitCallback& callback);
-    void Clear();
+
     TimeStepBuffer& GetTimeStepBuffer(size_t concurrent_index );
 
     int GetComponentIndex(const std::string &instance_id);
     int GetCountAsyncSources()const;
     int GetCountSyncSources()const;
     int GetCountSources()const;
+
+    void CancelAll();
 
 private:
     int time_domain_;
@@ -66,6 +68,8 @@ private:
     std::vector<std::string> buffer_datatype_;
     std::map<int, std::pair<BufferConfig, std::string>> buffer_config_;
     std::map<pattern::instance::ComponentID_PortName, int> port_to_bufferIndex_;
+
+    void CancelAllSources(int ringbuffer_index, bool valid);
 };
 }
 

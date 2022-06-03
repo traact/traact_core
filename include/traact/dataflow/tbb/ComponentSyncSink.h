@@ -29,52 +29,44 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_TIMESTEPBUFFER_H
-#define TRAACTMULTI_TIMESTEPBUFFER_H
+#ifndef TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
+#define TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
 
-#include <tuple>
-#include <vector>
-#include <map>
-#include "ComponentBuffer.h"
-#include "SourceComponentBuffer.h"
-#include <traact/component/ComponentTypes.h>
+#include <tbb/flow_graph.h>
 
-namespace traact::buffer{
+#include "ComponentBase.h"
+#include "DynamicJoinNode.h"
 
+namespace traact::dataflow {
 
-    struct BufferConfig {
-        component::ComponentType component_type;
-        std::vector<std::pair<int, int>> buffer_to_port_inputs;
-        std::vector<std::pair<int, int>> buffer_to_port_output;
-    };
-    using BufferType = std::vector<void*>;
+class ComponentSyncSink : public ComponentBase {
+ public:
 
-    class TimeStepBuffer {
-    public:
+  ComponentSyncSink(DefaultPatternPtr pattern_base,
+                          DefaultComponentPtr component_base,
+                          TBBTimeDomainManager* buffer_manager,
+                          NetworkGraph *network_graph);
 
-        TimeStepBuffer(BufferType bufferData, std::map<int, std::pair<BufferConfig, std::string>> buffer_config, const SourceComponentBuffer::CommitCallback& callback);
-        std::size_t GetComponentIndex(const std::string &component_name);
-        ComponentBuffer &GetComponentBuffer(std::size_t component_idx);
-        ComponentBuffer &GetComponentBuffer(const std::string &component_name);
-        SourceComponentBuffer *GetSourceComponentBuffer(std::size_t component_idx);
-        std::future<bool> GetSourceLock(std::size_t component_idx);
-        void ResetLock();
-        void SetEvent(TimestampType ts, MessageType message_type);
-        TimestampType GetTimestamp();
-        MessageType GetEventType();
+  bool init() override;
+  bool teardown() override;
 
+  TraactMessage operator()(const TraactMessage &in);
+  void connect() override;
+  void disconnect() override;
+  component::ComponentType getComponentType() override;
 
-    private:
-        TimestampType current_ts_;
-        MessageType message_type_;
-        std::map<std::string, std::size_t > component_buffer_to_index_;
-        std::vector< ComponentBuffer > component_buffers_list_;
-        std::vector< std::shared_ptr<SourceComponentBuffer> > source_buffer_list_;
-        BufferType buffer_data_;
+  tbb::flow::receiver<TraactMessage> &getReceiver(int index) override;
 
-    };
+    tbb::flow::sender<TraactMessage> &getSender(int index) override;
+
+protected:
+
+  tbb::flow::function_node<TraactMessage, TraactMessage> *node_;
+  DynamicJoinNode *join_node_;
+  tbb::flow::sequencer_node<TraactMessage> *sequencer_node_;
+
+};
+
 }
 
-
-
-#endif //TRAACTMULTI_TIMESTEPBUFFER_H
+#endif //TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_

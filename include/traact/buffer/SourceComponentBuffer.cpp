@@ -48,7 +48,10 @@ namespace traact::buffer {
     }
 
     void SourceComponentBuffer::Commit(bool valid) {
+        SPDLOG_TRACE("commit value ts: {0} {1}", GetTimestamp().time_since_epoch().count(), valid);
+
         source_lock_.set_value(valid);
+        lock_set_ = true;
         //commit_callback_(this, valid);
     }
 
@@ -58,5 +61,14 @@ namespace traact::buffer {
 
     void SourceComponentBuffer::ResetLock() {
         source_lock_ = {};
+        lock_set_ = false;
+    }
+
+    void SourceComponentBuffer::Cancel() {
+        if(!lock_set_){
+            source_lock_.set_value(false);
+            lock_set_ = true;
+        }
+
     };
 }

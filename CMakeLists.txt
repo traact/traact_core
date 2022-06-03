@@ -66,6 +66,31 @@ set(LIB_HEADERS
         include/traact/buffer/TimeStepBuffer.cpp)
 
 # rest of source code
+set(TBB_SOURCES
+        include/traact/dataflow/tbb/ComponentAsyncFunctional.cpp
+        include/traact/dataflow/tbb/ComponentAsyncFunctional.h
+        include/traact/dataflow/tbb/ComponentAsyncSink.cpp
+        include/traact/dataflow/tbb/ComponentAsyncSink.h
+        include/traact/dataflow/tbb/ComponentAsyncSource.cpp
+        include/traact/dataflow/tbb/ComponentAsyncSource.h
+        include/traact/dataflow/tbb/ComponentBase.h
+        include/traact/dataflow/tbb/ComponentSyncFunctional.cpp
+        include/traact/dataflow/tbb/ComponentSyncFunctional.h
+        include/traact/dataflow/tbb/ComponentSyncSink.cpp
+        include/traact/dataflow/tbb/ComponentSyncSink.h
+        include/traact/dataflow/tbb/ComponentSyncSource.cpp
+        include/traact/dataflow/tbb/ComponentSyncSource.h
+        include/traact/dataflow/tbb/DataflowMessage.h
+        include/traact/dataflow/tbb/DynamicJoinNode.h
+        include/traact/dataflow/tbb/NetworkGraph.cpp
+        include/traact/dataflow/tbb/NetworkGraph.h
+        include/traact/dataflow/tbb/SourceMergeNode.h
+        include/traact/dataflow/tbb/TBBNetwork.cpp
+        include/traact/dataflow/tbb/TBBNetwork.h
+        include/traact/dataflow/tbb/TBBTimeDomainManager.h
+        include/traact/dataflow/tbb/TBBTimeDomainManager.cpp
+        include/traact/dataflow/tbb/ComponentBase.cpp
+        )
 set(LIB_SOURCES
         src/pattern/Pattern.cpp
         src/pattern/Port.cpp
@@ -101,7 +126,8 @@ set(LIB_SOURCES
         include/traact/dataflow/taskflow/TaskFlowGraph.h
         include/traact/buffer/ComponentBuffer.cpp
         include/traact/buffer/SourceComponentBuffer.cpp
-        include/traact/buffer/SourceComponentBuffer.h include/traact/dataflow/taskflow/TaskFlowTaskFunctions.h include/traact/dataflow/taskflow/TaskFlowTimeDomain.cpp include/traact/dataflow/taskflow/TaskFlowTimeDomain.h)
+        include/traact/buffer/SourceComponentBuffer.h include/traact/dataflow/taskflow/TaskFlowTaskFunctions.h include/traact/dataflow/taskflow/TaskFlowTimeDomain.cpp include/traact/dataflow/taskflow/TaskFlowTimeDomain.h
+        )
 
 
 # conan is required hard, library name, version and description are configured from conan
