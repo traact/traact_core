@@ -220,7 +220,12 @@ traact::facade::RTTRPluginFactory::ComponentPtr traact::facade::RTTRPluginFactor
 }
 
 traact::facade::RTTRPluginFactory::RTTRPluginFactory() {
-    plugin_directories_ = getenv("TRAACT_PLUGIN_PATHS");
+    auto plugin_dirs = getenv("TRAACT_PLUGIN_PATHS");
+    if (plugin_dirs != nullptr) {
+        plugin_directories_ = plugin_dirs;
+    } else {
+        throw std::runtime_error(std::string("Missing environment variable: TRAACT_PLUGIN_PATH"));
+    }
     init();
 }
 
