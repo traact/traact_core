@@ -89,7 +89,7 @@ class FilePlayer : public Component {
         while (running_) {
 
             if (!readTimestamp(ts)) {
-                spdlog::info("{0}: End of file or error when trying to read next data, exit thread");
+                SPDLOG_INFO("{0}: End of file or error when trying to read next data, exit thread");
                 running_ = false;
                 return;
             }
@@ -102,7 +102,7 @@ class FilePlayer : public Component {
                 readValue(new_data);
                 buffer_p->commit(true);
             } else {
-                spdlog::error("request to get next buffer failed");
+                SPDLOG_ERROR("request to get next buffer failed");
                 std::this_thread::yield();
             }
 

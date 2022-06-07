@@ -100,7 +100,7 @@ bool traact::facade::Facade::blockingStart() {
     auto finished = getFinishedFuture();
     while (finished.wait_for(std::chrono::seconds(1)) != std::future_status::ready) {
         if (should_stop_) {
-            spdlog::info("waiting for dataflow to stop");
+            SPDLOG_INFO("waiting for dataflow to stop");
         }
     }
     return true;

@@ -51,7 +51,7 @@ void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr
                         break;
                     }
                     default: {
-                        spdlog::error(
+                        SPDLOG_ERROR(
                             "unsupported component type in source components: {0} for component {1}, dataflow will not work",
                             (int) pattern_component.second->getComponentType(),
                             component_name);
@@ -63,7 +63,7 @@ void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr
         }
 
         if (!component_found) {
-            spdlog::error("component not found for source component: {0}", component_name);
+            SPDLOG_ERROR("component not found for source component: {0}", component_name);
         }
 
     }
@@ -78,7 +78,7 @@ void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr
                 is_endpoint = false;
         }
         if (is_endpoint) {
-            spdlog::info("found dataflow endpoint: {0}", pattern_component.second->getName());
+            SPDLOG_INFO("found dataflow endpoint: {0}", pattern_component.second->getName());
             endpoints.push_back(pattern_component.second->getName());
         }
 
@@ -91,7 +91,7 @@ void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr
                                                              std::placeholders::_1));
 
     if (endpoints.empty()) {
-        spdlog::error("no endpoints in dataflow");
+        SPDLOG_ERROR("no endpoints in dataflow");
     } else if (endpoints.size() == 1) {
         auto &end_sender = graph_->getSender(endpoints[0]);
         make_edge(end_sender, *emit_td_node_);
@@ -115,31 +115,31 @@ void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr
 }
 
 void traact::dataflow::TBBTimeDomainManager::Configure() {
-    spdlog::info("Send Configure message to all components");
+    SPDLOG_INFO("Send Configure message to all components");
     EmitNonDataEvent(MessageType::Configure);
 
     while (running_) {
         if (wait_for_configure_finished_lock.Wait()) {
             break;
         } else {
-            spdlog::info("waiting for configure message to finish");
+            SPDLOG_INFO("waiting for configure message to finish");
         }
     }
 }
 
 void traact::dataflow::TBBTimeDomainManager::Start() {
-    spdlog::info("Send Start message to all components");
+    SPDLOG_INFO("Send Start message to all components");
 
-    spdlog::info("send start message");
+    SPDLOG_INFO("send start message");
     EmitNonDataEvent(MessageType::Start);
     while (running_) {
         if (wait_for_start_finished_lock.Wait()) {
             break;
         } else {
-            spdlog::info("waiting for start message to finish");
+            SPDLOG_INFO("waiting for start message to finish");
         }
     }
-    spdlog::info("start sources");
+    SPDLOG_INFO("start sources");
     for (const auto &pattern_component : source_components_) {
         pattern_component.second->start();
     }
@@ -147,26 +147,26 @@ void traact::dataflow::TBBTimeDomainManager::Start() {
 }
 
 void traact::dataflow::TBBTimeDomainManager::Stop() {
-    spdlog::info("Send Stop message to all components");
+    SPDLOG_INFO("Send Stop message to all components");
     EmitNonDataEvent(MessageType::Stop);
 
     while (running_) {
         if (wait_for_stop_finished_lock.Wait()) {
             break;
         } else {
-            spdlog::info("waiting for start message to finish");
+            SPDLOG_INFO("waiting for start message to finish");
         }
     }
 }
 
 void traact::dataflow::TBBTimeDomainManager::Teardown() {
-    spdlog::info("Send Teardown message to all components");
+    SPDLOG_INFO("Send Teardown message to all components");
     EmitNonDataEvent(MessageType::Teardown);
     while (running_) {
         if (wait_for_teardown_finished_lock.Wait()) {
             break;
         } else {
-            spdlog::info("waiting for teardown message to finish");
+            SPDLOG_INFO("waiting for teardown message to finish");
         }
     }
     running_ = false;
@@ -299,7 +299,7 @@ traact::dataflow::TBBTimeDomainManager::RequestSourceBuffer(const TimestampType 
 #endif
                 return buffer;
             }
-            spdlog::error(
+            SPDLOG_ERROR(
                 "could not pop free source buffer for source idx {0} at ts {1} even though one should be available",
                 source_index,
                 ts.time_since_epoch().count());
@@ -524,22 +524,22 @@ void traact::dataflow::TBBTimeDomainManager::FinishEvent(const traact::dataflow:
 
     switch (in.message_type) {
         case MessageType::Configure: {
-            spdlog::info("configure message finished");
+            SPDLOG_INFO("configure message finished");
             wait_for_configure_finished_lock.SetInit(true);
             break;
         }
         case MessageType::Start: {
-            spdlog::info("start message finished");
+            SPDLOG_INFO("start message finished");
             wait_for_start_finished_lock.SetInit(true);
             break;
         }
         case MessageType::Stop: {
-            spdlog::info("stop message finished");
+            SPDLOG_INFO("stop message finished");
             wait_for_stop_finished_lock.SetInit(true);
             break;
         }
         case MessageType::Teardown: {
-            spdlog::info("teardown message finished");
+            SPDLOG_INFO("teardown message finished");
             wait_for_teardown_finished_lock.SetInit(true);
             break;
         }

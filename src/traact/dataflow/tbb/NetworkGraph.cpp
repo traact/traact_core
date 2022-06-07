@@ -39,13 +39,13 @@ void NetworkGraph::init() {
     for (const auto &base_component : component_graph_->getPatterns()) {
         DefaultPatternPtr pattern = base_component.first;
         if (!pattern) {
-            spdlog::error("Skipping non dataflow pattern");
+            SPDLOG_ERROR("Skipping non dataflow pattern");
             continue;
         }
 
         DefaultComponentPtr component = std::dynamic_pointer_cast<DefaultComponent>(base_component.second);
         if (!component) {
-            spdlog::error("Skipping non dataflow component");
+            SPDLOG_ERROR("Skipping non dataflow component");
             continue;
         }
 

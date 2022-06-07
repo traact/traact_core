@@ -39,7 +39,7 @@ class ApplicationSyncSink : public Component {
             const auto &input = data.getInput<HeaderType>(0);
             callback_(data.getTimestamp(), input);
         } else {
-            spdlog::warn("ApplicationSyncSink {0}: missing callback function", getName());
+            SPDLOG_WARN("ApplicationSyncSink {0}: missing callback function", getName());
         }
 
         return true;
@@ -51,12 +51,12 @@ class ApplicationSyncSink : public Component {
     }
 
     bool start() override {
-        spdlog::info("ApplicationSyncSink got start signal");
+        SPDLOG_INFO("ApplicationSyncSink got start signal");
         return true;
 
     }
     bool stop() override {
-        spdlog::info("ApplicationSyncSink got stop signal");
+        SPDLOG_INFO("ApplicationSyncSink got stop signal");
         return true;
     }
 

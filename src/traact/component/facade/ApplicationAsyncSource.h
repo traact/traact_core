@@ -34,18 +34,18 @@ class ApplicationAsyncSource : public Component {
     bool newValue(Timestamp ts, const NativeType &value) {
 
         try {
-            //spdlog::info("acquire buffer");
+            //SPDLOG_INFO("acquire buffer");
             auto buffer = request_callback_(ts);
             buffer.wait();
             auto buffer_p = buffer.get();
             if (buffer_p == nullptr)
                 return false;
 
-            //spdlog::info("get output");
+            //SPDLOG_INFO("get output");
             auto &new_data = buffer_p->template getOutput<HeaderType>(0);
-            //spdlog::info("write value");
+            //SPDLOG_INFO("write value");
             new_data = value;
-            //spdlog::info("commit data");
+            //SPDLOG_INFO("commit data");
             buffer_p->commit(true);
 
             return true;
@@ -56,11 +56,11 @@ class ApplicationAsyncSource : public Component {
     }
 
     bool start() override {
-        spdlog::info("ApplicationAsyncSource got start signal");
+        SPDLOG_INFO("ApplicationAsyncSource got start signal");
         return true;
     }
     bool stop() override {
-        spdlog::info("ApplicationAsyncSource got stop signal");
+        SPDLOG_INFO("ApplicationAsyncSource got stop signal");
         return true;
     }
 

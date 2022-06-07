@@ -51,7 +51,7 @@ const T *vectorGetForName(const std::vector<T> &vecOfElements, const std::string
     });
 
     if (it == vecOfElements.end()) {
-        spdlog::error("used vectorGetForName with unkown name");
+        SPDLOG_ERROR("used vectorGetForName with unkown name");
     }
 
     return &(*it);
@@ -66,7 +66,7 @@ T *vectorGetForName(std::vector<T> &vecOfElements, const std::string &name) {
     });
 
     if (it == vecOfElements.end()) {
-        spdlog::error("used vectorGetForName with unknown name");
+        SPDLOG_ERROR("used vectorGetForName with unknown name");
         return nullptr;
     }
 

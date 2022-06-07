@@ -157,7 +157,7 @@ void TaskFlowTimeDomain::prepareComponents() {
         std::shared_ptr<pattern::instance::PatternInstance> pattern_instance = component.first;
         auto instance_id = component.first->instance_id;
         if (!pattern_instance) {
-            spdlog::warn("skipping non dataflow pattern : {0}", instance_id);
+            SPDLOG_WARN("skipping non dataflow pattern : {0}", instance_id);
             continue;
         }
 

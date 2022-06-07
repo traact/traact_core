@@ -20,7 +20,7 @@ TestAsyncSourceComponent::TestAsyncSourceComponent(const std::string &name)
     : TestComponent(name, traact::component::ComponentType::ASYNC_SOURCE) {}
 
 void TestAsyncSourceComponent::new_value(traact::Timestamp timestamp, std::string value) {
-    spdlog::info("call from source, new value: {0}", getName());
+    SPDLOG_INFO("call from source, new value: {0}", getName());
     component_state_.callRequest(timestamp);
     auto buffer = request_callback_(timestamp);
     buffer.wait();

@@ -101,7 +101,7 @@ void ComponentAsyncFunctional::ReleaseGateway(TimestampType ts, bool valid) {
         result->second.gateway->release_wait();
         async_messages_.erase(result);
     } else {
-        spdlog::error("{0}: ReleaseGateway timestamp {1} not found", GetName(), ts.time_since_epoch().count());
+        SPDLOG_ERROR("{0}: ReleaseGateway timestamp {1} not found", GetName(), ts.time_since_epoch().count());
     }
 }
 
@@ -120,7 +120,7 @@ void ComponentAsyncFunctional::submit(TraactMessage in,
         switch (in.message_type) {
             case MessageType::Configure: {
                 bool configure_result = component_base_->configure(pattern_base_->local_pattern.parameter, nullptr);
-                spdlog::info("{0}: configure {1}", GetName(), configure_result);
+                SPDLOG_INFO("{0}: configure {1}", GetName(), configure_result);
                 break;
             }
             case MessageType::Start: {
@@ -167,7 +167,7 @@ void ComponentAsyncFunctional::submit(TraactMessage in,
 
 
     } catch (...) {
-        spdlog::error("unknown exception in {0}", component_base_->getName());
+        SPDLOG_ERROR("unknown exception in {0}", component_base_->getName());
         in.valid_data = false;
     }
 

@@ -17,7 +17,7 @@
 traact::facade::Facade *myfacade{nullptr};
 
 void ctrlC(int i) {
-    spdlog::info("User requested exit (Ctrl-C).");
+    SPDLOG_INFO("User requested exit (Ctrl-C).");
     if (myfacade)
         myfacade->stop();
 }
@@ -54,16 +54,16 @@ int main(int argc, char **argv) {
             if (log_level == "info") {
                 spdlog::set_level(spdlog::level::info);
                 spdlog::flush_on(spdlog::level::info);
-                spdlog::info("Set Loglevel to INFO");
+                SPDLOG_INFO("Set Loglevel to INFO");
             } else if (log_level == "debug") {
                 spdlog::set_level(spdlog::level::debug);
                 spdlog::flush_on(spdlog::level::debug);
-                spdlog::info("Set Loglevel to DEBUG");
+                SPDLOG_INFO("Set Loglevel to DEBUG");
             } else if (log_level == "trace") {
                 spdlog::set_level(spdlog::level::trace);
                 spdlog::flush_on(spdlog::level::trace);
-                spdlog::info("Set Loglevel to TRACE");
-                spdlog::trace("Test TRACE message");
+                SPDLOG_INFO("Set Loglevel to TRACE");
+                SPDLOG_TRACE("Test TRACE message");
             } else {
                 spdlog::set_level(spdlog::level::trace);
                 spdlog::flush_on(spdlog::level::trace);
@@ -91,11 +91,11 @@ int main(int argc, char **argv) {
 
 
     if (!util::fileExists(dataflow_file, "Facade")) {
-        spdlog::error("traactConsole: error: - invalid dataflow file: {0}", dataflow_file);
+        SPDLOG_ERROR("traactConsole: error: - invalid dataflow file: {0}", dataflow_file);
         return 1;
     }
 
-    spdlog::info("using plugin directories: {0}", plugin_dirs);
+    SPDLOG_INFO("using plugin directories: {0}", plugin_dirs);
 
     myfacade = new DefaultFacade(plugin_dirs);
 
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
     delete myfacade;
 
-    spdlog::info("exit program");
+    SPDLOG_INFO("exit program");
 
     return 0;
 }

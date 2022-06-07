@@ -97,7 +97,7 @@ traact::buffer::TimeDomainManagerConfig ComponentGraph::getTimeDomainConfig(size
     auto result = graph_instance_->timedomain_configs.find(time_domain);
     if (result == graph_instance_->timedomain_configs.end()) {
         traact::buffer::TimeDomainManagerConfig config;
-        spdlog::error("no valid time domain manager config for time domain {0}", time_domain);
+        SPDLOG_ERROR("no valid time domain manager config for time domain {0}", time_domain);
         return config;
     } else {
         return result->second;

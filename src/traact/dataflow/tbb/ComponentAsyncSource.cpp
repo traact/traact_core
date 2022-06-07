@@ -96,7 +96,7 @@ TraactMessage ComponentAsyncSource::operator()(const TraactMessage &in) {
         switch (in.message_type) {
             case MessageType::Configure: {
                 bool configure_result = component_base_->configure(pattern_base_->local_pattern.parameter, nullptr);
-                spdlog::info("{0}: configure {1}", GetName(), configure_result);
+                SPDLOG_INFO("{0}: configure {1}", GetName(), configure_result);
                 break;
             }
             case MessageType::Start: {
@@ -129,7 +129,7 @@ TraactMessage ComponentAsyncSource::operator()(const TraactMessage &in) {
         }
 
     } catch (...) {
-        spdlog::error("unknown exception in {0}", component_base_->getName());
+        SPDLOG_ERROR("unknown exception in {0}", component_base_->getName());
         result.valid_data = false;
     }
     return result;

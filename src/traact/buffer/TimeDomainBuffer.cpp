@@ -36,7 +36,7 @@ void TimeDomainBuffer::init(const component::ComponentGraph &component_graph) {
 
         std::shared_ptr<PatternInstance> data_comp = component.first;
         if (!data_comp) {
-            spdlog::warn("skipping non dataflow pattern : {0}", component.first->instance_id);
+            SPDLOG_WARN("skipping non dataflow pattern : {0}", component.first->instance_id);
             continue;
         }
 
