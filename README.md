@@ -1,1 +1,1 @@
-Convenience wrapper around tbb for realtime tracking in heterogeneous, distributed sensor environments
+Convenience wrapper around a parallel task library for realtime tracking in heterogeneous, distributed sensor environments

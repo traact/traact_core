@@ -25,13 +25,13 @@ class Traact(ConanFile):
         "with_tests": True
     }
 
-    exports_sources =  "src/*", "util/*", "apps/*", "tests/*", "CMakeLists.txt"
+    exports_sources = "src/*", "util/*", "apps/*", "tests/*", "CMakeLists.txt"
 
     def requirements(self):
         if self.options.with_tests:
             self.requires("gtest/[>=1.10.0]")
             self.requires("approvaltests.cpp/10.12.2")
-        self.requires("traact_run_env/[>=1.0.0]@camposs/stable")
+        self.requires("traact_run_env/[>=1.0.0]@traact/latest")
         self.requires("nlohmann_json/[>=3.7.3]")
         self.requires("spdlog/[>=1.8.2]")
         self.requires("rttr/0.9.7-dev@camposs/stable")
@@ -58,7 +58,6 @@ class Traact(ConanFile):
     def configure(self):
         if self.options.with_tests:
             self.options['gtest'].shared = self.options.shared
-        self.options['Boost'].shared = self.options.shared
 
     def build(self):
         cmake = self._configure_cmake()

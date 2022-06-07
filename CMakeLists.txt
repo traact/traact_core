@@ -123,16 +123,12 @@ conan_target_link_libraries(${CONAN_PACKAGE_NAME})
 
 set_target_properties(${CONAN_PACKAGE_NAME} PROPERTIES VERSION ${CONAN_PACKAGE_VERSION})
 
-target_include_directories(${CONAN_PACKAGE_NAME} PUBLIC
-        ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
-        )
 
 target_include_directories(${CONAN_PACKAGE_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_BINARY_DIR}
         )
 
-# public header
 generate_export_header(${CONAN_PACKAGE_NAME} EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/traact/${CONAN_PACKAGE_NAME}_export.h)
 
 install(TARGETS ${CONAN_PACKAGE_NAME}
