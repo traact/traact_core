@@ -37,7 +37,7 @@ class Traact(ConanFile):
         self.requires("rttr/0.9.7-dev@camposs/stable")
         self.requires("taskflow/3.3.0")
         self.requires("tclap/[>=1.2.4]")
-        self.requires("cppfs/1.3.0@camposs/stable")
+        self.requires("cppfs/1.3.0-r1@camposs/stable")
 
     def _configure_cmake(self):
         cmake = CMake(self)

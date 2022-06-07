@@ -24,7 +24,7 @@ class TRAACT_CORE_EXPORT RTTRPluginFactory : public PluginFactory {
 
     RTTRPluginFactory();
 
-    RTTRPluginFactory(const std::string &pluginDirectories);
+    explicit RTTRPluginFactory(const std::string &pluginDirectories);
 
     ~RTTRPluginFactory() = default;
 

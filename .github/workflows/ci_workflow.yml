@@ -43,14 +43,14 @@ jobs:
           conan user
           python build.py
         env:
-          CONAN_LOGIN_USERNAME: "ci_user"
+          CONAN_LOGIN_USERNAME: "traact_ci"
           CONAN_PASSWORD: ${{ secrets.TRAACT_ORG_CI_PASSWORD }}
           CONAN_CONFIG_URL: "https://github.com/traact/bincrafters-config.git"
-          CONAN_USERNAME: "camposs"
+          CONAN_USERNAME: "git_ci"
           CONAN_UPLOAD_DEPENDENCIES: "all"
           CONAN_CHANNEL: "latest"
           CONAN_STABLE_BRANCH_PATTERN: "releases/*"
-          CONAN_UPLOAD: "https://traact.jfrog.io/artifactory/api/conan/traact@True@traact"
+          CONAN_UPLOAD: "https://conan.campar.in.tum.de/api/conan/conan-camposs@True@traact"
           CONAN_BUILD_POLICY: "outdated"
           CONAN_BASE_PROFILE: ${{ matrix.conan_base_profile }}
           CONAN_REVISIONS_ENABLED: 1
