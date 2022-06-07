@@ -4,15 +4,16 @@ cmake_minimum_required(VERSION 3.16)
 if (MSVC)
     # per default disable extended aligned storage for now on msvc
     add_definitions(-D_DISABLE_EXTENDED_ALIGNED_STORAGE -DHAVE_SNPRINTF)
-endif()
+endif ()
 
 # public header
 set(TEST_SOURCES
-        test_main.cpp
-        #dataflow/Test_DynamicJoinNode.cpp
-        #dataflow/DataflowMessageReceiver.cpp
-        #dataflow/DataflowMessageReceiver.h
-        )
+        main.cpp
+        #dataflow/tbb/Test_DynamicJoinNode.cpp
+        #dataflow/tbb/DataflowMessageReceiver.cpp
+        #dataflow/tbb/DataflowMessageReceiver.h
+        buffer/SingleComponentBufferTest.cpp
+        TestDatatypes.h TestDatatypes.cpp TestComponents.cpp TestComponents.h TestAsyncSourceComponent.cpp TestAsyncSourceComponent.h TestSyncSinkComponent.cpp TestSyncSinkComponent.h dataflow/SourceSink.cpp TestComponentState.cpp TestComponentState.h)
 
 add_executable(core_tests ${TEST_SOURCES})
 
@@ -23,7 +24,6 @@ target_link_libraries(core_tests PUBLIC
 target_include_directories(core_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/
         ${CMAKE_CURRENT_SOURCE_DIR}/../src
-        ${CMAKE_CURRENT_SOURCE_DIR}/../include
         ${CMAKE_CURRENT_BINARY_DIR}
         )
 

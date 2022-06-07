@@ -5,14 +5,14 @@ from conans import ConanFile, CMake, tools
 
 class Traact(ConanFile):
     name = "traact_core"
-    version = "0.0.1"
+    version = "0.1.0"
 
-    description = "Convenience wrapper around tbb for realtime tracking in heterogeneous, distributed sensor environments"
+    description = "Core library of traact, defining the dataflow and component interfaces"
     url = "https://github.com/traact/traact_core"
-    license = "BSD 3-Clause"
+    license = "MIT"
     author = "Frieder Pankratz"
 
-    generators = "cmake", "traact_virtualrunenv_generator"
+    generators = "cmake", "TraactVirtualRunEnvGenerator"
     settings = "os", "compiler", "build_type", "arch"
     compiler = "cppstd"
     options = {
@@ -25,20 +25,19 @@ class Traact(ConanFile):
         "with_tests": True
     }
 
-    exports_sources = "include/*", "src/*", "util/*", "apps/*", "tests/*", "CMakeLists.txt"
+    exports_sources =  "src/*", "util/*", "apps/*", "tests/*", "CMakeLists.txt"
 
     def requirements(self):
         if self.options.with_tests:
-            self.requires("gtest/1.10.0")
-            self.requires("fakeit/2.0.7")
-        self.requires("traact_run_env/%s@camposs/stable" % self.version)
-        self.requires("nlohmann_json/3.7.3")
-        self.requires("spdlog/1.8.2")
-        #self.requires("onetbb/2020.3")
+            self.requires("gtest/[>=1.10.0]")
+            self.requires("approvaltests.cpp/10.12.2")
+        self.requires("traact_run_env/[>=1.0.0]@camposs/stable")
+        self.requires("nlohmann_json/[>=3.7.3]")
+        self.requires("spdlog/[>=1.8.2]")
         self.requires("rttr/0.9.7-dev@camposs/stable")
-        self.requires("Boost/1.75.0-r3@camposs/stable")
-        self.requires("cppfs/1.3.0@camposs/stable")
         self.requires("taskflow/3.3.0")
+        self.requires("tclap/[>=1.2.4]")
+        self.requires("cppfs/1.3.0@camposs/stable")
 
     def _configure_cmake(self):
         cmake = CMake(self)

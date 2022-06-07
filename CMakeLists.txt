@@ -1,134 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
 include(GenerateExportHeader)
-
-option(WITH_TESTS "Build Tests" ON)
-option(WITH_COVERAGE "" ON)
-option(WITH_COZ "With Coz Profiler" OFF)
-
 set(CMAKE_CXX_STANDARD 17)
-
-# public header
-set(LIB_HEADERS
-        include/traact/traact.h
-        include/traact/traact_core_export.h
-        include/traact/component/Component.h
-        include/traact/component/ComponentTypes.h
-        include/traact/datatypes.h
-        include/traact/dataflow/Network.h
-        include/traact/pattern/Pattern.h
-        include/traact/pattern/Port.h
-        include/traact/pattern/CoordinateSystem.h
-
-        include/traact/pattern/MetaPattern.h
-        include/traact/component/ComponentGraph.h
-        include/traact/util/PerformanceMonitor.h
-        include/traact/buffer/ComponentBuffer.h
-        include/traact/buffer/TimeDomainBuffer.h
-        include/traact/buffer/TimeDomainBuffer.cpp
-        include/traact/buffer/BufferTypeConversion.h
-        include/traact/buffer/BufferFactory.h
-        include/traact/pattern/instance/PatternInstance.h
-        include/traact/pattern/instance/PortInstance.h
-        include/traact/pattern/instance/GraphInstance.h
-        include/traact/util/Utils.h
-        include/traact/facade/Facade.cpp
-        include/traact/facade/Facade.h
-        include/traact/component/facade/ApplicationAsyncSource.h
-        include/traact/component/facade/ApplicationSyncSink.h
-        include/traact/component/PlayerBaseComponent.cpp
-        include/traact/component/PlayerBaseComponent.h
-
-        include/traact/component/FileWriter.cpp
-        include/traact/component/FileWriter.h
-        include/traact/component/FileReader.cpp
-        include/traact/component/FileReader.h
-        include/traact/component/FilePlayer.cpp
-        include/traact/component/FilePlayer.h
-        include/traact/component/FileRecorder.h
-        include/traact/facade/PluginFactory.h
-        include/traact/serialization/JsonPattern.h
-        include/traact/serialization/JsonPatternInstance.h
-        include/traact/serialization/JsonPort.h
-        include/traact/serialization/JsonPortInstance.h
-
-        include/traact/util/FileUtil.h
-        include/traact/util/Logging.cpp
-        include/traact/util/Logging.h
-        include/traact/facade/rttr/RTTRPluginFactory.cpp
-        include/traact/facade/rttr/RTTRPluginFactory.h
-        include/traact/serialization/JsonGraphInstance.h
-        include/traact/pattern/ParameterUtils.h
-        include/traact/component/ModuleComponent.h
-        include/traact/util/TraactCoreUtils.h
-        include/traact/util/TraactCoreUtils.cpp
-        include/traact/buffer/TimeStepBuffer.h
-        include/traact/buffer/TimeStepBuffer.cpp)
-
-# rest of source code
-set(TBB_SOURCES
-        include/traact/dataflow/tbb/ComponentAsyncFunctional.cpp
-        include/traact/dataflow/tbb/ComponentAsyncFunctional.h
-        include/traact/dataflow/tbb/ComponentAsyncSink.cpp
-        include/traact/dataflow/tbb/ComponentAsyncSink.h
-        include/traact/dataflow/tbb/ComponentAsyncSource.cpp
-        include/traact/dataflow/tbb/ComponentAsyncSource.h
-        include/traact/dataflow/tbb/ComponentBase.h
-        include/traact/dataflow/tbb/ComponentSyncFunctional.cpp
-        include/traact/dataflow/tbb/ComponentSyncFunctional.h
-        include/traact/dataflow/tbb/ComponentSyncSink.cpp
-        include/traact/dataflow/tbb/ComponentSyncSink.h
-        include/traact/dataflow/tbb/ComponentSyncSource.cpp
-        include/traact/dataflow/tbb/ComponentSyncSource.h
-        include/traact/dataflow/tbb/DataflowMessage.h
-        include/traact/dataflow/tbb/DynamicJoinNode.h
-        include/traact/dataflow/tbb/NetworkGraph.cpp
-        include/traact/dataflow/tbb/NetworkGraph.h
-        include/traact/dataflow/tbb/SourceMergeNode.h
-        include/traact/dataflow/tbb/TBBNetwork.cpp
-        include/traact/dataflow/tbb/TBBNetwork.h
-        include/traact/dataflow/tbb/TBBTimeDomainManager.h
-        include/traact/dataflow/tbb/TBBTimeDomainManager.cpp
-        include/traact/dataflow/tbb/ComponentBase.cpp
-        )
-set(LIB_SOURCES
-        src/pattern/Pattern.cpp
-        src/pattern/Port.cpp
-        src/pattern/CoordinateSystem.cpp
-
-        src/pattern/MetaPattern.cpp
-
-        src/util/PerformanceMonitor.cpp
-        src/pattern/instance/PatternInstance.cpp
-        src/pattern/instance/PortInstance.cpp
-        src/pattern/instance/GraphInstance.cpp
-        src/util/Utils.cpp
-        src/dataflow/Network.cpp
-        src/pattern/ParameterUtils.cpp
-        src/component/Component.cpp
-        src/component/ModuleComponent.cpp
-        src/component/ComponentGraph.cpp
-        include/traact/util/Semaphore.h
-        include/traact/buffer/BufferSource.h
-        include/traact/facade/DefaultFacade.cpp
-        include/traact/facade/DefaultFacade.h
-        include/traact/util/FileUtil.cpp
-        src/serialization/JsonGraphInstance.cpp
-        src/serialization/JsonPortInstance.cpp
-        src/serialization/JsonPattern.cpp
-        src/serialization/JsonPatternInstance.cpp
-        src/serialization/JsonPort.cpp
-        src/serialization/JsonTimeDomainManagerConfig.cpp
-        include/traact/util/RingBuffer.h
-        include/traact/dataflow/taskflow/TaskFlowNetwork.cpp
-        include/traact/dataflow/taskflow/TaskFlowNetwork.h
-        include/traact/dataflow/taskflow/TaskFlowGraph.cpp
-        include/traact/dataflow/taskflow/TaskFlowGraph.h
-        include/traact/buffer/ComponentBuffer.cpp
-        include/traact/buffer/SourceComponentBuffer.cpp
-        include/traact/buffer/SourceComponentBuffer.h include/traact/dataflow/taskflow/TaskFlowTaskFunctions.h include/traact/dataflow/taskflow/TaskFlowTimeDomain.cpp include/traact/dataflow/taskflow/TaskFlowTimeDomain.h
-        )
-
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 # conan is required hard, library name, version and description are configured from conan
 if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
@@ -137,85 +12,139 @@ else ()
     message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
 endif ()
 
+option(WITH_TESTS "Build Tests" ON)
+
 project(${CONAN_PACKAGE_NAME}_PROJECT VERSION ${CONAN_PACKAGE_VERSION})
 
 conan_basic_setup(TARGETS)
 
-if (WITH_COVERAGE)
-    #add_compile_options(-g -O0 -Wall -W -Wshadow -Wunused-variable -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage)
-    add_link_options(-fprofile-arcs -ftest-coverage)
-endif ()
-
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-DTBB_USE_DEBUG=1)
+if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_compile_definitions(SPDLOG_DEBUG_ON SPDLOG_TRACE_ON SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
-
 endif ()
 
-add_definitions(-DTBB_PREVIEW_FLOW_GRAPH_FEATURES=1)
-add_definitions(-DTBB_PREVIEW_FLOW_GRAPH_NODES=1)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # using Clang
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # using GCC
+    # add_compile_options(-Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wcast-align -Wpedantic -Wmisleading-indentation -Wlogical-op -Wnull-dereference)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    # using Intel C++
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # using Visual Studio C++
+endif ()
 
-# conan workspace and cmake don't work that well together, did not manage to get the build dir into the includes: 
-# force generated file into source include dir 
-# only one export file could be generated
-# use files and defines instead
-#set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-#set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
-#generate_export_header(${CONAN_PACKAGE_NAME} EXPORT_FILE_NAME "../../include/traact/${CONAN_PACKAGE_NAME}_export.h")
+set(CORE_SRC src/traact/traact.h
+        src/traact/component/Component.h
+        src/traact/component/ComponentTypes.h
+        src/traact/datatypes.h
+        src/traact/dataflow/Network.h
+        src/traact/pattern/Pattern.h
+        src/traact/pattern/Port.h
+        src/traact/pattern/CoordinateSystem.h
+        src/traact/util/FileUtil.h
+        src/traact/util/FileUtil.cpp
+        src/traact/pattern/MetaPattern.h
+        src/traact/component/ComponentGraph.h
+        src/traact/buffer/ComponentBuffer.h
+        src/traact/buffer/TimeDomainBuffer.h
+        src/traact/buffer/TimeDomainBuffer.cpp
+        src/traact/pattern/instance/PatternInstance.h
+        src/traact/pattern/instance/PortInstance.h
+        src/traact/pattern/instance/GraphInstance.h
+        src/traact/util/Utils.h
+        src/traact/facade/Facade.cpp
+        src/traact/facade/Facade.h
+        src/traact/component/facade/ApplicationAsyncSource.h
+        src/traact/component/facade/ApplicationSyncSink.h
+        src/traact/component/PlayerBaseComponent.cpp
+        src/traact/component/PlayerBaseComponent.h
 
-if(UNIX)
-    if(APPLE)
-        MESSAGE(STATUS "Building for Macos.")
-        add_definitions(-DTRAACT_TARGET_APPLE=1)
-    endif()
-    MESSAGE(STATUS "Building for Unix.")
-    add_definitions(-DTRAACT_TARGET_UNIX=1)
-elseif(WIN32)
-    MESSAGE(STATUS "Building for Windows.")
-    add_definitions(-DTRAACT_TARGET_WINDOWS=1)
-endif()
-
-if (MSVC)
-    # per default disable extended aligned storage for now on msvc
-    add_definitions(-D_DISABLE_EXTENDED_ALIGNED_STORAGE -DHAVE_SNPRINTF)
-endif()
+        src/traact/component/FileWriter.cpp
+        src/traact/component/FileWriter.h
+        src/traact/component/FileReader.cpp
+        src/traact/component/FileReader.h
+        src/traact/component/FilePlayer.cpp
+        src/traact/component/FilePlayer.h
+        src/traact/component/FileRecorder.h
+        src/traact/facade/PluginFactory.h
+        src/traact/serialization/JsonPattern.h
+        src/traact/serialization/JsonPatternInstance.h
+        src/traact/serialization/JsonPort.h
+        src/traact/serialization/JsonPortInstance.h
+        src/traact/util/Logging.cpp
+        src/traact/util/Logging.h
+        src/traact/facade/rttr/RTTRPluginFactory.h
+        src/traact/facade/rttr/RTTRPluginFactory.cpp
+        src/traact/serialization/JsonGraphInstance.h
+        src/traact/pattern/ParameterUtils.h
+        src/traact/component/ModuleComponent.h
+        src/traact/buffer/TimeStepBuffer.h
+        src/traact/buffer/TimeStepBuffer.cpp
+        src/traact/pattern/Pattern.cpp
+        src/traact/pattern/Port.cpp
+        src/traact/pattern/CoordinateSystem.cpp
+        src/traact/pattern/MetaPattern.cpp
+        src/traact/pattern/instance/PatternInstance.cpp
+        src/traact/pattern/instance/PortInstance.cpp
+        src/traact/pattern/instance/GraphInstance.cpp
+        src/traact/util/Utils.cpp
+        src/traact/dataflow/Network.cpp
+        src/traact/pattern/ParameterUtils.cpp
+        src/traact/component/Component.cpp
+        src/traact/component/ModuleComponent.cpp
+        src/traact/component/ComponentGraph.cpp
+        src/traact/util/Semaphore.h
+        src/traact/facade/DefaultFacade.cpp
+        src/traact/facade/DefaultFacade.h
+        src/traact/serialization/JsonGraphInstance.cpp
+        src/traact/serialization/JsonPortInstance.cpp
+        src/traact/serialization/JsonPattern.cpp
+        src/traact/serialization/JsonPatternInstance.cpp
+        src/traact/serialization/JsonPort.cpp
+        src/traact/serialization/JsonTimeDomainManagerConfig.cpp
+        src/traact/dataflow/taskflow/TaskFlowNetwork.cpp
+        src/traact/dataflow/taskflow/TaskFlowNetwork.h
+        src/traact/dataflow/taskflow/TaskFlowGraph.cpp
+        src/traact/dataflow/taskflow/TaskFlowGraph.h
+        src/traact/buffer/ComponentBuffer.cpp
+        src/traact/buffer/SourceComponentBuffer.cpp
+        src/traact/buffer/SourceComponentBuffer.h
+        src/traact/dataflow/taskflow/TaskFlowTaskFunctions.h
+        src/traact/dataflow/taskflow/TaskFlowTimeDomain.cpp
+        src/traact/dataflow/taskflow/TaskFlowTimeDomain.h
+        src/traact/buffer/DataFactory.h src/traact/buffer/BufferUtils.h src/traact/buffer/DataBuffer.cpp src/traact/buffer/DataBuffer.h src/traact/buffer/DataBufferFactory.h src/traact/dataflow/taskflow/TaskFlowUtils.h src/traact/util/EnumToString.cpp src/traact/util/EnumToString.h)
 
 
 add_library(${CONAN_PACKAGE_NAME} SHARED
-        ${LIB_HEADERS}
-        ${LIB_SOURCES}
+        ${CORE_SRC}
         )
-
-if(WITH_COZ)
-    find_package(coz-profiler)
-endif()
 
 conan_target_link_libraries(${CONAN_PACKAGE_NAME})
 
 set_target_properties(${CONAN_PACKAGE_NAME} PROPERTIES VERSION ${CONAN_PACKAGE_VERSION})
-#set_target_properties(${CONAN_PACKAGE_NAME} PROPERTIES PUBLIC_HEADER "${LIB_HEADERS}")
-
 
 target_include_directories(${CONAN_PACKAGE_NAME} PUBLIC
-        $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         ${CONAN_INCLUDE_DIRS_NLOHMANN_JSON}
         )
-target_include_directories(${CONAN_PACKAGE_NAME} PRIVATE
+
+target_include_directories(${CONAN_PACKAGE_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_BINARY_DIR}
         )
+
+# public header
+generate_export_header(${CONAN_PACKAGE_NAME} EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/traact/${CONAN_PACKAGE_NAME}_export.h)
 
 install(TARGETS ${CONAN_PACKAGE_NAME}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/traact" # source directory
-        DESTINATION "include" # target directory
-        FILES_MATCHING # install only matched files
-        PATTERN "*.h" # select header files
+install(DIRECTORY "./src/traact" DESTINATION "${CMAKE_INSTALL_PREFIX}/include" FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "_internal" EXCLUDE
         )
-
-#install(FILES "${PROJECT_BINARY_DIR}/traact_export.h" DESTINATION "include")
 
 add_subdirectory(apps)
 
