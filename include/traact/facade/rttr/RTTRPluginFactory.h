@@ -51,7 +51,7 @@ namespace traact::facade {
 
         RTTRPluginFactory();
 
-        RTTRPluginFactory(const std::string &pluginDirectories);
+        explicit RTTRPluginFactory(const std::string &pluginDirectories);
 
         ~RTTRPluginFactory() = default;
 
