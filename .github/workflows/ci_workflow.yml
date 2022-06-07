@@ -50,7 +50,7 @@ jobs:
           CONAN_UPLOAD_DEPENDENCIES: "all"
           CONAN_CHANNEL: "latest"
           CONAN_STABLE_BRANCH_PATTERN: "releases/*"
-          CONAN_UPLOAD: "https://conan.campar.in.tum.de/api/conan/conan-camposs"
+          CONAN_UPLOAD: "https://conan.campar.in.tum.de/api/conan/conan-traact"
           CONAN_BUILD_POLICY: "outdated"
           CONAN_BASE_PROFILE: ${{ matrix.conan_base_profile }}
           CONAN_REVISIONS_ENABLED: 1
