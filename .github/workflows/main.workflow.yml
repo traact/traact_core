@@ -36,8 +36,8 @@ jobs:
       - name: Export package
         run: |
           conan user
+          conan config install https://github.com/traact/bincrafters-config.git
           conan export . @traact/latest
-          conan remote add traact-camposs https://conan.campar.in.tum.de/api/conan/conan-traact
       - name: Upload Package
         uses: grisumbras/conan-upload@v0.3.0
         with:
