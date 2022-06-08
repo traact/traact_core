@@ -1,0 +1,49 @@
+name: Build Conan Pakages
+on:
+  push:
+    branches:
+      - 'releases/**'
+jobs:
+  conan_package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-18.04 ]
+        include:
+          - os: ubuntu-18.04
+            python-arch: "x64"
+            python-version: "3.6.x"
+            install-headerfiles: true
+            prepare-python: true
+            conan_base_profile: "linux-gcc7-amd64"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@master
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.python-arch }}
+        if: matrix.prepare-python
+      - name: Install conan && conan package tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install conan
+      - name: Checkout package
+        uses: actions/checkout@v3
+        with:
+          path: main
+      - name: Export package
+        run: |
+          conan user
+          conan export . @traact/stable
+          conan remote add traact-camposs https://conan.campar.in.tum.de/api/conan/conan-traact
+      - name: Upload Package
+        uses: grisumbras/conan-upload@v0.3.0
+        with:
+          login: traact_ci
+          password: ${{ secrets.TRAACT_ORG_CI_CAMPOSS_PASSWORD }}
+          url: https://conan.campar.in.tum.de/api/conan/conan-traact
+          remote: traact-camposs
+          user: traact
+          channel: stable

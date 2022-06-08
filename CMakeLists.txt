@@ -1,37 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
 
-include(GenerateExportHeader)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
-
-# conan is required hard, library name, version and description are configured from conan
 if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
     include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
 else ()
     message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
 endif ()
 
-option(WITH_TESTS "Build Tests" ON)
+list(APPEND CMAKE_MODULE_PATH ${CONAN_TRAACT_RUN_ENV_ROOT}/cmake)
 
 project(${CONAN_PACKAGE_NAME}_PROJECT VERSION ${CONAN_PACKAGE_VERSION})
 
-conan_basic_setup(TARGETS)
-
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    add_compile_definitions(SPDLOG_DEBUG_ON SPDLOG_TRACE_ON SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
-endif ()
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # using Clang
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # using GCC
-    # add_compile_options(-Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wcast-align -Wpedantic -Wmisleading-indentation -Wlogical-op -Wnull-dereference)
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-    # using Intel C++
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    # using Visual Studio C++
-endif ()
+include(traact_default_library_setup)
 
 set(CORE_SRC src/traact/traact.h
         src/traact/component/Component.h
@@ -115,32 +94,16 @@ set(CORE_SRC src/traact/traact.h
         src/traact/buffer/DataFactory.h src/traact/buffer/BufferUtils.h src/traact/buffer/DataBuffer.cpp src/traact/buffer/DataBuffer.h src/traact/buffer/DataBufferFactory.h src/traact/dataflow/taskflow/TaskFlowUtils.h src/traact/util/EnumToString.cpp src/traact/util/EnumToString.h)
 
 
-add_library(${CONAN_PACKAGE_NAME} SHARED
-        ${CORE_SRC}
-        )
+add_library(${CONAN_PACKAGE_NAME} ${CORE_SRC})
 
 conan_target_link_libraries(${CONAN_PACKAGE_NAME})
-
-set_target_properties(${CONAN_PACKAGE_NAME} PROPERTIES VERSION ${CONAN_PACKAGE_VERSION})
-
-
-target_include_directories(${CONAN_PACKAGE_NAME} PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_BINARY_DIR}
-        )
-
-generate_export_header(${CONAN_PACKAGE_NAME} EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/traact/${CONAN_PACKAGE_NAME}_export.h)
-
-install(TARGETS ${CONAN_PACKAGE_NAME}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
 
 install(DIRECTORY "./src/traact" DESTINATION "${CMAKE_INSTALL_PREFIX}/include" FILES_MATCHING
         PATTERN "*.h"
         PATTERN "_internal" EXCLUDE
         )
+
+include(traact_default_library_final)
 
 add_subdirectory(apps)
 
