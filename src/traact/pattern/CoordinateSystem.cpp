@@ -1,8 +1,4 @@
-/**
- *   Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com>
- *
- *   License in root folder
-**/
+/** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #include "traact/pattern/CoordinateSystem.h"
 traact::pattern::spatial::CoordinateSystem::CoordinateSystem(std::string name, bool is_multi)

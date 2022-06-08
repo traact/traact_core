@@ -1,8 +1,4 @@
-/**
- *   Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com>
- *
- *   License in root folder
-**/
+/** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 #ifndef TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPORT_H_
 #define TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPORT_H_
 

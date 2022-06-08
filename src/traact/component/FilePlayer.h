@@ -1,8 +1,4 @@
-/**
- *   Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com>
- *
- *   License in root folder
-**/
+/** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_FILEPLAYER_H_
 #define TRAACT_CORE_SRC_TRAACT_COMPONENT_FILEPLAYER_H_

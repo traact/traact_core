@@ -1,8 +1,4 @@
-/**
- *   Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com>
- *
- *   License in root folder
-**/
+/** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #ifndef TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_
 #define TRAACTTEST_SRC_TRAACT_NETWORK_TRAACTCOMPONENTSINK_H_

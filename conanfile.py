@@ -8,7 +8,7 @@ class Traact(ConanFile):
     version = "0.1.0"
 
     description = "Core library of traact, defining the dataflow and component interfaces"
-    url = "https://github.com/traact/traact_core"
+    url = "https://github.com/traact/traact_core.git"
     license = "MIT"
     author = "Frieder Pankratz"
 

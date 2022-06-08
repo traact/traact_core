@@ -1,8 +1,4 @@
-/**
- *   Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com>
- *
- *   License in root folder
-**/
+/** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #ifndef TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_PATTERN_PARAMETERUTILS_H_
 #define TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_PATTERN_PARAMETERUTILS_H_

@@ -1,8 +1,4 @@
-/**
- *   Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com>
- *
- *   License in root folder
-**/
+/** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #ifndef TRAACT_INCLUDE_TRAACT_FACADE_FACADE_H_
 #define TRAACT_INCLUDE_TRAACT_FACADE_FACADE_H_

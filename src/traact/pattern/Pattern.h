@@ -1,10 +1,6 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-use-nodiscard"
-/**
- *   Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com>
- *
- *   License in root folder
-**/
+/** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 #ifndef TRAACT_INCLUDE_TRAACT_PATTERN_DATAFLOWPATTERN_H_
 #define TRAACT_INCLUDE_TRAACT_PATTERN_DATAFLOWPATTERN_H_
 
