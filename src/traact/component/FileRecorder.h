@@ -33,7 +33,7 @@ class FileRecorder : public FileWriter<T> {
         return pattern;
     }
 
- RTTR_ENABLE(Component)
+ TRAACT_PLUGIN_ENABLE(Component)
 
 };
 

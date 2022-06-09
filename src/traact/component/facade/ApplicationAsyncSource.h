@@ -3,8 +3,10 @@
 #ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_FACADE_APPLICATIONASYNCSOURCE_H_
 #define TRAACT_CORE_SRC_TRAACT_COMPONENT_FACADE_APPLICATIONASYNCSOURCE_H_
 
-#include <traact/traact.h>
-#include <traact/buffer/SourceComponentBuffer.h>
+#include "traact/component/Component.h"
+#include "traact/traact_plugins.h"
+#include <spdlog/spdlog.h>
+
 namespace traact::component::facade {
 
 template<typename HeaderType>
@@ -60,7 +62,7 @@ class ApplicationAsyncSource : public Component {
         return true;
     }
 
- RTTR_ENABLE(Component)
+ TRAACT_PLUGIN_ENABLE(Component)
 
 };
 }

@@ -19,7 +19,7 @@ class TraactPackage(ConanFile):
     exports_sources = "src/*", "util/*", "apps/*", "tests/*", "CMakeLists.txt"
 
     def requirements(self):
-        self.traact_requires("traact_run_env","latest")
+        self.traact_requires("traact_run_env", "latest")
         if self.options.with_tests:
             self.requires("gtest/[>=1.11.0]")
             self.requires("approvaltests.cpp/10.12.2")

@@ -38,11 +38,8 @@ set(CORE_SRC src/traact/traact.h
         src/traact/component/PlayerBaseComponent.cpp
         src/traact/component/PlayerBaseComponent.h
 
-        src/traact/component/FileWriter.cpp
         src/traact/component/FileWriter.h
-        src/traact/component/FileReader.cpp
         src/traact/component/FileReader.h
-        src/traact/component/FilePlayer.cpp
         src/traact/component/FilePlayer.h
         src/traact/component/FileRecorder.h
         src/traact/facade/PluginFactory.h
@@ -91,7 +88,14 @@ set(CORE_SRC src/traact/traact.h
         src/traact/dataflow/taskflow/TaskFlowTaskFunctions.h
         src/traact/dataflow/taskflow/TaskFlowTimeDomain.cpp
         src/traact/dataflow/taskflow/TaskFlowTimeDomain.h
-        src/traact/buffer/DataFactory.h src/traact/buffer/BufferUtils.h src/traact/buffer/DataBuffer.cpp src/traact/buffer/DataBuffer.h src/traact/buffer/DataBufferFactory.h src/traact/dataflow/taskflow/TaskFlowUtils.h src/traact/util/EnumToString.cpp src/traact/util/EnumToString.h)
+        src/traact/buffer/DataFactory.h src/traact/buffer/BufferUtils.h
+        src/traact/buffer/DataBuffer.cpp src/traact/buffer/DataBuffer.h
+        src/traact/buffer/DataBufferFactory.h
+        src/traact/dataflow/taskflow/TaskFlowUtils.h
+        src/traact/util/EnumToString.cpp
+        src/traact/util/EnumToString.h
+        src/traact/traact_plugins.h
+        src/traact/facade/rttr/traact_plugins_rttr.h src/traact/component/generic_components.h)
 
 
 add_library(${CONAN_PACKAGE_NAME} ${CORE_SRC})

@@ -3,10 +3,12 @@
 #ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_PLAYERBASECOMPONENT_H_
 #define TRAACT_CORE_SRC_TRAACT_COMPONENT_PLAYERBASECOMPONENT_H_
 
-#include "traact/traact.h"
-#include <queue>
-#include <rttr/type>
+#include "traact/component/Component.h"
+#include "traact/traact_plugins.h"
+#include "ModuleComponent.h"
+#include <spdlog/spdlog.h>
 #include <thread>
+#include <queue>
 
 namespace traact::component {
 
@@ -99,7 +101,6 @@ class TRAACT_CORE_EXPORT PlayerBaseModule : public Module {
 
     void threadLoop();
 
- RTTR_ENABLE(Module)
 };
 }
 

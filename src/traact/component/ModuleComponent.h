@@ -3,8 +3,9 @@
 #ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_MODULECOMPONENT_H_
 #define TRAACT_CORE_SRC_TRAACT_COMPONENT_MODULECOMPONENT_H_
 
-#include <traact/component/Component.h>
-#include <rttr/type>
+#include "traact/component/Component.h"
+#include "traact/traact_plugins.h"
+#include <spdlog/spdlog.h>
 
 namespace traact::component {
 
@@ -28,8 +29,6 @@ class TRAACT_CORE_EXPORT Module {
     virtual bool stop(ComponentPtr module_component);
 
     virtual bool teardown(ComponentPtr module_component);
-
- RTTR_ENABLE();
 
 };
 
@@ -59,7 +58,7 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component {
     ModuleType module_type_;
     Module::Ptr module_;
 
- RTTR_ENABLE(Component)
+ TRAACT_PLUGIN_ENABLE(Component)
 };
 
 }

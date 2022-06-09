@@ -3,12 +3,10 @@
 #ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_FILEPLAYER_H_
 #define TRAACT_CORE_SRC_TRAACT_COMPONENT_FILEPLAYER_H_
 
-#include <rttr/registration>
-#include "traact/traact.h"
-#include <fmt/format.h>
-#include <thread>
-#include <utility>
-#include "traact/buffer/SourceComponentBuffer.h"
+#include "traact/component/Component.h"
+#include "traact/traact_plugins.h"
+#include <spdlog/spdlog.h>
+#include <traact/pattern/ParameterUtils.h>
 
 namespace traact::component {
 
@@ -104,7 +102,7 @@ class FilePlayer : public Component {
 
         }
     }
- RTTR_ENABLE(Component)
+ TRAACT_PLUGIN_ENABLE(Component)
 
 };
 

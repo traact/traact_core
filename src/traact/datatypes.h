@@ -8,6 +8,8 @@
 #include <traact/traact_core_export.h>
 namespace traact {
 
+using Scalar = double;
+
 using TimeDuration = std::chrono::duration<uint64_t, std::nano>;
 using Timestamp = std::chrono::time_point<std::chrono::system_clock, TimeDuration>;
 

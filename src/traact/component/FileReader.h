@@ -3,11 +3,12 @@
 #ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_FILEREADER_H_
 #define TRAACT_CORE_SRC_TRAACT_COMPONENT_FILEREADER_H_
 
-#include <rttr/registration>
-#include <utility>
-#include "traact/traact.h"
-#include <fmt/format.h>
-#include "traact/util/FileUtil.h"
+#include "traact/component/Component.h"
+#include "traact/traact_plugins.h"
+#include <spdlog/spdlog.h>
+#include <traact/pattern/ParameterUtils.h>
+#include <traact/util/FileUtil.h>
+#include <traact/buffer/ComponentBuffer.h>
 
 namespace traact::component {
 
@@ -63,7 +64,7 @@ class FileReader : public Component {
     const std::string serializer_name_;
     typename T::NativeType data_;
 
- RTTR_ENABLE(Component)
+ TRAACT_PLUGIN_ENABLE(Component)
 
 };
 

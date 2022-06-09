@@ -3,7 +3,10 @@
 #ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_FACADE_APPLICATIONSYNCSINK_H_
 #define TRAACT_CORE_SRC_TRAACT_COMPONENT_FACADE_APPLICATIONSYNCSINK_H_
 
-#include <traact/traact.h>
+#include "traact/buffer/ComponentBuffer.h"
+#include "traact/component/Component.h"
+#include "traact/traact_plugins.h"
+#include <spdlog/spdlog.h>
 
 namespace traact::component::facade {
 
@@ -29,10 +32,10 @@ class ApplicationSyncSink : public Component {
         return pattern;
     }
 
-    bool processTimePoint(traact::DefaultComponentBuffer &data) override {
+    bool processTimePoint(traact::buffer::ComponentBuffer &data) override {
 
         if (callback_) {
-            const auto &input = data.getInput<HeaderType>(0);
+            const auto &input = data.template getInput<HeaderType>(0);
             callback_(data.getTimestamp(), input);
         } else {
             SPDLOG_WARN("ApplicationSyncSink {0}: missing callback function", getName());
@@ -68,7 +71,7 @@ class ApplicationSyncSink : public Component {
     NewValueCallback callback_;
     InvalidTimestampCallback invalid_callback_;
 
- RTTR_ENABLE(Component)
+ TRAACT_PLUGIN_ENABLE(Component)
 
 };
 }
