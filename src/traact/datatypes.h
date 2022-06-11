@@ -33,6 +33,16 @@ inline static Timestamp now() {
 inline static TimestampSteady nowSteady() {
     return std::chrono::steady_clock::now();
 }
+
+inline static bool isWithinRange(const Timestamp& value_0, const Timestamp& value_1, const TimeDuration max_offset ){
+    const auto kTs0Min = value_0 - max_offset;
+    const auto kTs0Max = value_0 + max_offset;
+    const auto kTs1Min = value_1 - max_offset;
+    const auto kTs1Max = value_1 + max_offset;
+
+    return kTs0Max >= kTs1Min && kTs0Min <= kTs1Max;
+}
+
 enum class MessageDataMode {
     INVALID = 0,
     STATIC,

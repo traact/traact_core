@@ -33,11 +33,12 @@ struct TestComponentState {
     void callStart();
     void callStop();
     void callTeardown();
-    void callProcessTimePoint(traact::Timestamp timestamp);
-    void callInvalidTimePoint(traact::Timestamp timestamp);
+    void callProcessTimePoint(const traact::buffer::ComponentBuffer &data);
+    void callInvalidTimePoint(const traact::buffer::ComponentBuffer &data);
     void callRequest(traact::Timestamp timestamp);
     void callCommitDone(traact::Timestamp timestamp);
     std::vector<TestComponentEvent> events;
+    std::vector<std::string> process_data;
     std::mutex event_lock;
     bool expectInOrder(bool data_in_order) const;
     size_t expectEventCount(TestEvents test_event) const;

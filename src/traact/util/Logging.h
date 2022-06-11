@@ -31,6 +31,18 @@ template <> struct fmt::formatter<traact::Timestamp> {
     }
 };
 
+template <> struct fmt::formatter<traact::TimeDuration> {
+
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        return ctx.end();
+    }
+
+    template <typename FormatContext>
+    auto format(const traact::TimeDuration & value, FormatContext& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", value.count());
+    }
+};
+
 template <> struct fmt::formatter<traact::TimestampSteady> {
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {

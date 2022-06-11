@@ -15,7 +15,11 @@ TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
       current_message_{EventType::INVALID} {
 
     buffer_timestamp_.resize(buffer_data_.size());
-    buffer_valid_.resize(buffer_data_.size(), PortState::INVALID);
+    buffer_valid_.reserve(buffer_data_.size());
+    for (size_t i = 0; i < buffer_data_.size(); ++i) {
+        //buffer_valid_.emplace_back(std::make_unique<PortStateShared >(PortState::INVALID));
+        buffer_valid_.emplace_back(PortState::INVALID);
+    }
 
     int component_count = 0;
     for (const auto &component_config : buffer_config) {
@@ -136,11 +140,12 @@ std::future<bool> TimeStepBuffer::getSourceLock(size_t component_idx) {
     return source_buffer_list_[component_idx]->getSourceLock();
 }
 
-void TimeStepBuffer::resetLock() {
+void TimeStepBuffer::resetNewEvent() {
     for (auto &comp_buffer : source_buffer_list_) {
-        if (comp_buffer) {
-            comp_buffer->resetLock();
-        }
+        comp_buffer->resetLock();
+    }
+    for (auto &buffer_valid : buffer_valid_) {
+        buffer_valid = PortState::INVALID;
     }
 }
 

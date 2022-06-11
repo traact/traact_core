@@ -7,9 +7,9 @@
 #include "TestSyncSinkComponent.h"
 #include <traact/facade/DefaultFacade.h>
 
-class SourceSink: public ::testing::TestWithParam<int> {
+class Test_00_SourceSink: public ::testing::TestWithParam<int> {
  public:
-    SourceSink( ) {
+    Test_00_SourceSink( ) {
 
     }
 
@@ -66,7 +66,7 @@ class SourceSink: public ::testing::TestWithParam<int> {
     const traact::TimeDuration time_delta_{std::chrono::nanoseconds (1)};
 };
 
-TEST_P(SourceSink, NoDataEvent) {
+TEST_P(Test_00_SourceSink, NoDataEvent) {
 
 
     my_facade_->start();
@@ -101,7 +101,7 @@ TEST_P(SourceSink, NoDataEvent) {
     }
 }
 
-TEST_P(SourceSink, DataEvents) {
+TEST_P(Test_00_SourceSink, DataEvents) {
 
     const size_t kDataEvents = 1000;
 
@@ -146,4 +146,58 @@ TEST_P(SourceSink, DataEvents) {
     }
 }
 
-INSTANTIATE_TEST_SUITE_P(ConcurrentTimeSteps, SourceSink,::testing::Range(1,11));
+TEST_P(Test_00_SourceSink, DataEventsEverySecondEventInvalid) {
+
+    const size_t kDataEvents = 1000;
+
+
+
+    my_facade_->start();
+    std::vector<traact::Timestamp> missing_events;
+    for(size_t i=0;i<kDataEvents;++i){
+        auto current_timestamp = start_timestamp_+time_delta_*i;
+        if(i % 2 == 0){
+            source_component_->invalid_value(current_timestamp);
+            missing_events.emplace_back(current_timestamp);
+        } else {
+            source_component_->new_value(current_timestamp, fmt::format("{0}",i));
+        }
+
+    }
+    my_facade_->stop();
+
+    auto& source_state = source_component_->component_state_;
+    auto& sink_state = sink_component_->component_state_;
+    bool force_data_in_order = true;
+    {
+        SCOPED_TRACE("source_state");
+        EXPECT_TRUE(source_state.expectInOrder(force_data_in_order));
+        EXPECT_EQ(1, source_state.expectEventCount(TestEvents::CONFIGURE));
+        EXPECT_EQ(1, source_state.expectEventCount(TestEvents::START));
+        EXPECT_EQ(1, source_state.expectEventCount(TestEvents::STOP));
+        EXPECT_EQ(1, source_state.expectEventCount(TestEvents::TEARDOWN));
+        EXPECT_EQ(0, source_state.expectEventCount(TestEvents::DATA));
+        EXPECT_EQ(kDataEvents, source_state.expectEventCount(TestEvents::CALL_REQUEST));
+        EXPECT_EQ(kDataEvents, source_state.expectEventCount(TestEvents::CALL_COMMIT_DONE));
+
+    }
+    {
+        SCOPED_TRACE("sink_state");
+        EXPECT_TRUE(sink_state.expectInOrder(force_data_in_order));
+        EXPECT_EQ(1, sink_state.expectEventCount(TestEvents::CONFIGURE));
+        EXPECT_EQ(1, sink_state.expectEventCount(TestEvents::START));
+        EXPECT_EQ(1, sink_state.expectEventCount(TestEvents::STOP));
+        EXPECT_EQ(1, sink_state.expectEventCount(TestEvents::TEARDOWN));
+        EXPECT_EQ(kDataEvents/2, sink_state.expectEventCount(TestEvents::DATA));
+        EXPECT_EQ(kDataEvents/2, sink_state.expectEventCount(TestEvents::INVALID_DATA));
+        EXPECT_EQ(0, sink_state.expectEventCount(TestEvents::CALL_REQUEST));
+        EXPECT_EQ(0, sink_state.expectEventCount(TestEvents::CALL_COMMIT_DONE));
+    }
+    {
+        SCOPED_TRACE("source_before_sink");
+
+        EXPECT_TRUE(source_state.precedes(sink_state, missing_events));
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(ConcurrentTimeSteps, Test_00_SourceSink, ::testing::Range(1, 11));

@@ -6,7 +6,8 @@
 #include <string>
 #include <traact/traact.h>
 
-
+const static constexpr char* kTestValue{"{0}_"};
+const static constexpr size_t kExpectedTestValueLength = 5;
 
 CREATE_TRAACT_HEADER_TYPE(TestStringHeader, std::string, "TestString", )
 

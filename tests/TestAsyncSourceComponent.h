@@ -13,12 +13,14 @@ class TestAsyncSourceComponent : public TestComponent{
         traact::pattern::Pattern::Ptr
             pattern = std::make_shared<traact::pattern::Pattern>(pattern_name, traact::Concurrency::SERIAL, traact::component::ComponentType::ASYNC_SOURCE);
         pattern->addProducerPort("output", TestStringHeader::MetaType);
-        pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
+
         return pattern;
     }
 
 
     void new_value(traact::Timestamp timestamp, std::string value);
+
+    void invalid_value(traact::Timestamp timestamp);
 
 };
 

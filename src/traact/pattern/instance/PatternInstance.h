@@ -33,6 +33,11 @@ struct TRAACT_CORE_EXPORT PatternInstance {
     component::ComponentType getComponentType(int time_domain) const;
     LocalConnectedOutputPorts getOutputPortsConnected() const;
 
+    template<typename T>
+        void setParameter(const std::string name, T value){
+            local_pattern.parameter[name]["value"] = value;
+        }
+
     std::string instance_id;
     std::string display_name;
     GraphInstance *parent_graph;

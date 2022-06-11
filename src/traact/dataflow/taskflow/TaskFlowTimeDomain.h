@@ -62,13 +62,16 @@ class TaskFlowTimeDomain {
 
     // concurrent running time steps
     std::mutex flow_mutex_;
+    std::mutex request_mutex_;
     //tf::SmallVector<bool, 10> running_taskflows_;
     std::vector<bool> running_taskflows_;
     std::vector<tf::Future<void>> taskflow_execute_future_;
     Semaphore free_taskflows_semaphore_;
     WaitForTimestamp latest_running_ts_;
-    std::queue<std::pair<Timestamp, EventType>> queued_messages_;
+    std::deque<std::pair<Timestamp, EventType>> queued_messages_;
     Timestamp latest_scheduled_ts_;
+    std::vector<Timestamp> latest_scheduled_component_timestamp_;
+    Timestamp latest_queued_ts_;
 
     std::mutex running_mutex_;
     //tf::SmallVector<Timestamp, 10> running_timestamps_;
@@ -117,6 +120,7 @@ class TaskFlowTimeDomain {
     void cancelOlderEvents(Timestamp timestamp, int component_index);
 
     tf::Task createSeamEntryTask(int time_step_index, const std::string &seam_entry_name);
+    std::optional<int> isTimestampRunningOrQueued(Timestamp timestamp);
 };
 }
 

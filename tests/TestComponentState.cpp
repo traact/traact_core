@@ -20,13 +20,21 @@ void TestComponentState::callTeardown() {
     std::unique_lock guard(event_lock);
     events.emplace_back(TestEvents::TEARDOWN, traact::Timestamp::min());
 }
-void TestComponentState::callProcessTimePoint(traact::Timestamp timestamp) {
+void TestComponentState::callProcessTimePoint(const traact::buffer::ComponentBuffer &data) {
     std::unique_lock guard(event_lock);
-    events.emplace_back(TestEvents::DATA, timestamp);
+    events.emplace_back(TestEvents::DATA, data.getTimestamp());
+    std::string data_string;
+    data_string.reserve(data.getInputCount()*kExpectedTestValueLength);
+    for (int i = 0; i < data.getInputCount(); ++i) {
+        data_string += data.getInput<TestStringHeader>(i);
+    }
+    for (int i = 0; i < data.getOutputCount(); ++i) {
+        data.getOutput<TestStringHeader>(i) = data_string;
+    }
 }
-void TestComponentState::callInvalidTimePoint(traact::Timestamp timestamp) {
+void TestComponentState::callInvalidTimePoint(const traact::buffer::ComponentBuffer &data) {
     std::unique_lock guard(event_lock);
-    events.emplace_back(TestEvents::INVALID_DATA, timestamp);
+    events.emplace_back(TestEvents::INVALID_DATA, data.getTimestamp());
 }
 void TestComponentState::callRequest(traact::Timestamp timestamp) {
     std::unique_lock guard(event_lock);
@@ -39,6 +47,7 @@ void TestComponentState::callCommitDone(traact::Timestamp timestamp) {
 }
 TestComponentState::TestComponentState() {
     events.reserve(kExpectedEvents);
+    process_data.reserve(kExpectedEvents);
 
 }
 bool TestComponentState::expectInOrder(bool data_in_order) const {
@@ -96,7 +105,7 @@ bool TestComponentState::precedes(const TestComponentState &next_state,
 const TestComponentEvent * TestComponentState::getEventFor(const TestComponentEvent &event) const {
     auto has_event = std::find_if(events.begin(), events.end(), [&event](const auto& value){
         if(event.event_type == TestEvents::CALL_COMMIT_DONE){
-            return event.timestamp == value.timestamp && TestEvents::DATA == value.event_type;
+            return event.timestamp == value.timestamp && (TestEvents::DATA == value.event_type || TestEvents::INVALID_DATA == value.event_type);
         }
         else {
             return event.timestamp == value.timestamp && event.event_type == value.event_type;

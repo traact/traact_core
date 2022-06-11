@@ -270,7 +270,9 @@ void TaskFlowTimeDomain::createBuffer() {
     std::vector<bool> tmp;
     tmp.resize(time_step_count_, false);
     source_set_input_.resize(time_domain_buffer_->getCountSources(), tmp);
+    latest_scheduled_component_timestamp_.resize(time_domain_buffer_->getCountSources(), Timestamp::min());
     latest_scheduled_ts_ = Timestamp::min();
+    latest_queued_ts_ = Timestamp ::min();
 }
 
 void TaskFlowTimeDomain::masterSourceFinished() {
@@ -286,12 +288,30 @@ std::future<buffer::SourceComponentBuffer *>
 TaskFlowTimeDomain::requestSourceBuffer(Timestamp timestamp, int component_index) {
 
     SPDLOG_TRACE("RequestSource comp: {0} timestamp: {1} start", component_index, timestamp);
+    std::unique_lock guard(request_mutex_);
+    SPDLOG_TRACE("RequestSource comp: {0} timestamp: {1} has lock", component_index, timestamp);
 
-    // cancel potential older
-    //cancelOlderEvents(timestamp, component_index);
+    if(latest_queued_ts_ != Timestamp ::min() && timestamp > latest_queued_ts_ + time_domain_config_.measurement_delta){
+        SPDLOG_WARN("skip in timestamp, events seem to be missing for component: {0} ts: {1}", component_index, timestamp);
+        Timestamp queue_timestamp = latest_queued_ts_ + time_domain_config_.measurement_delta;
+        while(!isWithinRange(queue_timestamp , timestamp, time_domain_config_.max_offset)){
+            SPDLOG_WARN("scheduling padding event ts: {0}", queue_timestamp);
+            scheduleEvent(EventType::DATA, queue_timestamp);
+            queue_timestamp += time_domain_config_.measurement_delta;
 
-    auto running_time_step = isTimestampRunning(timestamp);
-    if (running_time_step < 0) {
+        }
+    }
+
+    auto running_time_step = isTimestampRunningOrQueued(timestamp);
+    // running or scheduled
+    if (running_time_step.has_value()) {
+        SPDLOG_TRACE("RequestSource comp: {0} timestamp: {1} already running or scheduled",
+                     component_index,
+                     timestamp);
+
+        cancelOlderEvents(timestamp, component_index);
+
+    } else { // not scheduled or running
         if (timestamp + time_domain_config_.max_offset < latest_scheduled_ts_) {
             SPDLOG_ERROR("New data timestamp must be monotonic increasing, latest: {0} now: {1}",
                          latest_scheduled_ts_,
@@ -301,15 +321,17 @@ TaskFlowTimeDomain::requestSourceBuffer(Timestamp timestamp, int component_index
             return value.get_future();
 
         }
-
-        scheduleEvent(EventType::DATA, timestamp);
-
-    } else {
-        SPDLOG_TRACE("RequestSource comp: {0} timestamp: {1} already running",
+        SPDLOG_TRACE("RequestSource comp: {0} timestamp: {1} schedule new message",
                      component_index,
                      timestamp);
-        cancelOlderEvents(timestamp, component_index);
+
+        latest_queued_ts_ = timestamp;
+
+        scheduleEvent(EventType::DATA, timestamp);
     }
+
+    latest_scheduled_component_timestamp_[component_index] = timestamp;
+
 
     return std::async(std::launch::deferred,
                       [&, timestamp, component_index]() mutable -> buffer::SourceComponentBuffer * {
@@ -338,7 +360,7 @@ void TaskFlowTimeDomain::freeTimeStep(int time_step_index) {
     SPDLOG_TRACE("Free Time Step {0}, Reset Locks of ts: {1}",
                  time_step_index,
                  time_domain_buffer_->getTimeStepBuffer(time_step_index).getTimestamp());
-    time_domain_buffer_->getTimeStepBuffer(time_step_index).resetLock();
+    time_domain_buffer_->getTimeStepBuffer(time_step_index).resetNewEvent();
     running_taskflows_[time_step_index] = false;
     if (queued_messages_.empty()) {
         setTaskflowFree(time_step_index);
@@ -352,7 +374,7 @@ void TaskFlowTimeDomain::freeTimeStep(int time_step_index) {
 void TaskFlowTimeDomain::runTaskFlowFromQueue() {
 
     auto next_ts_message = queued_messages_.front();
-    queued_messages_.pop();
+    queued_messages_.pop_front();
 
     time_step_latest_++;
     time_step_latest_ = time_step_latest_ % time_step_count_;
@@ -362,6 +384,9 @@ void TaskFlowTimeDomain::runTaskFlowFromQueue() {
                 next_ts_message.first,
                 next_ts_message.second);
     assert(!running_taskflows_[time_step_latest_]);
+    if(next_ts_message.second == EventType::DATA && latest_running_ts_.currentValue() == next_ts_message.first){
+        SPDLOG_ERROR("same timestamp scheduled twice");
+    }
 
     takeTaskflow(time_step_latest_, next_ts_message.first);
     auto &time_step_buffer = time_domain_buffer_->getTimeStepBuffer(time_step_latest_);
@@ -402,6 +427,8 @@ int TaskFlowTimeDomain::isTimestampRunning(const Timestamp &timestamp) {
         }
 
     }
+
+    SPDLOG_TRACE("no match found for ts {0}", timestamp);
     return -1;
 }
 
@@ -427,25 +454,24 @@ void TaskFlowTimeDomain::scheduleEvent(EventType message_type, Timestamp timesta
 
     latest_scheduled_ts_ = timestamp;
 
-    queued_messages_.emplace(std::make_pair(timestamp, message_type));
+    queued_messages_.emplace_back(std::make_pair(timestamp, message_type));
 
-    auto min_ts = timestamp - time_domain_config_.max_offset;
-    for (int time_step_index = 0; time_step_index < time_step_count_; ++time_step_index) {
-        for (int component_index = 0; component_index < time_domain_buffer_->getCountAsyncSources();
-             ++component_index) {
-            if (!source_set_input_[component_index][time_step_index] && running_taskflows_[time_step_index]
-                && running_timestamps_[time_step_index] < min_ts) {
-                auto &time_step_buffer = time_domain_buffer_->getTimeStepBuffer(time_step_index);
-                SPDLOG_WARN(
-                    "cancel source component buffer, because event seems to be missing, time step: {0} component {1} ts: {2}",
-                    time_step_index,
-                    component_index,
-                    time_step_buffer.getTimestamp());
-                time_step_buffer.getSourceComponentBuffer(component_index)->cancel();
-            }
-        }
-
-    }
+//    auto min_ts = timestamp - time_domain_config_.max_offset;
+//    for (int time_step_index = 0; time_step_index < time_step_count_; ++time_step_index) {
+//        for (int component_index = 0; component_index < time_domain_buffer_->getCountAsyncSources();
+//             ++component_index) {
+//            if (!source_set_input_[component_index][time_step_index] && running_taskflows_[time_step_index]
+//                && running_timestamps_[time_step_index] < min_ts) {
+//                auto &time_step_buffer = time_domain_buffer_->getTimeStepBuffer(time_step_index);
+//                SPDLOG_WARN(
+//                    "cancel source component buffer, because event seems to be missing, time step: {0} component {1} ts: {2}",
+//                    time_step_index,
+//                    component_index,
+//                    time_step_buffer.getTimestamp());
+//                time_step_buffer.getSourceComponentBuffer(component_index)->cancel();
+//            }
+//        }
+//    }
 
     if (free_taskflows_semaphore_.try_wait()) {
         SPDLOG_TRACE("Schedule event ts: {0} {1}, run from queue",
@@ -641,7 +667,7 @@ void TaskFlowTimeDomain::createInterTimeStepDependencies() {
 void TaskFlowTimeDomain::globalTaskflowStart() {
     SPDLOG_TRACE("start time domain: {0}", time_domain_);
     for (int time_step_index = 0; time_step_index < time_step_count_; ++time_step_index) {
-        time_domain_buffer_->getTimeStepBuffer(time_step_index).resetLock();
+        time_domain_buffer_->getTimeStepBuffer(time_step_index).resetNewEvent();
     }
     taskflow_started_.notify();
 
@@ -687,6 +713,25 @@ tf::Task TaskFlowTimeDomain::createSeamEntryTask(int time_step_index, const std:
             return 0;
         }
     }).name(seam_entry_name);
+}
+std::optional<int> TaskFlowTimeDomain::isTimestampRunningOrQueued(Timestamp timestamp) {
+    {
+        std::unique_lock guard(flow_mutex_);
+
+        auto is_running = isTimestampRunning(timestamp);
+        if(is_running >= 0)
+            return {is_running};
+
+        for(const auto& message : queued_messages_) {
+            if(isWithinRange(message.first, timestamp, time_domain_config_.max_offset)){
+                SPDLOG_TRACE("found timestamp match in queued messages: {0} {1} {2}", timestamp, message.first, timestamp-message.first);
+                return {-1};
+            }
+
+        }
+    }
+    SPDLOG_TRACE("no timestamp match found in queued messages: {0}", timestamp);
+    return {};
 }
 
 }

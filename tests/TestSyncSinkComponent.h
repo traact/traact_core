@@ -13,7 +13,7 @@ class TestSyncSinkComponent : public TestComponent{
         traact::pattern::Pattern::Ptr
             pattern = std::make_shared<traact::pattern::Pattern>(pattern_name, traact::Concurrency::SERIAL, traact::component::ComponentType::SYNC_SINK);
         pattern->addConsumerPort("input", TestStringHeader::MetaType);
-        pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
+
         return pattern;
     }
 

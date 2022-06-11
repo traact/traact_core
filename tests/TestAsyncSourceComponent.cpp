@@ -22,6 +22,17 @@ void TestAsyncSourceComponent::new_value(traact::Timestamp timestamp, std::strin
     buffer_p->commit(true);
 
 }
+void TestAsyncSourceComponent::invalid_value(traact::Timestamp timestamp) {
+    component_state_.callRequest(timestamp);
+    auto buffer = request_callback_(timestamp);
+    buffer.wait();
+    auto *buffer_p = buffer.get();
+    if (buffer_p == nullptr){
+        throw std::runtime_error("source buffer is null");
+    }
+    component_state_.callCommitDone(timestamp);
+    buffer_p->commit(true);
+}
 
 CREATE_TRAACT_COMPONENT_FACTORY(TestAsyncSourceComponent)
 
