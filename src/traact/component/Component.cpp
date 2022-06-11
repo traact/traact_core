@@ -5,17 +5,13 @@
 
 namespace traact::component {
 
-Component::Component(std::string name, const ComponentType traact_component_type)
-    : name_(std::move(name)), traact_component_type_(traact_component_type) {
+Component::Component(std::string name)
+    : name_(std::move(name)) {
 
 }
 
 const std::string &Component::getName() const {
     return name_;
-}
-
-const ComponentType &Component::getComponentType() const {
-    return traact_component_type_;
 }
 
 bool Component::configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) {
@@ -42,8 +38,8 @@ void Component::setRequestCallback(const RequestCallback &request_callback) {
     request_callback_ = request_callback;
 }
 
-void Component::invalidTimePoint(Timestamp timestamp, size_t mea_idx) {
-
+bool Component::processTimePointWithInvalid(buffer::ComponentBuffer &data) {
+    return true;
 }
 
 void Component::releaseAsyncCall(Timestamp timestamp, bool valid) {
@@ -68,6 +64,9 @@ void Component::setSourceFinished() {
     } else {
         SPDLOG_ERROR("finished_callback_ not set");
     }
+}
+void Component::configureInstance(const pattern::instance::PatternInstance &pattern_instance) {
+
 }
 
 }

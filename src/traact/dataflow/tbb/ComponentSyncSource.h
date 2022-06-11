@@ -14,7 +14,7 @@ class ComponentSyncSource : public ComponentBase {
 
  public:
     ComponentSyncSource(DefaultPatternPtr pattern_base,
-                        DefaultComponentPtr component_base,
+                        component::Component::Ptr component_base,
                         TBBTimeDomainManager *buffer_manager,
                         NetworkGraph *network_graph);
 

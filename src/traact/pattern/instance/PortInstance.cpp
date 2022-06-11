@@ -36,5 +36,5 @@ bool traact::pattern::instance::PortInstance::IsConnected() const {
 }
 
 traact::pattern::PortType traact::pattern::instance::PortInstance::GetPortType() const {
-    return port.porttype;
+    return port.port_type;
 }

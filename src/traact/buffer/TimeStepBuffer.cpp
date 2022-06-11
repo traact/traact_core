@@ -6,9 +6,12 @@
 namespace traact::buffer {
 TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
                                BufferType buffer_data,
-                               const std::map<int,BufferConfig> &buffer_config)
+                               BufferType header_data,
+                               const std::map<int,
+                                              BufferConfig> &buffer_config)
     : time_step_index_(time_step_index),
       buffer_data_(std::move(buffer_data)),
+      header_data_(std::move(header_data)),
       current_message_{EventType::INVALID} {
 
     buffer_timestamp_.resize(buffer_data_.size());
@@ -26,20 +29,38 @@ TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
         }
 
         LocalDataBuffer input_data_buffer;
+        LocalHeaderBuffer input_header_buffer;
         LocalValidBuffer input_valid_buffer;
         LocalTimestampBuffer input_timestamp_buffer;
-        createLocalBuffer(port_inputs, input_data_buffer, input_valid_buffer, input_timestamp_buffer);
+        createLocalBuffer(port_inputs,
+                          input_data_buffer,
+                          input_header_buffer,
+                          input_valid_buffer,
+                          input_timestamp_buffer);
 
         const auto &port_outputs = component_config.second.buffer_to_port_output;
         LocalDataBuffer output_data_buffer;
+        LocalHeaderBuffer output_header_buffer;
         LocalValidBuffer output_valid_buffer;
         LocalTimestampBuffer output_timestamp_buffer;
-        createLocalBuffer(port_outputs, output_data_buffer, output_valid_buffer, output_timestamp_buffer);
+        createLocalBuffer(port_outputs,
+                          output_data_buffer,
+                          output_header_buffer,
+                          output_valid_buffer,
+                          output_timestamp_buffer);
 
         component_buffers_list_.emplace_back(std::make_unique<ComponentBuffer>(component_index,
-                                                                               input_data_buffer,input_valid_buffer,input_timestamp_buffer,
-                                                                               output_data_buffer,output_valid_buffer,output_timestamp_buffer,
-                                                                               time_step_index_, &current_ts_, &current_message_));
+                                                                               input_data_buffer,
+                                                                               input_header_buffer,
+                                                                               input_valid_buffer,
+                                                                               input_timestamp_buffer,
+                                                                               output_data_buffer,
+                                                                               output_header_buffer,
+                                                                               output_valid_buffer,
+                                                                               output_timestamp_buffer,
+                                                                               time_step_index_,
+                                                                               &current_ts_,
+                                                                               &current_message_));
 
         ++component_count;
         component_buffer_to_index_.emplace(instance_id, component_index);
@@ -67,13 +88,16 @@ TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
 }
 void TimeStepBuffer::createLocalBuffer(const std::vector<std::pair<int, int>> &port_inputs,
                                        LocalDataBuffer &data_buffer,
+                                       LocalHeaderBuffer &header_buffer,
                                        LocalValidBuffer &valid_buffer,
                                        LocalTimestampBuffer &timestamp_buffer) {
     data_buffer.resize(port_inputs.size());
+    header_buffer.resize(port_inputs.size());
     valid_buffer.resize(port_inputs.size());
     timestamp_buffer.resize(port_inputs.size());
     for (auto port : port_inputs) {
         data_buffer[port.second] = buffer_data_[port.first];
+        header_buffer[port.second] = header_data_[port.first];
         timestamp_buffer[port.second] = &buffer_timestamp_[port.first];
         valid_buffer[port.second] = &buffer_valid_.at(port.first);
     }

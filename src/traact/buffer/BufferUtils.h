@@ -14,6 +14,7 @@ enum class PortState : bool {
 } ;
 
 using LocalDataBuffer = std::vector<void *>;
+using LocalHeaderBuffer = std::vector<void *>;
 using LocalTimestampBuffer = std::vector<Timestamp *>;
 using LocalValidBuffer = std::vector<PortState *>;
 using DataTypeNameVector = std::vector<std::string>;

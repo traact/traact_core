@@ -11,7 +11,7 @@ namespace traact::pattern::instance {
 class TRAACT_CORE_EXPORT PatternInstance;
 
 //
-typedef typename std::pair<std::string, std::string> ComponentID_PortName;
+using ComponentID_PortName = std::pair<std::string, std::string>;
 
 struct TRAACT_CORE_EXPORT PortInstance {
     typedef PortInstance *Ptr;

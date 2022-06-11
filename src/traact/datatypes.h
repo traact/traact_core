@@ -15,8 +15,8 @@ using Timestamp = std::chrono::time_point<std::chrono::system_clock, TimeDuratio
 
 using TimestampSteady = std::chrono::time_point<std::chrono::steady_clock, TimeDuration>;
 
-static constexpr  TimeDuration kDefaultTimeout = std::chrono::milliseconds(100);
-static constexpr  TimeDuration kDataflowStopTimeout = std::chrono::seconds(5);
+static constexpr TimeDuration kDefaultTimeout = std::chrono::milliseconds(100);
+static constexpr TimeDuration kDataflowStopTimeout = std::chrono::seconds(5);
 
 struct TRAACT_CORE_EXPORT TimestampHashCompare {
     static size_t hash(const Timestamp &x) {
@@ -39,7 +39,7 @@ enum class MessageDataMode {
     DYNAMIC
 };
 
-enum class EventType : uint8_t{
+enum class EventType : uint8_t {
     INVALID = 0,
     CONFIGURE,
     START,
@@ -61,9 +61,34 @@ enum class MissingSourceEventMode {
     CANCEL_OLDEST
 };
 
+enum BaseType : int {
+    UNKNOWN = 0,
+    INT_8,
+    UINT_8,
+    INT_16,
+    UINT_16,
+    INT_32,
+    FLOAT_16,
+    FLOAT_32,
+    FLOAT_64
+};
+
+static constexpr int getBytes(BaseType type) {
+    switch (type) {
+        case INT_8:
+        case UINT_8:return 1;
+        case INT_16:
+        case UINT_16:
+        case FLOAT_16:return 2;
+        case INT_32:
+        case FLOAT_32:return 4;
+        case FLOAT_64:return 8;
+        case UNKNOWN:
+        default:return 0;
+    }
+}
+
 enum class Concurrency : uint8_t { UNLIMITED = 0, SERIAL = 1 };
-
-
 
 
 namespace buffer {
@@ -91,3 +116,4 @@ struct TRAACT_CORE_EXPORT TimeDomainManagerConfig {
 }
 
 #endif //TRAACT_INCLUDE_TRAACT_DATATYPES_H_
+

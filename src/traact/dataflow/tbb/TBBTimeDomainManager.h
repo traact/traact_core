@@ -25,7 +25,7 @@ class TBBTimeDomainManager {
                          const std::set<buffer::BufferFactory::Ptr> &genericFactoryObjects,
                          dataflow::NetworkGraph *graph);
 
-    void Init(const DefaultComponentGraphPtr &component_graph);
+    void Init(const component::ComponentGraph::Ptr &component_graph);
 
     std::future<buffer::SourceComponentBuffer *> RequestSourceBuffer(TimestampType ts, int component_index);
 
@@ -48,7 +48,7 @@ class TBBTimeDomainManager {
 
     traact::dataflow::NetworkGraph *graph_;
     traact::buffer::TimeDomainManagerConfig time_domain_config_;
-    DefaultComponentGraphPtr component_graph_;
+    component::ComponentGraph::Ptr component_graph_;
     typedef tbb::spin_mutex TD_Lock;
     TD_Lock event_idx_lock_;
     size_t next_event_idx_{0};

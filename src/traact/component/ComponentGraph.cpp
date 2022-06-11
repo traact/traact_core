@@ -54,7 +54,7 @@ ComponentGraph::ComponentPtr ComponentGraph::getComponent(const std::string &ins
 std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTimeDomain(int time_domain) const {
     std::set<ComponentGraph::PatternComponentPair> result;
     for (const auto &pattern : patterns_) {
-        switch (pattern.second->getComponentType()) {
+        switch (pattern.first->getComponentType(time_domain)) {
             case ComponentType::ASYNC_SOURCE:
             case ComponentType::INTERNAL_SYNC_SOURCE:
             case ComponentType::ASYNC_SINK:
@@ -71,8 +71,9 @@ std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTim
                 throw std::runtime_error("getPatternsForTimeDomain for invalid ComponentType");
             }
             default: {
+
                 throw std::runtime_error("getPatternsForTimeDomain not implemented for ComponentType : "
-                                             + std::to_string((int) pattern.second->getComponentType()));
+                                             + std::to_string((int) pattern.first->getComponentType(time_domain)));
             }
 
         }

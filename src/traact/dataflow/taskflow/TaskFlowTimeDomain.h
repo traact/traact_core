@@ -5,7 +5,6 @@
 
 #include "traact/component/Component.h"
 #include "traact/buffer/DataFactory.h"
-#include "traact/traact.h"
 #include <taskflow/taskflow.hpp>
 #include "traact/buffer/TimeDomainBuffer.h"
 #include "traact/util/Semaphore.h"
@@ -13,11 +12,12 @@
 #include "TaskFlowTaskFunctions.h"
 #include <traact/buffer/DataBufferFactory.h>
 #include "TaskFlowUtils.h"
+
 namespace traact::dataflow {
 class TaskFlowTimeDomain {
  public:
     TaskFlowTimeDomain(int time_domain,
-                       DefaultComponentGraphPtr component_graph,
+                       component::ComponentGraph::Ptr component_graph,
                        buffer::DataBufferFactoryPtr buffer_factory,
                        component::Component::SourceFinishedCallback callback);
 
@@ -28,7 +28,7 @@ class TaskFlowTimeDomain {
     std::future<buffer::SourceComponentBuffer *> requestSourceBuffer(Timestamp timestamp, int component_index);
  private:
     const int time_domain_;
-    DefaultComponentGraphPtr component_graph_;
+    component::ComponentGraph::Ptr  component_graph_;
     buffer::DataBufferFactoryPtr generic_factory_objects_;
 
     component::Component::SourceFinishedCallback source_finished_callback_;

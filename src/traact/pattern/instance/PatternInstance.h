@@ -9,9 +9,11 @@
 
 namespace traact::pattern::instance {
 
-class TRAACT_CORE_EXPORT GraphInstance;
+struct TRAACT_CORE_EXPORT GraphInstance;
 
-class TRAACT_CORE_EXPORT PatternInstance {
+using LocalConnectedOutputPorts = std::vector<bool>;
+
+struct TRAACT_CORE_EXPORT PatternInstance {
  public:
     PatternInstance(std::string id, Pattern pattern_pointer,
                     GraphInstance *graph);
@@ -28,8 +30,11 @@ class TRAACT_CORE_EXPORT PatternInstance {
     PortInstance::ConstPtr getPort(const std::string &name) const;
     std::set<PortInstance::ConstPtr> getProducerPorts() const;
     std::set<PortInstance::ConstPtr> getConsumerPorts() const;
+    component::ComponentType getComponentType(int time_domain) const;
+    LocalConnectedOutputPorts getOutputPortsConnected() const;
 
     std::string instance_id;
+    std::string display_name;
     GraphInstance *parent_graph;
     Pattern local_pattern;
     std::vector<PortInstance> producer_ports;

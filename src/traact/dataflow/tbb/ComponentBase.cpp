@@ -4,7 +4,7 @@
 #include "TBBTimeDomainManager.h"
 namespace traact::dataflow {
 ComponentBase::ComponentBase(DefaultPatternPtr pattern_base,
-                             DefaultComponentPtr component_base,
+                             component::Component::Ptr component_base,
                              TBBTimeDomainManager *buffer_manager,
                              NetworkGraph *network_graph) : pattern_base_(std::move(pattern_base)),
                                                             component_base_(std::move(component_base)),

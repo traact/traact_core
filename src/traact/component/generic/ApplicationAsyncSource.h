@@ -15,15 +15,14 @@ class ApplicationAsyncSource : public Component {
     typedef typename std::shared_ptr<ApplicationAsyncSource<HeaderType> > Ptr;
     typedef typename HeaderType::NativeType NativeType;
 
-    explicit ApplicationAsyncSource(const std::string &name) : Component(name,
-                                                                         traact::component::ComponentType::ASYNC_SOURCE) {
+    explicit ApplicationAsyncSource(const std::string &name) : Component(name) {
 
     }
 
-    pattern::Pattern::Ptr GetPattern() const {
+    static pattern::Pattern::Ptr GetPattern() {
         std::string pattern_name = "ApplicationAsyncSource_" + std::string(HeaderType::NativeTypeName);
         pattern::Pattern::Ptr
-            pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL);
+            pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::ASYNC_SOURCE);
         pattern->addProducerPort("output", HeaderType::MetaType);
         pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
         return pattern;
@@ -61,9 +60,6 @@ class ApplicationAsyncSource : public Component {
         SPDLOG_INFO("ApplicationAsyncSource got stop signal");
         return true;
     }
-
- TRAACT_PLUGIN_ENABLE(Component)
-
 };
 }
 

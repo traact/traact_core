@@ -9,7 +9,7 @@
 
 class TestComponent : public traact::component::Component{
  public:
-    TestComponent(const std::string &name, traact::component::ComponentType component_type);
+    TestComponent(const std::string &name);
     ~TestComponent() override = default;
 
     bool configure(const nlohmann::json &parameter, traact::buffer::ComponentBufferConfig *data) override;
@@ -17,10 +17,8 @@ class TestComponent : public traact::component::Component{
     bool stop() override;
     bool teardown() override;
     bool processTimePoint(traact::buffer::ComponentBuffer &data) override;
-    void invalidTimePoint(traact::Timestamp timestamp, size_t mea_idx) override;
+    bool processTimePointWithInvalid(traact::buffer::ComponentBuffer &data) override;
     TestComponentState component_state_{};
-
-    RTTR_ENABLE(traact::component::Component)
 };
 
 

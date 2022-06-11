@@ -12,7 +12,7 @@
 #include "TBBTimeDomainManager.h"
 
 namespace traact::dataflow {
-NetworkGraph::NetworkGraph(DefaultComponentGraphPtr component_graph,
+NetworkGraph::NetworkGraph(component::ComponentGraph::Ptr component_graph,
                            std::set<buffer::BufferFactory::Ptr> generic_factory_objects)
     : component_graph_(std::move(
     component_graph)), generic_factory_objects_(std::move(generic_factory_objects)) {};
@@ -39,7 +39,7 @@ void NetworkGraph::init() {
             continue;
         }
 
-        DefaultComponentPtr component = std::dynamic_pointer_cast<DefaultComponent>(base_component.second);
+        component::Component::Ptr component = std::dynamic_pointer_cast<DefaultComponent>(base_component.second);
         if (!component) {
             SPDLOG_ERROR("Skipping non dataflow component");
             continue;

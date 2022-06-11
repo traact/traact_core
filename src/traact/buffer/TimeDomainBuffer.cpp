@@ -22,9 +22,9 @@ void TimeDomainBuffer::init(const component::ComponentGraph &component_graph) {
         ordered_components(components.begin(), components.end());
     std::sort(ordered_components.begin(),
               ordered_components.end(),
-              [](const component::ComponentGraph::PatternComponentPair &value_a,
-                 const component::ComponentGraph::PatternComponentPair &value_b) -> bool {
-                  return value_a.second->getComponentType() < value_b.second->getComponentType();
+              [time_domain = this->time_domain_](const component::ComponentGraph::PatternComponentPair &value_a,
+                                                 const component::ComponentGraph::PatternComponentPair &value_b) -> bool {
+                  return value_a.first->getComponentType(time_domain) < value_b.first->getComponentType(time_domain);
               });
 
     // gather all output buffers to allocate memory, input must be connected to an output
@@ -36,10 +36,10 @@ void TimeDomainBuffer::init(const component::ComponentGraph &component_graph) {
             continue;
         }
 
-        if (component.second->getComponentType() == component::ComponentType::ASYNC_SOURCE) {
+        if (component.first->getComponentType(time_domain_) == component::ComponentType::ASYNC_SOURCE) {
             count_async_sources_++;
         }
-        if (component.second->getComponentType() == component::ComponentType::INTERNAL_SYNC_SOURCE) {
+        if (component.first->getComponentType(time_domain_) == component::ComponentType::INTERNAL_SYNC_SOURCE) {
             count_internal_sync_sources_++;
         }
 
@@ -86,14 +86,16 @@ void TimeDomainBuffer::init(const component::ComponentGraph &component_graph) {
             auto global_buffer_index = port_to_buffer_index_[port->getID()];
             buffer_config.buffer_to_port_inputs.emplace_back(global_buffer_index, port->getPortIndex());
         }
-        buffer_config.component_type = component.second->getComponentType();
+        buffer_config.component_type = component.first->getComponentType(time_domain_);
         buffer_config.instance_id = component.first->instance_id;
-        buffer_config_.emplace(component_index, buffer_config );
+        buffer_config_.emplace(component_index, buffer_config);
         component_index++;
     }
     for (int time_step_index = 0; time_step_index < config_.ringbuffer_size; ++time_step_index) {
         // create time domain buffer, source data pointer are set but not used
-        time_step_buffer_.emplace_back(std::make_unique<TimeStepBuffer>(time_step_index, data_buffer_[time_step_index]->getData(),
+        time_step_buffer_.emplace_back(std::make_unique<TimeStepBuffer>(time_step_index,
+                                                                        data_buffer_[time_step_index]->getData(),
+                                                                        data_buffer_[time_step_index]->getHeader(),
                                                                         buffer_config_));
     }
 

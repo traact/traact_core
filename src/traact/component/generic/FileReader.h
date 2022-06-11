@@ -15,19 +15,18 @@ namespace traact::component {
 template<class T>
 class FileReader : public Component {
  public:
-    explicit FileReader(const std::string &name, std::string serializer_name) : Component(name,
-                                                                                          traact::component::ComponentType::SYNC_SOURCE),
+    explicit FileReader(const std::string &name, std::string serializer_name) : Component(name),
                                                                                 serializer_name_(std::move(
                                                                                     serializer_name)) {
     }
 
-    [[nodiscard]] traact::pattern::Pattern::Ptr GetPattern() const override {
+    [[nodiscard]] static traact::pattern::Pattern::Ptr GetBasePattern(const std::string& serializer_name) {
 
-        std::string pattern_name = fmt::format("FileReader_{0}_{1}", serializer_name_, T::MetaType);
+        std::string pattern_name = fmt::format("FileReader_{0}_{1}", serializer_name, T::MetaType);
 
         traact::pattern::Pattern::Ptr
             pattern =
-            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL);
+            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SOURCE);
 
         pattern->addProducerPort("output", T::MetaType);
         pattern->addStringParameter("file", "file.json");
@@ -64,7 +63,7 @@ class FileReader : public Component {
     const std::string serializer_name_;
     typename T::NativeType data_;
 
- TRAACT_PLUGIN_ENABLE(Component)
+
 
 };
 

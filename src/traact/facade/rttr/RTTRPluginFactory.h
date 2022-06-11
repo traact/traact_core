@@ -9,6 +9,7 @@
 #include <rttr/type>
 #include "traact/facade/PluginFactory.h"
 #include "traact/traact_core_export.h"
+#include "traact/component/ComponentFactory.h"
 
 namespace traact::facade {
 
@@ -20,7 +21,7 @@ class TRAACT_CORE_EXPORT RTTRPluginFactory : public PluginFactory {
 
     RTTRPluginFactory();
 
-    explicit RTTRPluginFactory(const std::string &pluginDirectories);
+    explicit RTTRPluginFactory(std::string plugin_directories);
 
     ~RTTRPluginFactory() = default;
 
@@ -30,7 +31,7 @@ class TRAACT_CORE_EXPORT RTTRPluginFactory : public PluginFactory {
     buffer::DataBufferPtr createBuffer() override;
 
     PatternPtr instantiatePattern(const std::string &pattern_name) override;
-    ComponentPtr instantiateComponent(const std::string &pattern_name, const std::string &new_component_name) override;
+    ComponentPtr instantiateComponent(const std::string &pattern_name, const std::string &instance_id) override;
  private:
     struct Plugin {
         explicit Plugin(const std::string &library_file_name);
@@ -46,8 +47,8 @@ class TRAACT_CORE_EXPORT RTTRPluginFactory : public PluginFactory {
     bool init();
     bool removeLibrary(const std::string &filename);
 
-    void addDatatype(const rttr::type &t);
-    void addPattern(const rttr::type &t);
+    void addDatatype(const rttr::type &loaded_type);
+    void addPattern(const rttr::type &loaded_type);
 
     typedef typename std::shared_ptr<Plugin> PluginPtr;
 
@@ -57,8 +58,7 @@ class TRAACT_CORE_EXPORT RTTRPluginFactory : public PluginFactory {
     std::vector<std::string> datatype_names;
 
     std::set<traact::buffer::DataFactory::Ptr> datatype_traact_plugin;
-    std::map<std::string, rttr::constructor> component_to_traact_plugin;
-    std::map<std::string, component::Component::Ptr> pattern_to_traact_plugin;
+    std::map<std::string, component::ComponentFactory::Ptr> pattern_to_traact_plugin;
 
 };
 

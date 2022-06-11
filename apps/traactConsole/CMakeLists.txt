@@ -8,7 +8,7 @@ add_executable(traactConsole ${CONSOLE_SOURCES})
 target_link_libraries(traactConsole PUBLIC
         ${CONAN_PACKAGE_NAME}
         )
-#conan_target_link_libraries(traactConsole)
+target_include_directories(traactConsole PRIVATE ../../src)
 
 
 install(TARGETS traactConsole

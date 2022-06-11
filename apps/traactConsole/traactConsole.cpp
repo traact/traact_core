@@ -3,7 +3,6 @@
 #include <iostream>
 #include <signal.h>
 #include <traact/traact.h>
-#include <traact/facade/DefaultFacade.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <thread>
 #include <traact/util/FileUtil.h>
@@ -20,7 +19,6 @@ void ctrlC(int i) {
 
 int main(int argc, char **argv) {
 
-    using namespace traact::facade;
     using namespace traact;
     using namespace traact::dataflow;
 

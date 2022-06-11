@@ -25,7 +25,9 @@ class TimeStepBuffer {
 
     TimeStepBuffer(size_t time_step_index,
                    BufferType buffer_data,
-                   const std::map<int,BufferConfig> &buffer_config);
+                   BufferType header_data,
+                   const std::map<int,
+                                  BufferConfig> &buffer_config);
     size_t getComponentIndex(const std::string &component_name);
     ComponentBuffer &getComponentBuffer(size_t component_idx);
     ComponentBuffer &getComponentBuffer(const std::string &component_name);
@@ -39,6 +41,7 @@ class TimeStepBuffer {
  private:
     const size_t time_step_index_;
     BufferType buffer_data_;
+    BufferType header_data_;
 
     Timestamp current_ts_;
     EventType current_message_;
@@ -50,6 +53,7 @@ class TimeStepBuffer {
 
     void createLocalBuffer(const std::vector<std::pair<int, int>> &port_inputs,
                            LocalDataBuffer &data_buffer,
+                           LocalHeaderBuffer &header_buffer,
                            LocalValidBuffer &valid_buffer,
                            LocalTimestampBuffer &timestamp_buffer);
 };

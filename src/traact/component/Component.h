@@ -8,10 +8,11 @@
 
 #include <traact/component/ComponentTypes.h>
 #include <traact/pattern/Pattern.h>
+#include <traact/pattern/instance/PatternInstance.h>
 #include <traact/datatypes.h>
 #include <traact/traact_core_export.h>
-#include <rttr/type>
 #include <future>
+
 namespace traact::buffer {
 class SourceComponentBuffer;
 class ComponentBuffer;
@@ -36,7 +37,7 @@ class TRAACT_CORE_EXPORT Component {
     typedef typename std::function<void(Timestamp, bool)> ReleaseAsyncCallback;
     typedef typename std::function<void(void)> SourceFinishedCallback;
 
-    Component(std::string name, const ComponentType traact_component_type);
+    Component(std::string name);
 
     virtual ~Component() = default;
 
@@ -44,18 +45,15 @@ class TRAACT_CORE_EXPORT Component {
      * Create Pattern describing input and outputs of the component
      * @return
      */
-    virtual pattern::Pattern::Ptr GetPattern() const = 0;
+    //static pattern::Pattern::Ptr GetPattern();
 
     /**
      * Name of component, unique in dataflow
      * @return
      */
     const std::string &getName() const;
-    /**
-     * Type of TraactNetwork supported type of component
-     * @return
-     */
-    const ComponentType &getComponentType() const;
+
+    virtual void configureInstance(const pattern::instance::PatternInstance &pattern_instance);
 
     /**
      * Called once in the beginning after the dataflow network is constructed
@@ -95,10 +93,17 @@ class TRAACT_CORE_EXPORT Component {
      * The component should return true when the processing succeeded and output buffers
      * are filled with new data for this timestamp
      *
-     * @tparam data Provides input and output buffer to the user
-     * @return false if processing failed and output has not meaningful data
+     * @tparam data Provides input and output buffer to the component
+     * @return false if output buffer are not in a meaningful state (VALID/INVALID) (e.g. exception), otherwise true
      */
     virtual bool processTimePoint(buffer::ComponentBuffer &data);
+
+    /**
+     * Same as processTimePoint but is called when at least one input port has the state INVALID
+     * @param data Provides input and output buffer to the component
+     * @return false if output buffer are not in a meaningful state (VALID/INVALID) (e.g. exception), otherwise true
+     */
+    virtual bool processTimePointWithInvalid(buffer::ComponentBuffer &data);
 
     /**
      * Used by source components.
@@ -116,7 +121,7 @@ class TRAACT_CORE_EXPORT Component {
      */
     void setRequestCallback(const RequestCallback &request_callback);
 
-    virtual void invalidTimePoint(Timestamp timestamp, size_t mea_idx);
+
 
     void setReleaseAsyncCallback(const ReleaseAsyncCallback &release_async_callback);
 
@@ -127,15 +132,11 @@ class TRAACT_CORE_EXPORT Component {
 
  protected:
     const std::string name_;
-    const ComponentType traact_component_type_;
 
     // used by source components
     RequestCallback request_callback_{nullptr};
     ReleaseAsyncCallback release_async_callback_{nullptr};
     SourceFinishedCallback finished_callback_{nullptr};
-
-    /* Enable RTTR Type Introspection */
- RTTR_ENABLE()
 };
 }
 

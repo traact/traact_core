@@ -5,8 +5,8 @@
 
 #include <string>
 #include <memory>
-#include <traact/traact_core_export.h>
-#include <rttr/type>
+#include "traact/traact_core_export.h"
+#include "traact/traact_plugins.h"
 namespace traact::buffer {
 
 class TRAACT_CORE_EXPORT DataFactory : public std::enable_shared_from_this<DataFactory> {
@@ -15,17 +15,21 @@ class TRAACT_CORE_EXPORT DataFactory : public std::enable_shared_from_this<DataF
     DataFactory() = default;
     virtual ~DataFactory() = default;
 
+    virtual void *createHeader() = 0;
+    virtual void deleteHeader(void *obj) = 0;
+
     virtual std::string getTypeName() = 0;
     virtual void *createObject() = 0;
-    virtual bool initObject(void *header, void *object) = 0;
+    [[maybe_unused]] virtual bool initObject(void *header, void *object) = 0;
     virtual void deleteObject(void *obj) = 0;
 
     template<typename Derived>
     std::shared_ptr<Derived> shared_from_base() {
         return std::static_pointer_cast<Derived>(shared_from_this());
     }
-    /* Enable RTTR Type Introspection */
- RTTR_ENABLE()
+
+    TRAACT_PLUGIN_ENABLE()
+
 };
 
 /**
@@ -34,10 +38,18 @@ class TRAACT_CORE_EXPORT DataFactory : public std::enable_shared_from_this<DataF
  * @tparam T
  */
 template<class T>
-class TemplatedDefaultFactoryObject : public DataFactory {
+class TRAACT_CORE_EXPORT TemplatedDefaultDataFactory : public DataFactory {
  public:
+    void *createHeader() override {
+        return new T;
+    }
+    void deleteHeader(void *obj) override {
+        auto *tmp = static_cast<T *>(obj);
+        delete tmp;
+    }
+
     std::string getTypeName() override {
-        return std::move(std::string(T::MetaType));
+        return std::string(T::MetaType);
     }
     void *createObject() override {
         return new typename T::NativeType;
@@ -51,8 +63,7 @@ class TemplatedDefaultFactoryObject : public DataFactory {
         delete tmp;
     }
 
-    /* Enable RTTR Type Introspection */
- RTTR_ENABLE(DataFactory)
+ TRAACT_PLUGIN_ENABLE(DataFactory)
 };
 
 }

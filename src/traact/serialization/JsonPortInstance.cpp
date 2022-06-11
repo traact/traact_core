@@ -7,14 +7,14 @@ using nlohmann::json;
 
 void to_json(json &jobj, const traact::pattern::instance::PortInstance &obj) {
     to_json(jobj, obj.port);
-    if (obj.port.porttype == traact::pattern::PortType::Consumer)
+    if (obj.port.port_type == traact::pattern::PortType::CONSUMER)
         jobj["connected_to"] = json(obj.connected_to);
 
 }
 
 void from_json(const json &jobj, traact::pattern::instance::PortInstance &obj) {
     from_json(jobj, obj.port);
-    if (obj.port.porttype == traact::pattern::PortType::Consumer) {
+    if (obj.port.port_type == traact::pattern::PortType::CONSUMER) {
         auto find_it = jobj.find("connected_to");
         if (find_it != jobj.end())
             find_it->get_to(obj.connected_to);

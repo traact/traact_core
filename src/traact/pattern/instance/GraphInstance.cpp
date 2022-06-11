@@ -80,7 +80,7 @@ std::set<traact::pattern::instance::PortInstance::ConstPtr> traact::pattern::ins
     std::set<traact::pattern::instance::PortInstance::ConstPtr> result;
 
     PortInstance::ConstPtr port = getPort(id);
-    if (port->port.porttype == PortType::Consumer) {
+    if (port->port.port_type == PortType::CONSUMER) {
         for (const auto &pattern_instance : pattern_instances) {
             for (const auto &producer_port : pattern_instance.second->producer_ports) {
                 if (producer_port.getID() == port->connected_to)

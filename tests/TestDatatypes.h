@@ -7,18 +7,8 @@
 #include <traact/traact.h>
 
 
-struct TestStringHeader {
-    virtual ~TestStringHeader() = default;
-    static constexpr const char *MetaType = "TestString";
-    using NativeType = std::string;
-    static constexpr const char *NativeTypeName = "String";
-    const size_t size = sizeof(NativeType);
- RTTR_ENABLE()
-};
 
-class TestStringFactoryObject : public traact::DefaultDataFactory<TestStringHeader> {
- RTTR_ENABLE(traact::DefaultDataFactory<TestStringHeader>)
-};
+CREATE_TRAACT_HEADER_TYPE(TestStringHeader, std::string, "TestString", )
 
 struct ExpectedPortState {
     ExpectedPortState(size_t port,

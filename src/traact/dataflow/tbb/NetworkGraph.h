@@ -22,16 +22,13 @@ class NetworkGraph {
     typedef typename std::shared_ptr<NetworkGraph> Ptr;
 
     typedef typename ComponentBase::Ptr TraactComponentBasePtr;
-    typedef typename component::ComponentGraph::Ptr DefaultComponentGraphPtr;
-
-    typedef typename component::Component DefaultComponent;
-    typedef typename component::Component::Ptr DefaultComponentPtr;
+    typedef typename component::ComponentGraph::Ptr component::ComponentGraph::Ptr;
 
     typedef typename pattern::instance::PatternInstance DefaultPattern;
     typedef typename DefaultPattern::Ptr DefaultPatternPtr;
     typedef typename pattern::instance::PortInstance::ConstPtr PortPtr;
 
-    NetworkGraph(DefaultComponentGraphPtr component_graph,
+    NetworkGraph(component::ComponentGraph::Ptr component_graph,
                  std::set<buffer::BufferFactory::Ptr> generic_factory_objects);
     ~NetworkGraph() = default;
 
@@ -54,7 +51,7 @@ class NetworkGraph {
 
  private:
     bool running_{false};
-    DefaultComponentGraphPtr component_graph_;
+    component::ComponentGraph::Ptr component_graph_;
     std::map<int, std::shared_ptr<TBBTimeDomainManager>> time_domain_manager_;
     tbb::flow::graph graph_;
 

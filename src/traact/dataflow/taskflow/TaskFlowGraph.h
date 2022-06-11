@@ -5,7 +5,6 @@
 
 #include "traact/component/Component.h"
 #include "traact/buffer/DataBufferFactory.h"
-#include "traact/traact.h"
 #include <taskflow/taskflow.hpp>
 #include "TaskFlowTimeDomain.h"
 #include "traact/util/Semaphore.h"
@@ -15,7 +14,7 @@ namespace traact::dataflow {
 class TaskFlowGraph {
  public:
     TaskFlowGraph(buffer::DataBufferFactoryPtr generic_factory_objects,
-                  DefaultComponentGraphPtr component_graph,
+                  component::ComponentGraph::Ptr component_graph,
                   component::Component::SourceFinishedCallback callback);
 
     void init();
@@ -26,7 +25,7 @@ class TaskFlowGraph {
  private:
 
     buffer::DataBufferFactoryPtr generic_factory_objects_;
-    DefaultComponentGraphPtr component_graph_;
+    component::ComponentGraph::Ptr component_graph_;
 
     std::atomic_flag source_finished_ = ATOMIC_FLAG_INIT;
     component::Component::SourceFinishedCallback source_finished_callback_;

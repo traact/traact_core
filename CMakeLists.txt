@@ -33,15 +33,15 @@ set(CORE_SRC src/traact/traact.h
         src/traact/util/Utils.h
         src/traact/facade/Facade.cpp
         src/traact/facade/Facade.h
-        src/traact/component/facade/ApplicationAsyncSource.h
-        src/traact/component/facade/ApplicationSyncSink.h
+        src/traact/component/generic/ApplicationAsyncSource.h
+        src/traact/component/generic/ApplicationSyncSink.h
         src/traact/component/PlayerBaseComponent.cpp
         src/traact/component/PlayerBaseComponent.h
 
-        src/traact/component/FileWriter.h
-        src/traact/component/FileReader.h
-        src/traact/component/FilePlayer.h
-        src/traact/component/FileRecorder.h
+        src/traact/component/generic/FileWriter.h
+        src/traact/component/generic/FileReader.h
+        src/traact/component/generic/FilePlayer.h
+        src/traact/component/generic/FileRecorder.h
         src/traact/facade/PluginFactory.h
         src/traact/serialization/JsonPattern.h
         src/traact/serialization/JsonPatternInstance.h
@@ -95,10 +95,10 @@ set(CORE_SRC src/traact/traact.h
         src/traact/util/EnumToString.cpp
         src/traact/util/EnumToString.h
         src/traact/traact_plugins.h
-        src/traact/facade/rttr/traact_plugins_rttr.h src/traact/component/generic_components.h)
+        src/traact/facade/rttr/traact_plugins_rttr.h src/traact/component/generic_components.h src/traact/component/generic/Buffer.h src/traact/component/ComponentFactory.h)
 
 
-add_library(${CONAN_PACKAGE_NAME} ${CORE_SRC})
+add_library(${CONAN_PACKAGE_NAME} SHARED ${CORE_SRC})
 
 conan_target_link_libraries(${CONAN_PACKAGE_NAME})
 

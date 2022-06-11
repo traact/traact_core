@@ -26,11 +26,10 @@ class ComponentBase {
  public:
     typedef typename std::shared_ptr<ComponentBase> Ptr;
     typedef typename pattern::instance::PatternInstance::Ptr DefaultPatternPtr;
-    typedef typename component::Component::Ptr DefaultComponentPtr;
     typedef typename buffer::ComponentBuffer DefaultComponentBuffer;
 
     ComponentBase(DefaultPatternPtr pattern_base,
-                  DefaultComponentPtr component_base,
+                  component::Component::Ptr component_base,
                   TBBTimeDomainManager *buffer_manager,
                   NetworkGraph *network_graph);
 
@@ -84,7 +83,7 @@ class ComponentBase {
 
  protected:
     TBBTimeDomainManager *buffer_manager_;
-    DefaultComponentPtr component_base_;
+    component::Component::Ptr component_base_;
     DefaultPatternPtr pattern_base_;
     NetworkGraph *network_graph_;
     int component_index_;

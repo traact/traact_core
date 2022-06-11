@@ -18,13 +18,15 @@ class DataBuffer {
     void deleteAll();
 
     const std::vector<void *> &getData() const noexcept;
+    const std::vector<void *> &getHeader() const noexcept;
     const std::vector<std::string> &getTypes() const noexcept;
 
  private:
     std::map<std::string, DataFactory::Ptr> type_name_to_factory_;
     std::vector<void *> data_buffer_;
+    std::vector<void *> header_buffer_;
     std::vector<std::string> data_name_;
- RTTR_ENABLE()
+
 };
 
 using DataBufferPtr = std::unique_ptr<DataBuffer>;

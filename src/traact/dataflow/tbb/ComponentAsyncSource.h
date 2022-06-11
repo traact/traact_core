@@ -13,7 +13,7 @@ namespace traact::dataflow {
 class ComponentAsyncSource : public ComponentBase {
  public:
     ComponentAsyncSource(DefaultPatternPtr pattern_base,
-                         DefaultComponentPtr component_base,
+                         component::Component::Ptr component_base,
                          TBBTimeDomainManager *buffer_manager,
                          NetworkGraph *network_graph);
 

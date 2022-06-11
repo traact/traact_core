@@ -20,7 +20,7 @@ int TBBTimeDomainManager::GetComponentIndex(std::string instance_id) {
 }
 }
 
-void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr &component_graph) {
+void traact::dataflow::TBBTimeDomainManager::Init(const component::ComponentGraph::Ptr &component_graph) {
 
     using namespace tbb::flow;
     component_graph_ = component_graph;
@@ -37,7 +37,7 @@ void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr
 
         for (const auto &pattern_component : source_components_) {
             if (pattern_component.second->getName() == component_name) {
-                switch (pattern_component.second->getComponentType()) {
+                switch (pattern_component.first->getComponentType(time_domain_)) {
                     case component::ComponentType::AsyncSource: {
                         async_source_nodes_.push_back(source_merge_node);
                         break;
@@ -49,7 +49,7 @@ void traact::dataflow::TBBTimeDomainManager::Init(const DefaultComponentGraphPtr
                     default: {
                         SPDLOG_ERROR(
                             "unsupported component type in source components: {0} for component {1}, dataflow will not work",
-                            (int) pattern_component.second->getComponentType(),
+                            (int) pattern_component.first->getComponentType(time_domain_),
                             component_name);
                     }
                 }

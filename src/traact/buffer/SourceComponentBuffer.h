@@ -15,18 +15,23 @@ class TRAACT_CORE_EXPORT SourceComponentBuffer {
     explicit SourceComponentBuffer(ComponentBuffer &output_buffer);
 
     template<typename ReturnType, typename HeaderType>
-    ReturnType &getOutput(size_t index) {
+    ReturnType &getOutput(size_t index) const {
         return getOutput<HeaderType>(index);
     }
 
     template<typename HeaderType>
-    typename HeaderType::NativeType &getOutput(size_t index) {
+    typename HeaderType::NativeType &getOutput(size_t index) const {
         return local_output_buffer_.template getOutput<HeaderType>(index);
     }
 
     template<typename Port>
-    typename Port::Header::NativeType &getOutput() {
+    typename Port::Header::NativeType &getOutput() const {
         return local_output_buffer_.template getOutput<Port>();
+    }
+
+    template<typename Port>
+    typename Port::Header &getOutputHeader() const {
+        return local_output_buffer_.template getOutputHeader<Port>();
     }
 
     size_t getOutputCount();

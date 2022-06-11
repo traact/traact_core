@@ -49,7 +49,7 @@ void TaskFlowGraph::masterSourceFinished() {
 }
 
 TaskFlowGraph::TaskFlowGraph(buffer::DataBufferFactoryPtr generic_factory_objects,
-                             DefaultComponentGraphPtr component_graph,
+                             component::ComponentGraph::Ptr  component_graph,
                              component::Component::SourceFinishedCallback callback) : generic_factory_objects_(
     std::move(
         generic_factory_objects)), component_graph_(std::move(component_graph)), source_finished_callback_(std::move(callback)) {

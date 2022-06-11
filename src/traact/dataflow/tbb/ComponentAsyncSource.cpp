@@ -6,7 +6,7 @@
 
 namespace traact::dataflow {
 ComponentAsyncSource::ComponentAsyncSource(DefaultPatternPtr pattern_base,
-                                           DefaultComponentPtr component_base,
+                                           component::Component::Ptr component_base,
                                            TBBTimeDomainManager *buffer_manager,
                                            NetworkGraph *network_graph) : ComponentBase(
     std::move(pattern_base),

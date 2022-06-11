@@ -13,19 +13,18 @@ namespace traact::component {
 template<class T>
 class FilePlayer : public Component {
  public:
-    explicit FilePlayer(const std::string &name, std::string serializer_name) : Component(name,
-                                                                                          traact::component::ComponentType::ASYNC_SOURCE),
+    explicit FilePlayer(const std::string &name, std::string serializer_name) : Component(name),
                                                                                 serializer_name_(std::move(
                                                                                     serializer_name)) {
     }
 
-    [[nodiscard]] traact::pattern::Pattern::Ptr GetPattern() const override {
+    [[nodiscard]] static traact::pattern::Pattern::Ptr GetBasePattern(const std::string& serializer_name) {
 
-        std::string pattern_name = fmt::format("FilePlayer_{0}_{1}", serializer_name_, T::MetaType);
+        std::string pattern_name = fmt::format("FilePlayer_{0}_{1}", serializer_name, T::MetaType);
 
         traact::pattern::Pattern::Ptr
             pattern =
-            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL);
+            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::ASYNC_SOURCE);
 
         pattern->addProducerPort("output", T::MetaType);
         pattern->addStringParameter("file", "file.json");
@@ -102,7 +101,7 @@ class FilePlayer : public Component {
 
         }
     }
- TRAACT_PLUGIN_ENABLE(Component)
+
 
 };
 

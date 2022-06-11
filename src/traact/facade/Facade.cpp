@@ -36,14 +36,17 @@ void traact::facade::Facade::loadDataflow(traact::pattern::instance::GraphInstan
 
         try {
             SPDLOG_DEBUG("Create component: {0}", dataflow_component->getPatternName());
-            auto newComponent =
+            auto new_component =
                 factory_->instantiateComponent(dataflow_component->getPatternName(), dataflow_component->instance_id);
-            component_graph_->addPattern(dataflow_component->instance_id, newComponent);
+
+            new_component->configureInstance(*dataflow_component);
+
+            component_graph_->addPattern(dataflow_component->instance_id, new_component);
 
         } catch (std::out_of_range e) {
             throw std::out_of_range("trying to instantiate unknown pattern: " + dataflow_component->getPatternName());
         } catch (...) {
-            throw std::out_of_range(
+            throw std::invalid_argument(
                 "exception while trying to instantiate pattern: " + dataflow_component->getPatternName());
         }
 

@@ -52,9 +52,6 @@ void setOutputInvalid(const traact::buffer::ComponentBuffer &buffer, size_t port
 
 }
 
-RTTR_PLUGIN_REGISTRATION // remark the different registration macro!
-{
-
-    using namespace rttr;
-    registration::class_<TestStringFactoryObject>("TestStringFactoryObject").constructor<>()();
-}
+BEGIN_TRAACT_PLUGIN_REGISTRATION
+    REGISTER_DEFAULT_TRAACT_TYPE(TestStringHeader)
+END_TRAACT_PLUGIN_REGISTRATION

@@ -22,8 +22,8 @@ bool Module::teardown(ComponentPtr module_component) {
     return true;
 }
 
-ModuleComponent::ModuleComponent(std::string name, ComponentType traact_component_type, ModuleType module_type)
-    : Component(std::move(name), traact_component_type), module_type_(module_type) {
+ModuleComponent::ModuleComponent(std::string name, ModuleType module_type)
+    : Component(std::move(name)), module_type_(module_type) {
 
 }
 

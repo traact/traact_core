@@ -14,18 +14,17 @@ namespace traact::component {
 template<class T>
 class FileWriter : public Component {
  public:
-    explicit FileWriter(const std::string &name, std::string serializer_name) : Component(name,
-                                                                                                 traact::component::ComponentType::SYNC_SINK),
+    explicit FileWriter(const std::string &name, std::string serializer_name) : Component(name),
                                                                                        serializer_name_(std::move(serializer_name)) {
     }
 
-    [[nodiscard]] traact::pattern::Pattern::Ptr GetPattern() const override {
+    [[nodiscard]] static traact::pattern::Pattern::Ptr GetBasePattern(const std::string& serializer_name) {
 
-        std::string pattern_name = fmt::format("FileWriter_{0}_{1}", serializer_name_, T::MetaType);
+        std::string pattern_name = fmt::format("FileWriter_{0}_{1}", serializer_name, T::MetaType);
 
         traact::pattern::Pattern::Ptr
             pattern =
-            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL);
+            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SINK);
 
         pattern->addConsumerPort("input", T::MetaType);
         pattern->addStringParameter("file", "file.json");
@@ -61,7 +60,7 @@ class FileWriter : public Component {
  protected:
     std::string filename_;
     const std::string serializer_name_;
- TRAACT_PLUGIN_ENABLE(Component)
+
 
 };
 

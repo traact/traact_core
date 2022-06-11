@@ -40,7 +40,7 @@ class TRAACT_CORE_EXPORT Module {
 class TRAACT_CORE_EXPORT ModuleComponent : public Component {
  public:
     typedef typename std::shared_ptr<ModuleComponent> Ptr;
-    ModuleComponent(std::string name, ComponentType traact_component_type, ModuleType module_type);
+    ModuleComponent(std::string name, ModuleType module_type);
 
     ModuleType getModuleType() const;
 
@@ -58,7 +58,7 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component {
     ModuleType module_type_;
     Module::Ptr module_;
 
- TRAACT_PLUGIN_ENABLE(Component)
+
 };
 
 }

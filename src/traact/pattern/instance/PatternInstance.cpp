@@ -61,4 +61,16 @@ traact::pattern::instance::PortInstance::ConstPtr traact::pattern::instance::Pat
 std::string traact::pattern::instance::PatternInstance::getPatternName() const {
     return local_pattern.name;
 }
+traact::component::ComponentType traact::pattern::instance::PatternInstance::getComponentType(int time_domain) const {
+    return local_pattern.time_domain_component_type.at(time_domain);
+}
+traact::pattern::instance::LocalConnectedOutputPorts traact::pattern::instance::PatternInstance::getOutputPortsConnected() const{
+    LocalConnectedOutputPorts result;
+    result.reserve(producer_ports.size());
+    for(const auto& port : producer_ports) {
+        result.emplace_back(port.IsConnected());
+    }
+    return result;
+}
+
 

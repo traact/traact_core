@@ -19,7 +19,7 @@ static const std::string kSeamEndFormat = "{0}_SEAM_END_{1}";
 namespace traact::dataflow {
 
 TaskFlowTimeDomain::TaskFlowTimeDomain(int time_domain,
-                                       DefaultComponentGraphPtr component_graph,
+                                       component::ComponentGraph::Ptr component_graph,
                                        buffer::DataBufferFactoryPtr buffer_factory,
                                        component::Component::SourceFinishedCallback callback)
     : generic_factory_objects_(std::move(buffer_factory)),
@@ -105,7 +105,7 @@ void TaskFlowTimeDomain::createTask(const int time_step_index, TimeStepData &tim
         throw std::range_error(error_message);
     }
 
-    switch (component.second->getComponentType()) {
+    switch (component.first->getComponentType(time_domain_)) {
         case component::ComponentType::ASYNC_SOURCE:
         case component::ComponentType::INTERNAL_SYNC_SOURCE: {
 
@@ -126,7 +126,7 @@ void TaskFlowTimeDomain::createTask(const int time_step_index, TimeStepData &tim
         }
         case component::ComponentType::INVALID:
         default:SPDLOG_ERROR("Unsupported ComponentType {0} for component {1}",
-                             component.second->getComponentType(),
+                             component.first->getComponentType(time_domain_),
                              component.second->getName());
             break;
     }
@@ -178,7 +178,7 @@ void TaskFlowTimeDomain::prepareComponents() {
 
         component_to_successors_.emplace(instance_id, std::move(successors));
 
-        switch (component.second->getComponentType()) {
+        switch (component.first->getComponentType(time_domain_)) {
             case component::ComponentType::ASYNC_SOURCE:
             case component::ComponentType::INTERNAL_SYNC_SOURCE: {
 
@@ -247,7 +247,7 @@ void TaskFlowTimeDomain::prepareTaskData() {
             for (const auto *port : pattern_instance->getConsumerPorts()) {
                 auto input_id = port->connected_to.first;
                 auto &input_data = time_step_data.component_data.at(input_id);
-                component_data.valid_input.push_back(&input_data.valid_output);
+                component_data.successors_valid.push_back(&input_data.valid_component_call);
 
             }
         }

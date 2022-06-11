@@ -3,4 +3,4 @@
 #include "traact/pattern/MetaPattern.h"
 traact::pattern::MetaPattern::MetaPattern(const std::string &name, Concurrency concurrency) : Pattern(
     name,
-    concurrency) {}
+    concurrency, component::ComponentType::ASYNC_SINK) {}

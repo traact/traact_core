@@ -9,6 +9,13 @@
 #include <traact/traact_core_export.h>
 #include <traact/util/Logging.h>
 #include "BufferUtils.h"
+
+template<typename ResultType, typename HeaderType, typename DataType>
+ResultType getBufferAs(const HeaderType &header, const DataType &data);
+
+template<typename ResultType, typename HeaderType, typename DataType>
+ResultType getBufferAs(const HeaderType &header, DataType &data);
+
 namespace traact::buffer {
 
 class TRAACT_CORE_EXPORT ComponentBuffer {
@@ -16,9 +23,11 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
 
     ComponentBuffer(size_t component_index,
                     LocalDataBuffer input_buffer,
+                    LocalHeaderBuffer input_header,
                     LocalValidBuffer input_valid,
                     LocalTimestampBuffer input_timestamp,
                     LocalDataBuffer output_buffer,
+                    LocalHeaderBuffer output_header,
                     LocalValidBuffer output_valid,
                     LocalTimestampBuffer output_timestamp,
                     size_t time_step_index,
@@ -39,12 +48,27 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
 
     }
 
+    template<typename Port>
+    const typename Port::Header &getInputHeader() const noexcept {
+        return *static_cast<typename Port::Header *>(input_header_[Port::PortIdx]);
+    }
+
+//    template<typename Port, typename ReturnType>
+//    ReturnType getInputAs() const noexcept {
+//        auto *data = static_cast<typename Port::Header::NativeType *>(input_buffer_[Port::PortIdx]);
+//        auto *header = static_cast<typename Port::Header *>(input_header_[Port::PortIdx]);
+//        return getBufferAs<ReturnType, typename Port::Header, typename Port::Header::NativeType>(*header, *data);
+//
+//    }
+
     [[nodiscard]] bool isInputValid(size_t index) const noexcept;
 
     template<typename Port>
     [[nodiscard]] bool isInputValid() const noexcept {
         return isInputValid(Port::PortIdx);
     }
+
+    [[nodiscard]] bool isAllInputValid() const noexcept;
 
     [[nodiscard]] Timestamp getInputTimestamp(size_t index) const noexcept;
 
@@ -63,13 +87,6 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
         return *static_cast<typename HeaderType::NativeType *>(output_buffer_[index]);
     }
 
-    template<typename Port>
-    typename Port::Header::NativeType &getOutput() const noexcept {
-        *output_valid_[Port::PortIdx] = PortState::VALID;
-        *output_timestamp_[Port::PortIdx] = *timestamp_;
-        return *static_cast<typename Port::Header::NativeType *>(output_buffer_[Port::PortIdx]);
-    }
-
     template<typename HeaderType>
     typename HeaderType::NativeType &getOutput(size_t index, Timestamp timestamp) const noexcept {
         *output_valid_[index] = PortState::VALID;
@@ -78,10 +95,42 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
     }
 
     template<typename Port>
+    typename Port::Header::NativeType &getOutput() const noexcept {
+        *output_valid_[Port::PortIdx] = PortState::VALID;
+        *output_timestamp_[Port::PortIdx] = *timestamp_;
+        return *static_cast<typename Port::Header::NativeType *>(output_buffer_[Port::PortIdx]);
+    }
+
+    template<typename Port>
     typename Port::Header::NativeType &getOutput(Timestamp timestamp) const noexcept {
         *output_valid_[Port::PortIdx] = PortState::VALID;
         *output_timestamp_[Port::PortIdx] = timestamp;
         return *static_cast<typename Port::Header::NativeType *>(output_buffer_[Port::PortIdx]);
+    }
+
+//    template<typename Port, typename ReturnType>
+//    ReturnType getOutputAs(const typename Port::Header& request_header) const noexcept {
+//        *output_valid_[Port::PortIdx] = PortState::VALID;
+//        *output_timestamp_[Port::PortIdx] = *timestamp_;
+//        auto *data = static_cast<typename Port::Header::NativeType *>(output_buffer_[Port::PortIdx]);
+//        auto *header = static_cast<typename Port::Header *>(output_header_[Port::PortIdx]);
+//        //header->initData(*data, request_header);
+//        return getBufferAs<ReturnType, typename Port::Header, typename Port::Header::NativeType>(*header, *data);
+//    }
+
+//    template<typename Port, typename ReturnType>
+//    ReturnType getOutputAs(Timestamp timestamp, const typename Port::Header& request_header) const noexcept {
+//        *output_valid_[Port::PortIdx] = PortState::VALID;
+//        *output_timestamp_[Port::PortIdx] = timestamp;
+//        auto *data = static_cast<typename Port::Header::NativeType *>(output_buffer_[Port::PortIdx]);
+//        auto *header = static_cast<typename Port::Header *>(output_header_[Port::PortIdx]);
+//        //header->initData(*data, *request_header);
+//        return getBufferAs<ReturnType, typename Port::Header, typename Port::Header::NativeType>(*header, *data);
+//    }
+
+    template<typename Port>
+    typename Port::Header &getOutputHeader() const noexcept {
+        return *static_cast<typename Port::Header *>(output_header_[Port::PortIdx]);
     }
 
     Timestamp getOutputTimestamp(size_t index) const noexcept;
@@ -113,18 +162,19 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
 
     [[nodiscard]] EventType getEventType() const noexcept;
 
-
  private:
     const size_t component_index_;
     const LocalDataBuffer input_buffer_;
+    const LocalHeaderBuffer input_header_;
     const LocalValidBuffer input_valid_;
     const LocalTimestampBuffer input_timestamp_;
     const LocalDataBuffer output_buffer_;
+    const LocalHeaderBuffer output_header_;
     const LocalValidBuffer output_valid_;
     const LocalTimestampBuffer output_timestamp_;
     const size_t time_step_index_;
-    const Timestamp* timestamp_;
-    const EventType* event_type_;
+    const Timestamp *timestamp_;
+    const EventType *event_type_;
 };
 }
 

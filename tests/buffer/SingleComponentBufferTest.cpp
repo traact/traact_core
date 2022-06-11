@@ -31,8 +31,8 @@ TEST(SingleComponentBuffer, Empty) {
     EventType event_type = EventType::CONFIGURE;
     ComponentBuffer buffer
         (kComponentIndex,
-         input_data, input_valid, input_timestamp,
-         output_data, output_valid, output_timestamp,
+         input_data, traact::buffer::LocalHeaderBuffer(), input_valid, input_timestamp,
+         output_data, traact::buffer::LocalHeaderBuffer(), output_valid, output_timestamp,
          kTimeStepIndex, &timestamp, &event_type);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
@@ -71,8 +71,8 @@ TEST(SingleComponentBuffer, Input) {
     EventType event_type = EventType::CONFIGURE;
     ComponentBuffer buffer
         (kComponentIndex,
-         input_data, input_valid, input_timestamp,
-         output_data, output_valid, output_timestamp,
+         input_data, traact::buffer::LocalHeaderBuffer(), input_valid, input_timestamp,
+         output_data, traact::buffer::LocalHeaderBuffer(), output_valid, output_timestamp,
          kTimeStepIndex, &timestamp, &event_type);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
@@ -128,8 +128,8 @@ TEST(SingleComponentBuffer, Output) {
     EventType event_type = EventType::CONFIGURE;
     ComponentBuffer buffer
         (kComponentIndex,
-         input_data, input_valid, input_timestamp,
-         output_data, output_valid, output_timestamp,
+         input_data, traact::buffer::LocalHeaderBuffer(), input_valid, input_timestamp,
+         output_data, traact::buffer::LocalHeaderBuffer(), output_valid, output_timestamp,
          kTimeStepIndex, &timestamp, &event_type);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());

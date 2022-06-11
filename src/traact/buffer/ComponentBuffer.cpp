@@ -7,9 +7,11 @@
 namespace traact::buffer {
 ComponentBuffer::ComponentBuffer(size_t component_index,
                                  LocalDataBuffer input_buffer,
+                                 LocalHeaderBuffer input_header,
                                  LocalValidBuffer input_valid,
                                  LocalTimestampBuffer input_timestamp,
                                  LocalDataBuffer output_buffer,
+                                 LocalHeaderBuffer output_header,
                                  LocalValidBuffer output_valid,
                                  LocalTimestampBuffer output_timestamp,
                                  size_t time_step_index,
@@ -22,7 +24,8 @@ ComponentBuffer::ComponentBuffer(size_t component_index,
       output_buffer_(std::move(output_buffer)),
       output_valid_(std::move(output_valid)),
       output_timestamp_(std::move(output_timestamp)),
-      component_index_(component_index), timestamp_(time_step_ts), event_type_(message_type) {
+      component_index_(component_index), timestamp_(time_step_ts), event_type_(message_type),
+      input_header_(input_header), output_header_(output_header) {
 
 }
 
@@ -60,5 +63,13 @@ bool ComponentBuffer::isOutputValid(size_t index) const noexcept {
 }
 Timestamp ComponentBuffer::getOutputTimestamp(size_t index) const noexcept {
     return *output_timestamp_[index];
+}
+bool ComponentBuffer::isAllInputValid() const noexcept {
+
+    for (auto *valid : input_valid_) {
+        if(*valid != PortState::VALID)
+            return false;
+    }
+    return true;
 }
 }

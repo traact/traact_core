@@ -16,17 +16,16 @@ class ApplicationSyncSink : public Component {
     typedef typename std::shared_ptr<ApplicationSyncSink<HeaderType> > Ptr;
     typedef typename HeaderType::NativeType NativeType;
     typedef typename std::function<void(Timestamp, const NativeType &)> NewValueCallback;
-    typedef typename std::function<void(Timestamp, size_t mea_idx)> InvalidTimestampCallback;
+    typedef typename std::function<void(Timestamp)> InvalidTimestampCallback;
 
-    explicit ApplicationSyncSink(const std::string &name) : Component(name,
-                                                                      traact::component::ComponentType::SYNC_SINK) {
+    explicit ApplicationSyncSink(const std::string &name) : Component(name) {
 
     }
 
-    pattern::Pattern::Ptr GetPattern() const {
+    static pattern::Pattern::Ptr GetPattern() {
         std::string pattern_name = "ApplicationSyncSink_" + std::string(HeaderType::NativeTypeName);
         pattern::Pattern::Ptr
-            pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL);
+            pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SINK);
         pattern->addConsumerPort("input", HeaderType::MetaType);
         pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "input");
         return pattern;
@@ -44,9 +43,10 @@ class ApplicationSyncSink : public Component {
         return true;
     }
 
-    void invalidTimePoint(traact::Timestamp ts, size_t mea_idx) override {
+    bool processTimePointWithInvalid(buffer::ComponentBuffer &data) override {
         if (invalid_callback_)
-            invalid_callback_(ts, mea_idx);
+            invalid_callback_(data.getTimestamp());
+        return true;
     }
 
     bool start() override {
@@ -71,7 +71,7 @@ class ApplicationSyncSink : public Component {
     NewValueCallback callback_;
     InvalidTimestampCallback invalid_callback_;
 
- TRAACT_PLUGIN_ENABLE(Component)
+
 
 };
 }

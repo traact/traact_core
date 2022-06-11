@@ -15,8 +15,7 @@ namespace traact::component {
 class TRAACT_CORE_EXPORT PlayerBaseComponent : public ModuleComponent {
  public:
     PlayerBaseComponent(std::string name)
-        : ModuleComponent(name,
-                          traact::component::ComponentType::ASYNC_SOURCE, ModuleType::GLOBAL) {
+        : ModuleComponent(name, ModuleType::GLOBAL) {
     };
 
     std::string getModuleKey() override;
@@ -26,10 +25,6 @@ class TRAACT_CORE_EXPORT PlayerBaseComponent : public ModuleComponent {
     virtual bool hasNext() = 0;
     virtual Timestamp getNextTimestamp() = 0;
     virtual void sendCurrent(Timestamp ts) = 0;
-
- protected:
-
- RTTR_ENABLE(ModuleComponent)
 
 };
 

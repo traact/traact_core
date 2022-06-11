@@ -14,7 +14,7 @@ class ComponentSyncSink : public ComponentBase {
  public:
 
     ComponentSyncSink(DefaultPatternPtr pattern_base,
-                      DefaultComponentPtr component_base,
+                      component::Component::Ptr component_base,
                       TBBTimeDomainManager *buffer_manager,
                       NetworkGraph *network_graph);
 

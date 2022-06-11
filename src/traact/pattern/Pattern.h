@@ -11,23 +11,51 @@
 #include <traact/pattern/Port.h>
 #include <traact/pattern/CoordinateSystem.h>
 #include <traact/datatypes.h>
+#include <traact/util/Utils.h>
 
 namespace traact::pattern {
 
-// TODO how to fix loss of method chaining: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern. But this would lead to a set of base classes, ...
+// how to fix loss of method chaining: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern. But this would lead to a set of base classes, ...
 struct TRAACT_CORE_EXPORT Pattern {
  public:
     typedef typename std::shared_ptr<Pattern> Ptr;
     Pattern();
 
-    Pattern(std::string name, Concurrency concurrency);
+    Pattern(std::string name,
+            Concurrency concurrency,
+            component::ComponentType component_type);
     virtual ~Pattern();
 
-    Pattern &addProducerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1);
-    Pattern &addConsumerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1);
-
-    Pattern &beginPortGroup(const std::string &name);
+    Pattern &addProducerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1, int time_domain = 0);
+    Pattern &addConsumerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1, int time_domain = 0);
+    traact::pattern::Pattern &beginPortGroup(const std::string &name, int min=0, int max = std::numeric_limits<int>::max());
     Pattern &endPortGroup();
+
+    template<typename Port> Pattern &addProducerPort(std::string name, int time_domain = 0){
+        if (util::vectorContainsName(producer_ports, name))
+            throw std::invalid_argument("Name of port already in use, Component: " + name + " Port: " + name);
+
+
+        if (is_group_port)
+            group_ports.back().producer_ports.emplace_back(name, Port::Header::MetaType, PortType::PRODUCER, Port::PortIdx,time_domain);
+        else
+            producer_ports.emplace_back(name, Port::Header::MetaType, PortType::PRODUCER, Port::PortIdx,time_domain);
+
+        return *this;
+    }
+
+    template<typename Port> Pattern &addConsumerPort(std::string name, int time_domain = 0){
+        if (util::vectorContainsName(producer_ports, name))
+            throw std::invalid_argument("Name of port already in use, Component: " + name + " Port: " + name);
+
+
+        if (is_group_port)
+            group_ports.back().consumer_ports.emplace_back(name, Port::Header::MetaType, PortType::CONSUMER, Port::PortIdx, time_domain);
+        else
+            consumer_ports.emplace_back(name, Port::Header::MetaType, PortType::CONSUMER, Port::PortIdx, time_domain);
+
+        return *this;
+    }
 
     template<typename T>
     Pattern &addParameter(std::string name,
@@ -64,16 +92,20 @@ struct TRAACT_CORE_EXPORT Pattern {
      */
     Pattern &addEdge(const std::string &source, const std::string &destination, const std::string &port);
 
+    Pattern &addTimeDomain(component::ComponentType component_type);
+
+
+    std::string name;
+    Concurrency concurrency;
     std::map<std::string, spatial::CoordinateSystem> coordinate_systems_;
     // set of edges: source name, destination name, port name
     std::set<std::tuple<std::string, std::string, std::string> > edges_;
 
-    std::string name;
-    Concurrency concurrency;
     std::vector<Port> producer_ports;
     std::vector<Port> consumer_ports;
     std::vector<PortGroup> group_ports;
     nlohmann::json parameter;
+    std::vector<component::ComponentType> time_domain_component_type;
 
  private:
     bool is_group_port{false};

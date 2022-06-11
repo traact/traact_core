@@ -8,7 +8,15 @@
 class TestAsyncSourceComponent : public TestComponent{
  public:
     TestAsyncSourceComponent(const std::string &name);
-    traact::pattern::Pattern::Ptr GetPattern() const override;
+    static traact::pattern::Pattern::Ptr GetPattern()  {
+        std::string pattern_name = "TestAsyncSourceComponent";
+        traact::pattern::Pattern::Ptr
+            pattern = std::make_shared<traact::pattern::Pattern>(pattern_name, traact::Concurrency::SERIAL, traact::component::ComponentType::ASYNC_SOURCE);
+        pattern->addProducerPort("output", TestStringHeader::MetaType);
+        pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
+        return pattern;
+    }
+
 
     void new_value(traact::Timestamp timestamp, std::string value);
 

@@ -15,7 +15,7 @@ class ComponentAsyncFunctional : public ComponentBase {
 
  public:
     ComponentAsyncFunctional(DefaultPatternPtr pattern_base,
-                             DefaultComponentPtr component_base,
+                             component::Component::Ptr component_base,
                              TBBTimeDomainManager *buffer_manager,
                              NetworkGraph *network_graph);
 

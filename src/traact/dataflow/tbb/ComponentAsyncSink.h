@@ -15,7 +15,7 @@ class ComponentAsyncSink : public ComponentBase {
  public:
 
     ComponentAsyncSink(DefaultPatternPtr pattern_base,
-                       DefaultComponentPtr component_base,
+                       component::Component::Ptr component_base,
                        TBBTimeDomainManager *buffer_manager,
                        NetworkGraph *network_graph);
 

@@ -3,17 +3,9 @@
 #include "TestAsyncSourceComponent.h"
 
 
-traact::pattern::Pattern::Ptr TestAsyncSourceComponent::GetPattern() const {
-    std::string pattern_name = "TestAsyncSourceComponent";
-    traact::pattern::Pattern::Ptr
-        pattern = std::make_shared<traact::pattern::Pattern>(pattern_name, traact::Concurrency::SERIAL);
-    pattern->addProducerPort("output", TestStringHeader::MetaType);
-    pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
-    return pattern;
-}
 
 TestAsyncSourceComponent::TestAsyncSourceComponent(const std::string &name)
-    : TestComponent(name, traact::component::ComponentType::ASYNC_SOURCE) {}
+    : TestComponent(name) {}
 
 void TestAsyncSourceComponent::new_value(traact::Timestamp timestamp, std::string value) {
     SPDLOG_INFO("call from source, new value: {0}", getName());
@@ -31,8 +23,8 @@ void TestAsyncSourceComponent::new_value(traact::Timestamp timestamp, std::strin
 
 }
 
-RTTR_PLUGIN_REGISTRATION // remark the different registration macro!
-{
-    using namespace rttr;
-    registration::class_<TestAsyncSourceComponent>("TestAsyncSourceComponent").constructor<std::string>()();
-}
+CREATE_TRAACT_COMPONENT_FACTORY(TestAsyncSourceComponent)
+
+BEGIN_TRAACT_PLUGIN_REGISTRATION
+    REGISTER_DEFAULT_COMPONENT(TestAsyncSourceComponent)
+END_TRAACT_PLUGIN_REGISTRATION

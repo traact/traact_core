@@ -1,25 +1,25 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #include "RTTRPluginFactory.h"
-#include <iostream>
 #include "traact/util/Logging.h"
 #include <regex>
+#include <utility>
 #include "traact/util/FileUtil.h"
 
 bool traact::facade::RTTRPluginFactory::addLibrary(const std::string &filename) {
-    PluginPtr newPlugin;
+    PluginPtr new_plugin;
 
     SPDLOG_INFO("loading library file: {0}", filename);
 
     try {
-        newPlugin = std::make_shared<Plugin>(filename);
-        if (!newPlugin->init()) {
+        new_plugin = std::make_shared<Plugin>(filename);
+        if (!new_plugin->init()) {
             SPDLOG_ERROR("init failed for: {0}", filename);
             return false;
         }
 
     } catch (...) {
-        SPDLOG_ERROR("init thows exception for: {0}", filename);
+        SPDLOG_ERROR("init throws exception for: {0}", filename);
         return false;
     }
 
@@ -31,37 +31,38 @@ bool traact::facade::RTTRPluginFactory::init() {
     using namespace rttr;
 
 #ifdef TRAACT_TARGET_WINDOWS
-    auto const re = std::regex{R"(;+)"};
-    const std::string file_ending = ".dll";
+    auto const kFindLib = std::regex{R"(;+)"};
+    const std::string kFileEnding = ".dll";
 #else
-    auto const re = std::regex{R"(:+)"};
-    const std::string file_ending = ".so";
+    auto const kFindLib = std::regex{R"(:+)"};
+    const std::string kFileEnding = ".so";
 #endif
 
-    auto const plugin_dirs = std::vector<std::string>(
-        std::sregex_token_iterator{begin(plugin_directories_), end(plugin_directories_), re, -1},
+    auto const kPluginDirs = std::vector<std::string>(
+        std::sregex_token_iterator{begin(plugin_directories_), end(plugin_directories_), kFindLib, -1},
         std::sregex_token_iterator{}
     );
-    for (const auto &plugin_dir : plugin_dirs) {
+    for (const auto &plugin_dir : kPluginDirs) {
         SPDLOG_INFO("attempting to load plugin directory: {0}", plugin_dir);
-        std::vector<std::string> files = util::globFiles(plugin_dir, file_ending);
+        std::vector<std::string> files = util::globFiles(plugin_dir, kFileEnding);
         for (const auto &file : files) {
             addLibrary(file);
         }
     }
 
-    for (const auto &t : type::get_types()) // returns all registered types from this library
+    for (const auto &loaded_type : type::get_types()) // returns all registered types from all loaded libraries
     {
 
-        if (!t.is_class() || t.is_wrapper())
+        if (!loaded_type.is_class() || loaded_type.is_wrapper()) {
             continue;
+        }
 
-        SPDLOG_DEBUG("testing type: {0}", std::string(t.get_name().begin(), t.get_name().end()));
+        SPDLOG_DEBUG("testing type: {0}", std::string(loaded_type.get_name().begin(), loaded_type.get_name().end()));
 
-        if (t.is_derived_from<component::Component>()) {
-            addPattern(t);
-        } else if (t.is_derived_from<buffer::DataFactory>()) {
-            addDatatype(t);
+        if (loaded_type.is_derived_from<component::ComponentFactory>()) {
+            addPattern(loaded_type);
+        } else if (loaded_type.is_derived_from<buffer::DataFactory>()) {
+            addDatatype(loaded_type);
         }
 
     }
@@ -88,7 +89,7 @@ bool traact::facade::RTTRPluginFactory::Plugin::init() {
     using namespace rttr;
 
     if (library_.is_loaded()) {
-        SPDLOG_INFO("library alreay loaded");
+        SPDLOG_INFO("library already loaded");
     } else {
 
         if (!library_.load()) {
@@ -102,24 +103,19 @@ bool traact::facade::RTTRPluginFactory::Plugin::init() {
 
 }
 
-void traact::facade::RTTRPluginFactory::addDatatype(const rttr::type &t) {
+void traact::facade::RTTRPluginFactory::addDatatype(const rttr::type &loaded_type) {
     using namespace rttr;
-    std::string classname = std::string(t.get_name().begin(), t.get_name().end());
-    if (classname == "traact::buffer::DataFactory")
+    std::string classname = std::string(loaded_type.get_name().begin(), loaded_type.get_name().end());
+    if (classname == "traact::buffer::DataFactory") {
         return;
+    }
 
-
-
-    //if(classname.find("traact::buffer::TemplatedDefaultFactoryObject") == std::string::npos)
-    //    return;
-
-    constructor ctor = t.get_constructor();
+    constructor ctor = loaded_type.get_constructor();
     if (ctor.is_valid()) {
         variant var = ctor.invoke();
         if (var.is_valid()) {
             SPDLOG_INFO("found datatype: {0}", classname);
             auto factory = var.get_value<FactoryObjectPtr>();
-
             datatype_traact_plugin.emplace(factory);
             datatype_names.push_back(classname);
 
@@ -127,30 +123,29 @@ void traact::facade::RTTRPluginFactory::addDatatype(const rttr::type &t) {
             SPDLOG_WARN("can not instantiate datatype factory: {0}", classname);
         }
     } else {
-        SPDLOG_WARN("constructor invalid for datatype factory: {0}", classname);
+        SPDLOG_TRACE("constructor invalid for datatype factory: {0}", classname);
     }
 
 }
-void traact::facade::RTTRPluginFactory::addPattern(const rttr::type &t) {
+void traact::facade::RTTRPluginFactory::addPattern(const rttr::type &loaded_type) {
     using namespace rttr;
-    std::string classname = std::string(t.get_name().begin(), t.get_name().end());
-    if (classname == "traact::component::Component")
+    std::string classname = std::string(loaded_type.get_name().begin(), loaded_type.get_name().end());
+    if (classname == "traact::component::ComponentFactory") {
         return;
-    constructor ctor = t.get_constructor({type::get<std::string>()});
+    }
+    constructor ctor = loaded_type.get_constructor();
     if (ctor.is_valid()) {
-        variant var = ctor.invoke(classname + std::string("_factory_object"));
+        variant var = ctor.invoke();
         if (var.is_valid()) {
             SPDLOG_INFO("found component: {0}", classname);
-            auto component = var.get_value<component::Component::Ptr>();
-
-            pattern_to_traact_plugin.emplace(classname, component);
-            component_to_traact_plugin.emplace(classname, ctor);
-            pattern_names.push_back(classname);
+            auto component_factory = var.get_value<component::ComponentFactory::Ptr>();
+            pattern_to_traact_plugin.emplace(component_factory->createPattern()->name, component_factory);
+            pattern_names.push_back(component_factory->createPattern()->name);
         } else {
             SPDLOG_WARN("can not instantiate component: {0}", classname);
         }
     } else {
-        SPDLOG_WARN("constructor invalid for component: {0}", classname);
+        SPDLOG_TRACE("constructor invalid for component: {0}", classname);
     }
 }
 
@@ -158,36 +153,37 @@ bool traact::facade::RTTRPluginFactory::Plugin::teardown() {
     return true;//library_.unload();
 }
 
-traact::facade::RTTRPluginFactory::PatternPtr traact::facade::RTTRPluginFactory::instantiatePattern(const std::string &patternName) {
-    auto find_result = pattern_to_traact_plugin.find(patternName);
+traact::facade::RTTRPluginFactory::PatternPtr traact::facade::RTTRPluginFactory::instantiatePattern(const std::string &pattern_name) {
+    auto find_result = pattern_to_traact_plugin.find(pattern_name);
     if (find_result == pattern_to_traact_plugin.end()) {
-        throw std::runtime_error(std::string("Trying to instantiate unkown pattern: ") + patternName);
+        throw std::runtime_error(std::string("Trying to instantiate unknown pattern: ") + pattern_name);
     }
-    return find_result->second->GetPattern();
+    return find_result->second->createPattern();
 }
-traact::facade::RTTRPluginFactory::ComponentPtr traact::facade::RTTRPluginFactory::instantiateComponent(const std::string &patternName,
-                                                                                                        const std::string &new_component_name) {
+traact::facade::RTTRPluginFactory::ComponentPtr traact::facade::RTTRPluginFactory::instantiateComponent(const std::string &pattern_name,
+                                                                                                        const std::string &instance_id) {
 
-    auto find_result = component_to_traact_plugin.find(patternName);
-    if (find_result == component_to_traact_plugin.end()) {
-        throw std::runtime_error(std::string("Trying to instantiate unkown component: ") + patternName);
+    auto find_result = pattern_to_traact_plugin.find(pattern_name);
+    if (find_result == pattern_to_traact_plugin.end()) {
+        throw std::runtime_error(std::string("Trying to instantiate unknown component: ") + pattern_name);
     }
-    return find_result->second.invoke(new_component_name).get_value<ComponentPtr>();
+    return find_result->second->createComponent(instance_id);
 
 }
 
 traact::facade::RTTRPluginFactory::RTTRPluginFactory() {
-    auto plugin_dirs = getenv("TRAACT_PLUGIN_PATHS");
+    auto *plugin_dirs = getenv("TRAACT_PLUGIN_PATHS");
     if (plugin_dirs != nullptr) {
         plugin_directories_ = plugin_dirs;
     } else {
+        // right now this makes sense, in the future when there might be static linking then this check is not needed
         throw std::runtime_error(std::string("Missing environment variable: TRAACT_PLUGIN_PATH"));
     }
     init();
 }
 
-traact::facade::RTTRPluginFactory::RTTRPluginFactory(const std::string &pluginDirectories) : plugin_directories_(
-    pluginDirectories) {
+traact::facade::RTTRPluginFactory::RTTRPluginFactory(std::string plugin_directories) : plugin_directories_(std::move(
+    plugin_directories)) {
     init();
 
 }

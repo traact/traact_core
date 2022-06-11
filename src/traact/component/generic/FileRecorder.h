@@ -14,13 +14,13 @@ class FileRecorder : public FileWriter<T> {
                                                                                                        serializer_name) {
     }
 
-    traact::pattern::Pattern::Ptr GetPattern() const {
+    static traact::pattern::Pattern::Ptr GetPattern() {
 
         std::string pattern_name = fmt::format("FileRecorder_{0}_{1}", FileWriter<T>::serializer_name_, T::MetaType);
 
         traact::pattern::Pattern::Ptr
             pattern =
-            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL);
+            std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SINK);
 
         pattern->addConsumerPort("input", T::MetaType);
 
@@ -33,7 +33,7 @@ class FileRecorder : public FileWriter<T> {
         return pattern;
     }
 
- TRAACT_PLUGIN_ENABLE(Component)
+
 
 };
 

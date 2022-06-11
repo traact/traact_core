@@ -24,8 +24,8 @@ struct ComponentData {
     std::atomic<bool> &running;
 
     //tf::SmallVector<bool*> valid_input{};
-    std::vector<bool *> valid_input{};
-    bool valid_output{false};
+    std::vector<bool *> successors_valid{};
+    bool valid_component_call{false};
 
 };
 
@@ -43,11 +43,11 @@ inline void taskSource(ComponentData &local_data) {
         status = lock.wait_for(kDefaultTimeout);
     }
     if (status != std::future_status::ready || !local_data.running) {
-        local_data.valid_output = false;
+        local_data.valid_component_call = false;
         return;
     }
 
-    local_data.valid_output = lock.get();
+    local_data.valid_component_call = lock.get();
 
     switch (local_data.time_step_buffer.getEventType()) {
 
@@ -75,22 +75,26 @@ inline void taskGenericComponent(ComponentData &local_data) {
                  local_data.component.getName(),
                  local_data.buffer.getTimestamp());
 
+    for (auto *valid : local_data.successors_valid) {
+        if (*valid == false) {
+            SPDLOG_TRACE("{0}: abort ts {1}, successors call to component returned false",
+                         local_data.component.getName(),
+                         local_data.buffer.getTimestamp());
+            local_data.valid_component_call = false;
+        }
+    }
+
     switch (local_data.time_step_buffer.getEventType()) {
         case EventType::CONFIGURE:local_data.component.configure(local_data.component_parameter, nullptr);
             break;
         case EventType::START:local_data.component.start();
             break;
         case EventType::DATA: {
-            bool valid_input = true;
-            for (auto *valid : local_data.valid_input) {
-                valid_input &= *valid;
-            }
 
-            if (valid_input) {
-                local_data.valid_output = local_data.component.processTimePoint(local_data.buffer);
+            if (local_data.buffer.isAllInputValid()) {
+                local_data.valid_component_call = local_data.component.processTimePoint(local_data.buffer);
             } else {
-                local_data.component.invalidTimePoint(local_data.buffer.getTimestamp(), 0);
-                local_data.valid_output = false;
+                local_data.valid_component_call = local_data.component.processTimePointWithInvalid(local_data.buffer);
             }
 
             break;
@@ -102,8 +106,7 @@ inline void taskGenericComponent(ComponentData &local_data) {
         case EventType::DATAFLOW_NO_OP:
         case EventType::DATAFLOW_STOP:break;
         case EventType::INVALID:assert(!"Invalid MessageType");
-        default:
-            break;
+        default:break;
     }
 
     SPDLOG_TRACE("{0}: finished ts {1}",
