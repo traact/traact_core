@@ -35,11 +35,11 @@ class Semaphore {
         return true;
     }
 
-    inline bool try_wait() {
+    inline bool try_wait(TimeDuration timeout = TimeDuration(0)) {
         std::unique_lock<std::mutex> lock(mtx_);
         while(count_ == 0) {
             //wait on the mutex until notify is called
-            if(cv_.wait_for(lock, std::chrono::nanoseconds(0)) == std::cv_status::timeout) {
+            if(cv_.wait_for(lock, timeout) == std::cv_status::timeout) {
                 return false;
             }
         }
@@ -66,7 +66,7 @@ class WaitForMasterTs {
 
  public:
     WaitForMasterTs (std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
-        : timeout_(timeout), current_ts(Timestamp::min())
+        : timeout_(timeout), current_ts(kTimestampZero)
     {
     }
 
@@ -106,7 +106,7 @@ class WaitForInit {
         cv_.notify_all();
     }
 
-    inline bool Wait() {
+    inline bool tryWait() {
         std::unique_lock<std::mutex> lock(mtx_);
         while(!is_init) {
             //wait on the mutex until notify is called
@@ -172,7 +172,7 @@ class WaitForTimestamp {
 
  public:
     WaitForTimestamp (TimeDuration max_offset)
-        : current_value_(Timestamp::min()), max_offset_(max_offset)
+        : current_value_(kTimestampZero), max_offset_(max_offset)
     {
     }
 
@@ -205,6 +205,48 @@ class WaitForTimestamp {
 };
 
 }
+
+template <typename T>
+class WaitForExactValue {
+
+ public:
+    WaitForExactValue ()
+        : current_value(std::numeric_limits<T>::min())
+    {
+    }
+
+    inline void notifyAll(const T value) {
+        std::unique_lock<std::mutex> lock(mtx_);
+        current_value = value;
+        cv_.notify_all();
+    }
+
+    inline void wait(const T value) {
+        std::unique_lock<std::mutex> lock(mtx_);
+        while(current_value != value) {
+            //wait on the mutex until notify is called
+            cv_.wait(lock);
+        }
+    }
+
+    inline bool try_wait(const T value, traact::TimeDuration timeout) {
+        std::unique_lock<std::mutex> lock(mtx_);
+        while(current_value != value) {
+            //wait on the mutex until notify is called
+            auto status = cv_.wait_for(lock, timeout);
+            if(status == std::cv_status::timeout)
+                return false;
+        }
+        return true;
+    }
+
+
+
+ private:
+    std::mutex mtx_;
+    std::condition_variable cv_;
+    T current_value;
+};
 
 
 #endif //TRAACTMULTI_TRAACT_CORE_INCLUDE_TRAACT_UTIL_SEMAPHORE_H_

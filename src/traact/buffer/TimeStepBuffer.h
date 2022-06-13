@@ -48,8 +48,8 @@ class TimeStepBuffer {
     std::map<std::string, size_t> component_buffer_to_index_;
     std::vector<std::unique_ptr<ComponentBuffer> > component_buffers_list_;
     std::vector<std::unique_ptr<SourceComponentBuffer> > source_buffer_list_;
-    //std::vector<std::unique_ptr<PortStateShared > > buffer_valid_;
-    std::vector< PortStateShared  > buffer_valid_;
+    std::vector<std::unique_ptr<PortStateShared > > buffer_valid_;
+    //std::vector< PortStateShared  > buffer_valid_;
     std::vector<Timestamp> buffer_timestamp_;
 
     void createLocalBuffer(const std::vector<std::pair<int, int>> &port_inputs,

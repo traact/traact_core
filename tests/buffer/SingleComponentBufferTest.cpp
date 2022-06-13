@@ -14,7 +14,7 @@ TEST(SingleComponentBuffer, Empty) {
     const size_t kTimeStepIndex = 3;
     const size_t kComponentIndex = 2;
 
-    Timestamp timestamp = Timestamp::min() + TimeDuration(kDuration);
+    Timestamp timestamp = kTimestampZero + TimeDuration(kDuration);
 
     std::vector<std::string> buffer_data{};
     std::vector<Timestamp> buffer_timestamp{};
@@ -54,14 +54,15 @@ TEST(SingleComponentBuffer, Input) {
     using Port0 = buffer::PortConfig<TestStringHeader, 0>;
     const std::string kValue = "value_0";
 
-    Timestamp timestamp = Timestamp::min() + TimeDuration(kDuration);
+    Timestamp timestamp = kTimestampZero + TimeDuration(kDuration);
 
     std::vector<std::string> buffer_data{"invalid"};
-    std::vector<Timestamp> buffer_timestamp{Timestamp::min()};
-    std::vector<PortState> buffer_valid{PortState::INVALID};
+    std::vector<Timestamp> buffer_timestamp{kTimestampZero};
+    std::vector<std::unique_ptr<PortStateShared>> buffer_valid;
+    buffer_valid.emplace_back(std::make_unique<PortStateShared>(PortState::INVALID));
 
     LocalDataBuffer input_data{&buffer_data[0]};
-    LocalValidBuffer input_valid{&buffer_valid[0]};
+    LocalValidBuffer input_valid{buffer_valid[0].get()};
     LocalTimestampBuffer input_timestamp{&buffer_timestamp[0]};
 
     LocalDataBuffer output_data{};
@@ -89,7 +90,7 @@ TEST(SingleComponentBuffer, Input) {
     }
 
     // usually all data should be handled by the component buffer, in this test change data from the outside, component buffer should reflect this change
-    buffer_valid[0] = PortState::VALID;
+    *buffer_valid[0] = PortState::VALID;
     buffer_data[0] = kValue;
     buffer_timestamp[0] = timestamp;
     {
@@ -111,18 +112,19 @@ TEST(SingleComponentBuffer, Output) {
     const std::string kValue = "value_0";
     using Port0 = buffer::PortConfig<TestStringHeader, 0>;
 
-    Timestamp timestamp = Timestamp::min() + TimeDuration(kDuration);
+    Timestamp timestamp = kTimestampZero + TimeDuration(kDuration);
 
     std::vector<std::string> buffer_data{"invalid"};
-    std::vector<Timestamp> buffer_timestamp{Timestamp::min()};
-    std::vector<PortState> buffer_valid{PortState::INVALID};
+    std::vector<Timestamp> buffer_timestamp{kTimestampZero};
+    std::vector<std::unique_ptr<PortStateShared>> buffer_valid;
+    buffer_valid.emplace_back(std::make_unique<PortStateShared>(PortState::INVALID));
 
     LocalDataBuffer input_data{};
     LocalValidBuffer input_valid{};
     LocalTimestampBuffer input_timestamp{};
 
     LocalDataBuffer output_data{&buffer_data[0]};
-    LocalValidBuffer output_valid{&buffer_valid[0]};
+    LocalValidBuffer output_valid{buffer_valid[0].get()};
     LocalTimestampBuffer output_timestamp{&buffer_timestamp[0]};
 
     EventType event_type = EventType::CONFIGURE;

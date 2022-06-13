@@ -114,11 +114,12 @@ void traact::facade::RTTRPluginFactory::addDatatype(const rttr::type &loaded_typ
     if (ctor.is_valid()) {
         variant var = ctor.invoke();
         if (var.is_valid()) {
-            SPDLOG_INFO("found datatype: {0}", classname);
+
             auto factory = var.get_value<FactoryObjectPtr>();
+
             datatype_traact_plugin.emplace(factory);
             datatype_names.push_back(classname);
-
+            SPDLOG_INFO("found datatype: factory: {0} type name: {1}", classname, factory->getTypeName());
         } else {
             SPDLOG_WARN("can not instantiate datatype factory: {0}", classname);
         }
@@ -137,10 +138,12 @@ void traact::facade::RTTRPluginFactory::addPattern(const rttr::type &loaded_type
     if (ctor.is_valid()) {
         variant var = ctor.invoke();
         if (var.is_valid()) {
-            SPDLOG_INFO("found component: {0}", classname);
+
             auto component_factory = var.get_value<component::ComponentFactory::Ptr>();
-            pattern_to_traact_plugin.emplace(component_factory->createPattern()->name, component_factory);
-            pattern_names.push_back(component_factory->createPattern()->name);
+            auto pattern_name = component_factory->createPattern()->name;
+            pattern_to_traact_plugin.emplace(pattern_name, component_factory);
+            pattern_names.push_back(pattern_name);
+            SPDLOG_INFO("found component: factory: {0} pattern: {1}", classname, pattern_name);
         } else {
             SPDLOG_WARN("can not instantiate component: {0}", classname);
         }

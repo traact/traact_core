@@ -24,12 +24,12 @@ bool TestComponent::teardown() {
     return true;
 }
 bool TestComponent::processTimePoint(traact::buffer::ComponentBuffer &data) {
-    SPDLOG_INFO("call process time point: {0}", getName());
+    SPDLOG_INFO("call process time point: {0} ts: {1}", getName(), data.getTimestamp());
     component_state_.callProcessTimePoint(data);
     return true;
 }
 bool TestComponent::processTimePointWithInvalid(traact::buffer::ComponentBuffer &data) {
-    SPDLOG_INFO("call invalid time point: {0}", getName());
+    SPDLOG_INFO("call invalid time point: {0} ts: {1}", getName(), data.getTimestamp());
     component_state_.callInvalidTimePoint(data);
     return true;
 }

@@ -7,7 +7,7 @@
 #include "TestSyncSinkComponent.h"
 #include "TestSyncFunctionalComponent.h"
 #include <traact/facade/DefaultFacade.h>
-
+#include <traact/util/Semaphore.h>
 class Test_01_TwoAsyncSource_SyncFunctional_SyncSink: public ::testing::TestWithParam<int> {
  public:
     Test_01_TwoAsyncSource_SyncFunctional_SyncSink( ) {
@@ -53,7 +53,7 @@ class Test_01_TwoAsyncSource_SyncFunctional_SyncSink: public ::testing::TestWith
         td_config.missing_source_event_mode = MissingSourceEventMode::WAIT_FOR_EVENT;
         td_config.max_offset = std::chrono::milliseconds(0);
         td_config.max_delay = std::chrono::milliseconds(100);
-        td_config.measurement_delta = time_delta_;
+        td_config.sensor_frequency = sensor_frequency_;
 
         pattern_graph_ptr->timedomain_configs[0] = td_config;
 
@@ -77,7 +77,10 @@ class Test_01_TwoAsyncSource_SyncFunctional_SyncSink: public ::testing::TestWith
     std::shared_ptr<TestSyncSinkComponent> sink_component_;
     const traact::TimeDuration sleep_time_{std::chrono::milliseconds(200)};
     const traact::Timestamp start_timestamp_{std::chrono::milliseconds(1000000000000LL)};
-    const traact::TimeDuration time_delta_{std::chrono::nanoseconds (1)};
+    const double sensor_frequency_{1000000000};
+    const traact::TimeDuration time_delta_{1};
+    const size_t kDataEvents = 10000;
+    traact::WaitForInit wait_for_init;
 };
 
 void testDefaultOrder(const std::string &test_trace,
@@ -128,7 +131,7 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, NoDataEvent) {
 
 TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEvents) {
 
-    const size_t kDataEvents = 1000;
+    
 
 
 
@@ -176,7 +179,7 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEvents) {
 }
 
 TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEventInvalid) {
-    const size_t kDataEvents = 1000;
+    
 
 
 
@@ -228,34 +231,51 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEven
 
 }
 
-TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEventMissing) {
-    const size_t kDataEvents = 1000;
-
-
+TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEventMissing_0_CompleteSourceFirst) {
 
     my_facade_->start();
 
+
+
     auto source_0 = std::async([&, local_source = source_0_component_]() {
-        for(size_t i=0;i<kDataEvents;++i){
-            auto timestamp = start_timestamp_+time_delta_*i;
-            SPDLOG_INFO("send source 0: {0}", timestamp);
-            local_source->new_value(timestamp, fmt::format(kTestValue,i));
+        try{
+            for(size_t i=0;i<kDataEvents;++i){
+                auto timestamp = start_timestamp_+time_delta_*i;
+                SPDLOG_INFO("send source 0: {0}", timestamp);
+                local_source->new_value(timestamp, fmt::format(kTestValue,i));
+                wait_for_init.SetInit(true);
+            }
+        }catch(std::exception e){
+            SPDLOG_ERROR(e.what());
+        }catch (...){
+            SPDLOG_ERROR("some unknown error in async source");
         }
+
     });
     std::vector<traact::Timestamp> missing_events;
     missing_events.reserve(kDataEvents);
     auto source_1 = std::async([&, local_source = source_1_component_]() {
-        for(size_t i=0;i<kDataEvents;++i){
-            auto timestamp = start_timestamp_+time_delta_*i;
-            SPDLOG_INFO("send source 1: {0}", timestamp);
-            if(i % 2 == 0){
-                // no call to framework, data does not exist
-                //local_source->invalid_value(timestamp);
-                missing_events.emplace_back(timestamp);
-            } else {
-                local_source->new_value(timestamp, fmt::format(kTestValue,i));
+        try{
+            while(!wait_for_init.tryWait()) {
+                SPDLOG_INFO("wait for init");
             }
+            for(size_t i=0;i<kDataEvents;++i){
+                auto timestamp = start_timestamp_+time_delta_*i;
+                SPDLOG_INFO("send source 1: {0}, is missing {1}", timestamp, i % 2 == 0);
+                if(i % 2 == 0){
+                    // no call to framework, data does not exist
+                    //local_source->invalid_value(timestamp);
+                    missing_events.emplace_back(timestamp);
+                } else {
+                    local_source->new_value(timestamp, fmt::format(kTestValue,i));
+                }
+            }
+        }catch(std::exception e){
+            SPDLOG_ERROR(e.what());
+        }catch (...){
+            SPDLOG_ERROR("some unknown error in async source");
         }
+
     });
 
     source_0.wait();
@@ -264,9 +284,84 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEven
     my_facade_->stop();
 
     testDefaultOrder("source_0", source_0_component_->component_state_, 0, 0, kDataEvents, kDataEvents);
-    testDefaultOrder("source_1", source_1_component_->component_state_, 0, 0, kDataEvents, kDataEvents);
+    testDefaultOrder("source_1", source_1_component_->component_state_, 0, 0, kDataEvents/2, kDataEvents/2);
     testDefaultOrder("functional", functional_component_->component_state_, kDataEvents/2, kDataEvents/2, 0, 0);
     testDefaultOrder("sink", sink_component_->component_state_, kDataEvents/2, kDataEvents/2, 0, 0);
+
+    {
+        auto& source_0_state = source_0_component_->component_state_;
+        auto& source_1_state = source_1_component_->component_state_;
+        auto& functional_state = functional_component_->component_state_;
+        auto& sink_state = sink_component_->component_state_;
+        SCOPED_TRACE("source_before_functional_before_sink");
+        std::vector<traact::Timestamp> all_events_present{};
+        EXPECT_TRUE(source_0_state.precedes(functional_state, all_events_present));
+        EXPECT_TRUE(source_1_state.precedes(functional_state, all_events_present ));
+        EXPECT_TRUE(source_0_state.precedes(sink_state, all_events_present));
+        EXPECT_TRUE(source_1_state.precedes(sink_state, all_events_present));
+        EXPECT_TRUE(functional_state.precedes(sink_state, all_events_present));
+    }
+
+}
+
+
+TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEventMissing_1_MissingSourceFirst) {
+
+    my_facade_->start();
+
+
+    auto source_0 = std::async([&, local_source = source_0_component_]() {
+        try{
+            while(!wait_for_init.tryWait()) {
+                SPDLOG_INFO("wait for init");
+            }
+            for(size_t i=0;i<kDataEvents;++i){
+                auto timestamp = start_timestamp_+time_delta_*i;
+                SPDLOG_INFO("send source 0: {0}", timestamp);
+                local_source->new_value(timestamp, fmt::format(kTestValue,i));
+            }
+        }catch(std::exception e){
+            SPDLOG_ERROR(e.what());
+        }catch (...){
+            SPDLOG_ERROR("some unknown error in async source");
+        }
+
+    });
+    std::vector<traact::Timestamp> missing_events;
+    missing_events.reserve(kDataEvents);
+    auto source_1 = std::async([&, local_source = source_1_component_]() {
+
+        try{
+            missing_events.emplace_back(start_timestamp_);
+            for(size_t i=0;i<kDataEvents;++i){
+                auto timestamp = start_timestamp_+time_delta_*i;
+                SPDLOG_INFO("send source 1: {0}, is missing {1}", timestamp, i % 2 == 0);
+                if(i % 2 == 0){
+                    // no call to framework, data does not exist
+                    //local_source->invalid_value(timestamp);
+                    missing_events.emplace_back(timestamp);
+                } else {
+                    local_source->new_value(timestamp, fmt::format(kTestValue,i));
+                    wait_for_init.SetInit(true);
+                }
+
+            }
+        }catch(std::exception e){
+            SPDLOG_ERROR(e.what());
+        }catch (...){
+            SPDLOG_ERROR("some unknown error in async source");
+        }
+    });
+
+    source_0.wait();
+    source_1.wait();
+
+    my_facade_->stop();
+
+    testDefaultOrder("source_0", source_0_component_->component_state_, 0, 0, kDataEvents, kDataEvents-1);
+    testDefaultOrder("source_1", source_1_component_->component_state_, 0, 0, kDataEvents/2, kDataEvents/2);
+    testDefaultOrder("functional", functional_component_->component_state_, kDataEvents/2, kDataEvents/2-1, 0, 0);
+    testDefaultOrder("sink", sink_component_->component_state_, kDataEvents/2, kDataEvents/2-1, 0, 0);
 
     {
         auto& source_0_state = source_0_component_->component_state_;

@@ -47,7 +47,6 @@ class TRAACT_CORE_EXPORT SourceComponentBuffer {
  private:
     const ComponentBuffer &local_output_buffer_;
     std::promise<bool> source_lock_;
-    std::atomic_bool lock_set_{false};
 };
 }
 

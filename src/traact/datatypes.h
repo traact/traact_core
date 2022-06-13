@@ -10,13 +10,15 @@ namespace traact {
 
 using Scalar = double;
 
-using TimeDuration = std::chrono::duration<uint64_t, std::nano>;
+using TimeDuration = std::chrono::duration<int64_t, std::nano>;
 using Timestamp = std::chrono::time_point<std::chrono::system_clock, TimeDuration>;
+
+static const constexpr Timestamp kTimestampZero(TimeDuration(0));
 
 using TimestampSteady = std::chrono::time_point<std::chrono::steady_clock, TimeDuration>;
 
-static constexpr TimeDuration kDefaultTimeout = std::chrono::milliseconds(100);
-static constexpr TimeDuration kDataflowStopTimeout = std::chrono::seconds(5);
+static const constexpr TimeDuration kDefaultTimeout = std::chrono::milliseconds(100);
+static const constexpr TimeDuration kDataflowStopTimeout = std::chrono::seconds(5);
 
 struct TRAACT_CORE_EXPORT TimestampHashCompare {
     static size_t hash(const Timestamp &x) {
@@ -115,7 +117,7 @@ struct TRAACT_CORE_EXPORT TimeDomainManagerConfig {
     size_t ringbuffer_size{0};
     TimeDuration max_offset{TimeDuration::min()};
     TimeDuration max_delay{TimeDuration::min()};
-    TimeDuration measurement_delta{TimeDuration::min()};
+    double sensor_frequency{30};
     SourceMode source_mode{SourceMode::WAIT_FOR_BUFFER};
     MissingSourceEventMode missing_source_event_mode{MissingSourceEventMode::WAIT_FOR_EVENT};
     std::string master_source{"invalid"};

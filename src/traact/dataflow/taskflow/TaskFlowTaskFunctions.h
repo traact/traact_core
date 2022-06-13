@@ -47,26 +47,44 @@ inline void taskSource(ComponentData &local_data) {
         return;
     }
 
-    local_data.valid_component_call = lock.get();
-
     switch (local_data.time_step_buffer.getEventType()) {
 
-        case EventType::CONFIGURE:local_data.component.configure(local_data.component_parameter, nullptr);
+        case EventType::CONFIGURE: {
+            local_data.valid_component_call = local_data.component.configure(local_data.component_parameter, nullptr);
             break;
-        case EventType::START:local_data.component.start();
+        }
+
+        case EventType::START: {
+            local_data.valid_component_call = local_data.component.start();
             break;
-        case EventType::DATA:break;
-        case EventType::STOP:local_data.component.stop();
+        }
+
+        case EventType::DATA: {
+            local_data.valid_component_call = local_data.valid_component_call = lock.get();
             break;
-        case EventType::TEARDOWN:local_data.component.teardown();
+        }
+        case EventType::STOP: {
+            local_data.valid_component_call = local_data.component.stop();
             break;
+        }
+
+        case EventType::TEARDOWN: {
+            local_data.valid_component_call = local_data.component.teardown();
+            break;
+        }
+
         case EventType::DATAFLOW_NO_OP:
-        case EventType::DATAFLOW_STOP:break;
-        case EventType::INVALID:assert(!"Invalid MessageType");
-        default:break;
+        case EventType::DATAFLOW_STOP: {
+            break;
+        }
+        case EventType::INVALID:
+        default: {
+            assert(!"Invalid MessageType");
+        }
+
     }
 
-    SPDLOG_TRACE("SourceComponent: {0} ts: {1}", local_data.component.getName(),
+    SPDLOG_TRACE("SourceComponent: {0} ts: {1} done", local_data.component.getName(),
                  local_data.time_step_buffer.getTimestamp());
 }
 
@@ -77,18 +95,24 @@ inline void taskGenericComponent(ComponentData &local_data) {
 
     for (auto *valid : local_data.successors_valid) {
         if (*valid == false) {
-            SPDLOG_TRACE("{0}: abort ts {1}, successors call to component returned false",
+            SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
                          local_data.component.getName(),
-                         local_data.buffer.getTimestamp());
+                         local_data.buffer.getTimestamp(),
+                         local_data.time_step_buffer.getEventType());
             local_data.valid_component_call = false;
+            return;
         }
     }
 
     switch (local_data.time_step_buffer.getEventType()) {
-        case EventType::CONFIGURE:local_data.component.configure(local_data.component_parameter, nullptr);
+        case EventType::CONFIGURE: {
+            local_data.valid_component_call = local_data.component.configure(local_data.component_parameter, nullptr);
             break;
-        case EventType::START:local_data.component.start();
+        }
+        case EventType::START: {
+            local_data.valid_component_call = local_data.component.start();
             break;
+        }
         case EventType::DATA: {
 
             if (local_data.buffer.isAllInputValid()) {
@@ -99,17 +123,23 @@ inline void taskGenericComponent(ComponentData &local_data) {
 
             break;
         }
-        case EventType::STOP:local_data.component.stop();
+        case EventType::STOP: {
+            local_data.valid_component_call = local_data.component.stop();
             break;
-        case EventType::TEARDOWN:local_data.component.teardown();
+        }
+
+        case EventType::TEARDOWN: {
+            local_data.valid_component_call = local_data.component.teardown();
             break;
+        }
+
         case EventType::DATAFLOW_NO_OP:
         case EventType::DATAFLOW_STOP:break;
         case EventType::INVALID:assert(!"Invalid MessageType");
         default:break;
     }
 
-    SPDLOG_TRACE("{0}: finished ts {1}",
+    SPDLOG_TRACE("Component {0}: finished ts {1}",
                  local_data.component.getName(),
                  local_data.buffer.getTimestamp());
 }

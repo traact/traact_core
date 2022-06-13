@@ -17,13 +17,14 @@ enum class TestEvents {
     CALL_COMMIT_DONE,
     STOP,
     TEARDOWN,
+    REQUEST_REJECTED
 };
 
 struct TestComponentEvent {
     TestComponentEvent(TestEvents t_event_type, const traact::Timestamp &t_timestamp);
-    traact::TimestampSteady event_timestamp;
+    traact::TimestampSteady real_timestamp;
     TestEvents event_type;
-    traact::Timestamp timestamp;
+    traact::Timestamp event_timestamp;
 };
 
 struct TestComponentState {
@@ -44,6 +45,7 @@ struct TestComponentState {
     size_t expectEventCount(TestEvents test_event) const;
     bool precedes(const TestComponentState &next_state, const std::vector<traact::Timestamp> &missing_events) const;
     const TestComponentEvent * getEventFor(const TestComponentEvent &event) const;
+    void requestRejected(traact::Timestamp timestamp);
 };
 
 template <> struct fmt::formatter<TestEvents> {
@@ -65,7 +67,9 @@ template <> struct fmt::formatter<TestEvents> {
             case TestEvents::TEARDOWN:return format_to(ctx.out(), "{}", "TEARDOWN");
             case TestEvents::CALL_REQUEST:return format_to(ctx.out(), "{}", "CALL_REQUEST");
             case TestEvents::CALL_COMMIT_DONE:return format_to(ctx.out(), "{}", "REQUEST_DONE");
+            case TestEvents::REQUEST_REJECTED:return format_to(ctx.out(), "{}", "REQUEST_REJECTED");
             default: return format_to(ctx.out(), "{}", "unknown");
+
 
         }
 

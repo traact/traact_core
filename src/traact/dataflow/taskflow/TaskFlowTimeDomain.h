@@ -12,8 +12,15 @@
 #include "TaskFlowTaskFunctions.h"
 #include <traact/buffer/DataBufferFactory.h>
 #include "TaskFlowUtils.h"
+#include "TaskFlowAsyncScheduler.h"
+#include "TaskFlowInFlowScheduler.h"
+
+
 
 namespace traact::dataflow {
+
+using DefaultScheduler = TaskFlowInFlowScheduler;
+
 class TaskFlowTimeDomain {
  public:
     TaskFlowTimeDomain(int time_domain,
@@ -34,20 +41,18 @@ class TaskFlowTimeDomain {
     component::Component::SourceFinishedCallback source_finished_callback_;
 
     // data for taskflow
-    tf::Executor executor_;
+
     tf::Taskflow taskflow_;
-    tf::Future<void> taskflow_future_;
+
     std::vector<TimeStepData> time_step_data_;
     std::map<std::string, tf::Task> inter_time_step_tasks_;
     std::map<std::string, std::set<std::string>> component_to_successors_;
     std::set<std::string> component_end_points_;
     std::set<std::string> component_start_points_;
-    std::unique_ptr<buffer::TimeDomainBuffer> time_domain_buffer_;
+    std::shared_ptr<buffer::TimeDomainBuffer> time_domain_buffer_;
     std::atomic<bool> running_{};
-    std::vector<std::vector<bool>> source_set_input_;
-    Semaphore teardown_wait_{1, 0, std::chrono::duration_cast<std::chrono::milliseconds>(kDataflowStopTimeout)};
-    int time_step_count_{};
-    int time_step_latest_{};
+
+    int time_step_count_{0};
     tf::SmallVector<int, kStartEntries> start_entries_;
     bool stop_called_{false};
     // time domain data
@@ -55,34 +60,12 @@ class TaskFlowTimeDomain {
     traact::buffer::TimeDomainManagerConfig time_domain_config_;
     std::atomic_flag source_finished_ = ATOMIC_FLAG_INIT;
     void masterSourceFinished();
-    traact::WaitForInit configure_finished_;
-    traact::WaitForInit start_finished_;
-    traact::WaitForInit stop_finished_;
-    traact::WaitForInit teardown_finished_;
 
-    // concurrent running time steps
-    std::mutex flow_mutex_;
-    std::mutex request_mutex_;
-    //tf::SmallVector<bool, 10> running_taskflows_;
-    std::vector<bool> running_taskflows_;
-    std::vector<tf::Future<void>> taskflow_execute_future_;
-    Semaphore free_taskflows_semaphore_;
-    WaitForTimestamp latest_running_ts_;
-    std::deque<std::pair<Timestamp, EventType>> queued_messages_;
-    Timestamp latest_scheduled_ts_;
-    std::vector<Timestamp> latest_scheduled_component_timestamp_;
-    Timestamp latest_queued_ts_;
+    std::unique_ptr<DefaultScheduler> scheduler_;
 
-    std::mutex running_mutex_;
-    //tf::SmallVector<Timestamp, 10> running_timestamps_;
-    std::vector<Timestamp> running_timestamps_;
-    traact::Semaphore taskflow_started_{1, 0, kFreeTaskFlowTimeout};
 
-    int isTimestampRunning(const Timestamp &timestamp);
-    void
-    scheduleEvent(EventType message_type, Timestamp timestamp);
 
-    void freeTimeStep(int time_step_index);
+
 
     void createBuffer();
 
@@ -90,12 +73,8 @@ class TaskFlowTimeDomain {
 
     void createTimeStepTasks(const int time_step_index);
 
-    void runTaskFlowFromQueue();
 
-    void setTaskflowFree(int time_step_index);
 
-    void
-    takeTaskflow(int taskflow_id, std::chrono::time_point<std::chrono::system_clock, TimeDuration> &next_ts);
 
     void prepareComponents();
 
@@ -117,10 +96,10 @@ class TaskFlowTimeDomain {
 
     std::string getTaskName(const int time_step_index, const std::string &instance_id) const;
 
-    void cancelOlderEvents(Timestamp timestamp, int component_index);
+
 
     tf::Task createSeamEntryTask(int time_step_index, const std::string &seam_entry_name);
-    std::optional<int> isTimestampRunningOrQueued(Timestamp timestamp);
+
 };
 }
 

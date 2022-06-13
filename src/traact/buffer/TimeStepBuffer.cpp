@@ -17,8 +17,8 @@ TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
     buffer_timestamp_.resize(buffer_data_.size());
     buffer_valid_.reserve(buffer_data_.size());
     for (size_t i = 0; i < buffer_data_.size(); ++i) {
-        //buffer_valid_.emplace_back(std::make_unique<PortStateShared >(PortState::INVALID));
-        buffer_valid_.emplace_back(PortState::INVALID);
+        buffer_valid_.emplace_back(std::make_unique<PortStateShared >(PortState::INVALID));
+        //buffer_valid_.emplace_back(PortState::INVALID);
     }
 
     int component_count = 0;
@@ -103,7 +103,7 @@ void TimeStepBuffer::createLocalBuffer(const std::vector<std::pair<int, int>> &p
         data_buffer[port.second] = buffer_data_[port.first];
         header_buffer[port.second] = header_data_[port.first];
         timestamp_buffer[port.second] = &buffer_timestamp_[port.first];
-        valid_buffer[port.second] = &buffer_valid_.at(port.first);
+        valid_buffer[port.second] = buffer_valid_.at(port.first).get();
     }
 }
 
@@ -145,7 +145,7 @@ void TimeStepBuffer::resetNewEvent() {
         comp_buffer->resetLock();
     }
     for (auto &buffer_valid : buffer_valid_) {
-        buffer_valid = PortState::INVALID;
+        *buffer_valid = PortState::INVALID;
     }
 }
 

@@ -31,6 +31,18 @@ template <> struct fmt::formatter<traact::Timestamp> {
     }
 };
 
+template <> struct fmt::formatter<std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<uint64_t, std::nano>>> {
+
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        return ctx.end();
+    }
+
+    template <typename FormatContext>
+    auto format(const std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<uint64_t, std::nano>> & value, FormatContext& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", value.time_since_epoch().count());
+    }
+};
+
 template <> struct fmt::formatter<traact::TimeDuration> {
 
     constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
