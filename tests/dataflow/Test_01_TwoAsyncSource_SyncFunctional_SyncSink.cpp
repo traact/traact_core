@@ -79,7 +79,7 @@ class Test_01_TwoAsyncSource_SyncFunctional_SyncSink: public ::testing::TestWith
     const traact::Timestamp start_timestamp_{std::chrono::milliseconds(1000000000000LL)};
     const double sensor_frequency_{1000000000};
     const traact::TimeDuration time_delta_{1};
-    const size_t kDataEvents = 10000;
+    const size_t kDataEvents = 1000;
     traact::WaitForInit wait_for_init;
 };
 

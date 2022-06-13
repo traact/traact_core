@@ -15,6 +15,13 @@ struct ComponentData {
                   std::atomic<bool> &running) : time_step_buffer(time_step_buffer), buffer(buffer),
                                                 component(component), component_index(component_index),
                                                 component_parameter(component_parameter), running(running) {}
+    ComponentData(ComponentData&& other) : time_step_buffer(other.time_step_buffer),
+    buffer(other.buffer), component(other.component), component_index(other.component_index),
+    component_parameter(other.component_parameter), running(other.running), successors_valid(std::move(other.successors_valid)),
+    valid_component_call(other.valid_component_call.load())
+    {
+
+    }
 
     buffer::TimeStepBuffer &time_step_buffer;
     buffer::ComponentBuffer &buffer;
@@ -24,8 +31,8 @@ struct ComponentData {
     std::atomic<bool> &running;
 
     //tf::SmallVector<bool*> valid_input{};
-    std::vector<bool *> successors_valid{};
-    bool valid_component_call{false};
+    std::vector<std::atomic_bool *> successors_valid{};
+    std::atomic_bool valid_component_call{false};
 
 };
 
@@ -43,33 +50,36 @@ inline void taskSource(ComponentData &local_data) {
         status = lock.wait_for(kDefaultTimeout);
     }
     if (status != std::future_status::ready || !local_data.running) {
-        local_data.valid_component_call = false;
+        //std::atomic_thread_fence(std::memory_order_release);
+        local_data.valid_component_call.store(false, std::memory_order_release);
         return;
     }
+
+    bool component_result{false};
 
     switch (local_data.time_step_buffer.getEventType()) {
 
         case EventType::CONFIGURE: {
-            local_data.valid_component_call = local_data.component.configure(local_data.component_parameter, nullptr);
+            component_result = local_data.component.configure(local_data.component_parameter, nullptr);
             break;
         }
 
         case EventType::START: {
-            local_data.valid_component_call = local_data.component.start();
+            component_result = local_data.component.start();
             break;
         }
 
         case EventType::DATA: {
-            local_data.valid_component_call = local_data.valid_component_call = lock.get();
+            component_result = local_data.valid_component_call = lock.get();
             break;
         }
         case EventType::STOP: {
-            local_data.valid_component_call = local_data.component.stop();
+            component_result = local_data.component.stop();
             break;
         }
 
         case EventType::TEARDOWN: {
-            local_data.valid_component_call = local_data.component.teardown();
+            component_result = local_data.component.teardown();
             break;
         }
 
@@ -86,6 +96,9 @@ inline void taskSource(ComponentData &local_data) {
 
     SPDLOG_TRACE("SourceComponent: {0} ts: {1} done", local_data.component.getName(),
                  local_data.time_step_buffer.getTimestamp());
+
+    //std::atomic_thread_fence(std::memory_order_release);
+    local_data.valid_component_call.store(component_result, std::memory_order_release);
 }
 
 inline void taskGenericComponent(ComponentData &local_data) {
@@ -93,43 +106,51 @@ inline void taskGenericComponent(ComponentData &local_data) {
                  local_data.component.getName(),
                  local_data.buffer.getTimestamp());
 
+    bool all_input_valid = true;
     for (auto *valid : local_data.successors_valid) {
-        if (*valid == false) {
-            SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
-                         local_data.component.getName(),
-                         local_data.buffer.getTimestamp(),
-                         local_data.time_step_buffer.getEventType());
-            local_data.valid_component_call = false;
-            return;
-        }
+        bool local_valid = std::atomic_load_explicit(valid, std::memory_order_acquire);
+        //std::atomic_thread_fence(std::memory_order_acquire);
+        all_input_valid = all_input_valid && local_valid;
     }
 
+
+    if (!all_input_valid) {
+        SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
+                     local_data.component.getName(),
+                     local_data.buffer.getTimestamp(),
+                     local_data.time_step_buffer.getEventType());
+        //std::atomic_thread_fence(std::memory_order_release);
+        local_data.valid_component_call.store(false, std::memory_order_release);
+        return;
+    }
+
+    bool component_result{false};
     switch (local_data.time_step_buffer.getEventType()) {
         case EventType::CONFIGURE: {
-            local_data.valid_component_call = local_data.component.configure(local_data.component_parameter, nullptr);
+            component_result = local_data.component.configure(local_data.component_parameter, nullptr);
             break;
         }
         case EventType::START: {
-            local_data.valid_component_call = local_data.component.start();
+            component_result = local_data.component.start();
             break;
         }
         case EventType::DATA: {
 
             if (local_data.buffer.isAllInputValid()) {
-                local_data.valid_component_call = local_data.component.processTimePoint(local_data.buffer);
+                component_result = local_data.component.processTimePoint(local_data.buffer);
             } else {
-                local_data.valid_component_call = local_data.component.processTimePointWithInvalid(local_data.buffer);
+                component_result = local_data.component.processTimePointWithInvalid(local_data.buffer);
             }
 
             break;
         }
         case EventType::STOP: {
-            local_data.valid_component_call = local_data.component.stop();
+            component_result = local_data.component.stop();
             break;
         }
 
         case EventType::TEARDOWN: {
-            local_data.valid_component_call = local_data.component.teardown();
+            component_result = local_data.component.teardown();
             break;
         }
 
@@ -142,6 +163,9 @@ inline void taskGenericComponent(ComponentData &local_data) {
     SPDLOG_TRACE("Component {0}: finished ts {1}",
                  local_data.component.getName(),
                  local_data.buffer.getTimestamp());
+
+    //std::atomic_thread_fence(std::memory_order_release);
+    local_data.valid_component_call.store(component_result, std::memory_order_release);
 }
 }
 

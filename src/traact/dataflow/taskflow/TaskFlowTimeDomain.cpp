@@ -10,11 +10,11 @@ std::string timeStepEndTaskName(int index) {
     return fmt::format("TIME_STEP_END_{0}", index);
 }
 
-static const constexpr char* kTimeStepStart{"TIME_STEP_START"};
-static const constexpr char* kTimeStepEnd{"TIME_STEP_END"};
-static const constexpr char* kSeamEntryFormat{"{0}_SEAM_{1}"};
-static const constexpr char* kSeamStartFormat{"{0}_SEAM_START_{1}"};
-static const constexpr char* kSeamEndFormat{"{0}_SEAM_END_{1}"};
+static const constexpr char *kTimeStepStart{"TIME_STEP_START"};
+static const constexpr char *kTimeStepEnd{"TIME_STEP_END"};
+static const constexpr char *kSeamEntryFormat{"{0}_SEAM_{1}"};
+static const constexpr char *kSeamStartFormat{"{0}_SEAM_START_{1}"};
+static const constexpr char *kSeamEndFormat{"{0}_SEAM_END_{1}"};
 
 namespace traact::dataflow {
 
@@ -50,7 +50,11 @@ void TaskFlowTimeDomain::init() {
         time_domain_buffer_->getTimeStepBuffer(time_step_index).setEvent(kTimestampZero, EventType::INVALID);
     }
 
-    scheduler_ = std::make_unique<DefaultScheduler>(time_domain_config_, time_domain_buffer_, component_graph_->getName(), time_domain_, &taskflow_);
+    scheduler_ = std::make_unique<DefaultScheduler>(time_domain_config_,
+                                                    time_domain_buffer_,
+                                                    component_graph_->getName(),
+                                                    time_domain_,
+                                                    &taskflow_);
 }
 
 void TaskFlowTimeDomain::createTimeStepTasks(const int time_step_index) {
@@ -221,13 +225,10 @@ void TaskFlowTimeDomain::prepareTaskData() {
             auto &component_buffer = time_step_buffer.getComponentBuffer(component_index);
             auto function_object = component.second;
             auto &parameter = component.first->local_pattern.parameter;
+
             time_step_data.component_data.emplace(instance_id,
-                                                  ComponentData(time_step_buffer,
-                                                                component_buffer,
-                                                                *function_object,
-                                                                component_index,
-                                                                parameter,
-                                                                running_));
+                                                  ComponentData(time_step_buffer, component_buffer, *function_object,
+                                                                component_index, parameter, running_));
         }
     }
 
@@ -262,7 +263,6 @@ void TaskFlowTimeDomain::createBuffer() {
     time_domain_buffer_->init(*component_graph_);
     time_step_data_.resize(time_step_count_);
 
-
 }
 
 void TaskFlowTimeDomain::masterSourceFinished() {
@@ -277,12 +277,9 @@ void TaskFlowTimeDomain::masterSourceFinished() {
 std::future<buffer::SourceComponentBuffer *>
 TaskFlowTimeDomain::requestSourceBuffer(Timestamp timestamp, int component_index) {
 
-
-
     return scheduler_->requestSourceBuffer(timestamp, component_index);
 
 }
-
 
 void TaskFlowTimeDomain::stop() {
 
@@ -300,7 +297,6 @@ void TaskFlowTimeDomain::start() {
 
     running_ = true;
     scheduler_->start();
-
 
 }
 
@@ -425,7 +421,6 @@ tf::Task TaskFlowTimeDomain::createLocalEndTask(int time_step_index, const std::
         SPDLOG_TRACE("TIME_STEP_END_{0}", time_step_index);
         scheduler_->timeStepEnded(time_step_index);
 
-
     }).name(name);
 }
 
@@ -440,6 +435,5 @@ tf::Task TaskFlowTimeDomain::createSeamEntryTask(int time_step_index, const std:
         }
     }).name(seam_entry_name);
 }
-
 
 }

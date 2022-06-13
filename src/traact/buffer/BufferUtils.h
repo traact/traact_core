@@ -13,8 +13,7 @@ enum class PortState : bool {
     VALID = true
 } ;
 
-using PortStateShared = std::atomic<PortState>;
-//using PortStateShared = PortState;
+using PortStateShared = PortState;
 
 using LocalDataBuffer = std::vector<void *>;
 using LocalHeaderBuffer = std::vector<void *>;
