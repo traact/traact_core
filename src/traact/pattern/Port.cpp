@@ -27,7 +27,32 @@ const std::string &traact::pattern::Port::getName() const {
     return name;
 }
 
-traact::pattern::PortGroup::PortGroup(const std::string &name, int min, int max) : name(name), min(min), max(max) {}
+traact::pattern::PortGroup::PortGroup(const std::string &name,
+                                      int group_index,
+                                      int min,
+                                      int max) : name(name), min(min), max(max), group_index(group_index) {}
 traact::pattern::PortGroup::PortGroup() : name("Invalid"), min(-1), max(-1){
 
+}
+const std::string &traact::pattern::PortGroup::getName() const {
+    return name;
+}
+int traact::pattern::PortGroup::getPortCount(traact::pattern::PortType type, int time_domain) {
+    int result = 0;
+    if(type == PortType::PRODUCER){
+        for (const auto& port : producer_ports) {
+            if(port.time_domain == time_domain){
+                ++result;
+            }
+        }
+    } else if(type == PortType::CONSUMER){
+        for (const auto& port : consumer_ports) {
+            if(port.time_domain == time_domain){
+                ++result;
+            }
+        }
+    } else {
+        throw std::invalid_argument("invalid port type in PortGroup::getPortCount");
+    }
+    return result;
 }

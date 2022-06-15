@@ -10,10 +10,12 @@ ComponentBuffer::ComponentBuffer(size_t component_index,
                                  LocalHeaderBuffer input_header,
                                  LocalValidBuffer input_valid,
                                  LocalTimestampBuffer input_timestamp,
+                                 LocalGroupBuffer input_groups,
                                  LocalDataBuffer output_buffer,
                                  LocalHeaderBuffer output_header,
                                  LocalValidBuffer output_valid,
                                  LocalTimestampBuffer output_timestamp,
+                                 LocalGroupBuffer output_groups,
                                  size_t time_step_index,
                                  const Timestamp *time_step_ts,
                                  const EventType *message_type)
@@ -25,7 +27,8 @@ ComponentBuffer::ComponentBuffer(size_t component_index,
       output_valid_(std::move(output_valid)),
       output_timestamp_(std::move(output_timestamp)),
       component_index_(component_index), timestamp_(time_step_ts), event_type_(message_type),
-      input_header_(input_header), output_header_(output_header) {
+      input_header_(input_header), output_header_(output_header), input_groups_(input_groups),
+      output_groups_(output_groups) {
 
 }
 
@@ -72,4 +75,5 @@ bool ComponentBuffer::isAllInputValid() const noexcept {
     }
     return true;
 }
+
 }

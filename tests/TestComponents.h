@@ -12,7 +12,7 @@ class TestComponent : public traact::component::Component{
     TestComponent(const std::string &name);
     ~TestComponent() override = default;
 
-    bool configure(const nlohmann::json &parameter, traact::buffer::ComponentBufferConfig *data) override;
+    bool configure(const traact::pattern::instance::PatternInstance &pattern_instance, traact::buffer::ComponentBufferConfig *data) override;
     bool start() override;
     bool stop() override;
     bool teardown() override;

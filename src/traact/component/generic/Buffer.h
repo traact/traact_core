@@ -20,7 +20,7 @@ class Buffer : public Component {
     }
     [[nodiscard]] static traact::pattern::Pattern::Ptr GetPattern() {
 
-        std::string pattern_name = fmt::format("Buffer_{0}", T::MetaType);
+        std::string pattern_name = fmt::format("Buffer_{0}", T::NativeTypeName);
 
         traact::pattern::Pattern::Ptr
             pattern =

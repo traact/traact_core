@@ -62,7 +62,8 @@ std::set<ComponentGraph::PatternComponentPair> ComponentGraph::getPatternsForTim
             case ComponentType::SYNC_FUNCTIONAL:
             case ComponentType::ASYNC_FUNCTIONAL:
             case ComponentType::SYNC_SINK: {
-                if (pattern.first->time_domain == time_domain) {
+
+                if (pattern.first->isInTimeDomain(time_domain)) {
                     result.emplace(pattern);
                 }
                 break;
@@ -84,7 +85,10 @@ std::set<int> ComponentGraph::getTimeDomains() const {
     std::set<int> all_domains;
 
     for (const auto &pattern : patterns_) {
-        all_domains.emplace(pattern.first->time_domain);
+        for(int global_time_domain : pattern.first->local_to_global_time_domain){
+            all_domains.emplace(global_time_domain);
+        }
+
     }
 
     return all_domains;

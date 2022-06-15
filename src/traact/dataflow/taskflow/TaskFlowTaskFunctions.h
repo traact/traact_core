@@ -10,15 +10,15 @@ namespace traact::dataflow {
 
 struct ComponentData {
 
-    ComponentData(buffer::TimeStepBuffer &time_step_buffer, buffer::ComponentBuffer &buffer,
-                  component::Component &component, int component_index, nlohmann::json &component_parameter,
-                  std::atomic<bool> &running) : time_step_buffer(time_step_buffer), buffer(buffer),
-                                                component(component), component_index(component_index),
-                                                component_parameter(component_parameter), running(running) {}
+    ComponentData(buffer::TimeStepBuffer &t_time_step_buffer, buffer::ComponentBuffer &t_buffer,
+                  component::Component &t_component, int t_component_index, pattern::instance::PatternInstance &t_pattern_instance,
+                  std::atomic<bool> &t_running) : time_step_buffer(t_time_step_buffer), buffer(t_buffer),
+                                                  component(t_component), component_index(t_component_index),
+                                                  pattern_instance(t_pattern_instance), running(t_running) {}
     ComponentData(ComponentData&& other) : time_step_buffer(other.time_step_buffer),
-    buffer(other.buffer), component(other.component), component_index(other.component_index),
-    component_parameter(other.component_parameter), running(other.running), successors_valid(std::move(other.successors_valid)),
-    valid_component_call(other.valid_component_call.load())
+                                           buffer(other.buffer), component(other.component), component_index(other.component_index),
+                                           pattern_instance(other.pattern_instance), running(other.running), successors_valid(std::move(other.successors_valid)),
+                                           valid_component_call(other.valid_component_call.load())
     {
 
     }
@@ -27,7 +27,7 @@ struct ComponentData {
     buffer::ComponentBuffer &buffer;
     component::Component &component;
     int component_index;
-    nlohmann::json &component_parameter;
+    pattern::instance::PatternInstance &pattern_instance;
     std::atomic<bool> &running;
 
     //tf::SmallVector<bool*> valid_input{};
@@ -60,7 +60,7 @@ inline void taskSource(ComponentData &local_data) {
     switch (local_data.time_step_buffer.getEventType()) {
 
         case EventType::CONFIGURE: {
-            component_result = local_data.component.configure(local_data.component_parameter, nullptr);
+            component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
             break;
         }
 
@@ -127,7 +127,7 @@ inline void taskGenericComponent(ComponentData &local_data) {
     bool component_result{false};
     switch (local_data.time_step_buffer.getEventType()) {
         case EventType::CONFIGURE: {
-            component_result = local_data.component.configure(local_data.component_parameter, nullptr);
+            component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
             break;
         }
         case EventType::START: {

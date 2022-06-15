@@ -19,7 +19,9 @@ using TimestampSteady = std::chrono::time_point<std::chrono::steady_clock, TimeD
 
 static const constexpr TimeDuration kDefaultTimeout = std::chrono::milliseconds(100);
 static const constexpr TimeDuration kDataflowStopTimeout = std::chrono::seconds(5);
-
+static const constexpr int kDefaultTimeDomain{0};
+static const constexpr char* kDefaultPortGroupName{"Default"};
+static const constexpr int kDefaultPortGroupIndex{0};
 struct TRAACT_CORE_EXPORT TimestampHashCompare {
     static size_t hash(const Timestamp &x) {
         return std::hash<size_t>{}(x.time_since_epoch().count());
@@ -101,6 +103,11 @@ static constexpr int getBytes(BaseType type) {
 }
 
 enum class Concurrency : uint8_t { UNLIMITED = 0, SERIAL = 1 };
+
+struct PortGroupInfo {
+    int port_group_index;
+    int size;
+};
 
 
 namespace buffer {

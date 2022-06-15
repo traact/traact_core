@@ -3,7 +3,7 @@
 #include "TestComponents.h"
 
 
-bool TestComponent::configure(const nlohmann::json &parameter, traact::buffer::ComponentBufferConfig *data) {
+bool TestComponent::configure(const traact::pattern::instance::PatternInstance &pattern_instance, traact::buffer::ComponentBufferConfig *data) {
     SPDLOG_INFO("call configure: {0}", getName());
     component_state_.callConfigure();
     return true;

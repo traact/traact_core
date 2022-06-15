@@ -43,17 +43,16 @@ void TimeDomainBuffer::init(const component::ComponentGraph &component_graph) {
             count_internal_sync_sources_++;
         }
 
-        for (const auto *port : data_comp->getProducerPorts()) {
-            //if(port->IsConnected()) {
+        for (const auto *port : data_comp->getProducerPorts(time_domain_)) {
+
             buffer_datatype.emplace_back(port->getDataType());
             size_t buffer_index = buffer_datatype.size() - 1;
 
-            port_to_buffer_index_[port->getID()] = buffer_index;
+            port_to_buffer_index_[port->getId()] = buffer_index;
 
             for (const auto *input_port : port->connectedToPtr()) {
-                port_to_buffer_index_[input_port->getID()] = buffer_index;
+                port_to_buffer_index_[input_port->getId()] = buffer_index;
             }
-            //}
 
         }
 
@@ -69,22 +68,38 @@ void TimeDomainBuffer::init(const component::ComponentGraph &component_graph) {
     // create component buffer configs
     int component_index = 0;
     for (const auto &component : ordered_components) {
-        std::shared_ptr<PatternInstance> data_comp = component.first;
+        std::shared_ptr<PatternInstance> pattern_instance = component.first;
 
-        BufferConfig buffer_config;
-
-        if (!data_comp) {
+        if (!pattern_instance) {
             continue;
         }
-        buffer_config.buffer_to_port_output.reserve(data_comp->getProducerPorts().size());
-        for (const auto *port : data_comp->getProducerPorts()) {
-            auto global_buffer_index = port_to_buffer_index_[port->getID()];
+
+        BufferConfig buffer_config;
+        buffer_config.buffer_to_port_output.reserve(pattern_instance->getProducerPorts(time_domain_).size());
+        for (const auto *port : pattern_instance->getProducerPorts(time_domain_)) {
+            auto global_buffer_index = port_to_buffer_index_[port->getId()];
             buffer_config.buffer_to_port_output.emplace_back(global_buffer_index, port->getPortIndex());
         }
-        buffer_config.buffer_to_port_inputs.reserve(data_comp->getConsumerPorts().size());
-        for (const auto *port : data_comp->getConsumerPorts()) {
-            auto global_buffer_index = port_to_buffer_index_[port->getID()];
-            buffer_config.buffer_to_port_inputs.emplace_back(global_buffer_index, port->getPortIndex());
+        buffer_config.buffer_to_port_input.reserve(pattern_instance->getConsumerPorts(time_domain_).size());
+        for (const auto *port : pattern_instance->getConsumerPorts(time_domain_)) {
+            auto global_buffer_index = port_to_buffer_index_[port->getId()];
+            buffer_config.buffer_to_port_input.emplace_back(global_buffer_index, port->getPortIndex());
+        }
+
+        buffer_config.port_group_config_output.resize(pattern_instance->local_pattern.port_groups.size());
+        buffer_config.port_group_config_input.resize(pattern_instance->local_pattern.port_groups.size());
+        for (const auto &port_group : pattern_instance->local_pattern.port_groups) {
+            auto [input_group_offset, input_group_port_count, input_group_size] = pattern_instance->getPortGroupOffset(
+                port_group.group_index, pattern::PortType::CONSUMER, time_domain_);
+            buffer_config.port_group_config_input[port_group.group_index].group_offset = input_group_offset;
+            buffer_config.port_group_config_input[port_group.group_index].group_port_count = input_group_port_count;
+            buffer_config.port_group_config_input[port_group.group_index].size = input_group_size;
+
+            auto [output_group_offset, output_group_port_count, output_group_size] = pattern_instance->getPortGroupOffset(
+                port_group.group_index, pattern::PortType::PRODUCER, time_domain_);
+            buffer_config.port_group_config_output[port_group.group_index].group_offset = output_group_offset;
+            buffer_config.port_group_config_output[port_group.group_index].group_port_count = output_group_port_count;
+            buffer_config.port_group_config_output[port_group.group_index].size = output_group_size;
         }
         buffer_config.component_type = component.first->getComponentType(time_domain_);
         buffer_config.instance_id = component.first->instance_id;

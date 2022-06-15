@@ -16,13 +16,13 @@ class FileRecorder : public FileWriter<T> {
 
     static traact::pattern::Pattern::Ptr GetPattern() {
 
-        std::string pattern_name = fmt::format("FileRecorder_{0}_{1}", FileWriter<T>::serializer_name_, T::MetaType);
+        std::string pattern_name = fmt::format("FileRecorder_{0}_{1}", FileWriter<T>::serializer_name_, T::NativeTypeName);
 
         traact::pattern::Pattern::Ptr
             pattern =
             std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SINK);
 
-        pattern->addConsumerPort("input", T::MetaType);
+        pattern->addConsumerPort("input", T::NativeTypeName);
 
         pattern->addStringParameter("file", "file.json");
 

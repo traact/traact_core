@@ -36,7 +36,7 @@ void ModuleComponent::setModule(Module::Ptr module) {
     module_ = std::move(module);
 }
 
-bool ModuleComponent::configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) {
+bool ModuleComponent::configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data) {
     return module_->init(this);
 }
 bool ModuleComponent::start() {

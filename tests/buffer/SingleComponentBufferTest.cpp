@@ -31,9 +31,18 @@ TEST(SingleComponentBuffer, Empty) {
     EventType event_type = EventType::CONFIGURE;
     ComponentBuffer buffer
         (kComponentIndex,
-         input_data, traact::buffer::LocalHeaderBuffer(), input_valid, input_timestamp,
-         output_data, traact::buffer::LocalHeaderBuffer(), output_valid, output_timestamp,
-         kTimeStepIndex, &timestamp, &event_type);
+         input_data,
+         traact::buffer::LocalHeaderBuffer(),
+         input_valid,
+         input_timestamp,
+         traact::buffer::LocalGroupBuffer(),
+         output_data,
+         traact::buffer::LocalHeaderBuffer(),
+         output_valid,
+         output_timestamp, traact::buffer::LocalGroupBuffer(),
+         kTimeStepIndex,
+         &timestamp,
+         &event_type);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
     EXPECT_EQ(kTimeStepIndex, buffer.getTimeStepIndex());
@@ -58,8 +67,8 @@ TEST(SingleComponentBuffer, Input) {
 
     std::vector<std::string> buffer_data{"invalid"};
     std::vector<Timestamp> buffer_timestamp{kTimestampZero};
-    std::vector<std::unique_ptr<PortStateShared>> buffer_valid;
-    buffer_valid.emplace_back(std::make_unique<PortStateShared>(PortState::INVALID));
+    std::vector<std::unique_ptr<PortState>> buffer_valid;
+    buffer_valid.emplace_back(std::make_unique<PortState>(PortState::INVALID));
 
     LocalDataBuffer input_data{&buffer_data[0]};
     LocalValidBuffer input_valid{buffer_valid[0].get()};
@@ -72,9 +81,18 @@ TEST(SingleComponentBuffer, Input) {
     EventType event_type = EventType::CONFIGURE;
     ComponentBuffer buffer
         (kComponentIndex,
-         input_data, traact::buffer::LocalHeaderBuffer(), input_valid, input_timestamp,
-         output_data, traact::buffer::LocalHeaderBuffer(), output_valid, output_timestamp,
-         kTimeStepIndex, &timestamp, &event_type);
+         input_data,
+         traact::buffer::LocalHeaderBuffer(),
+         input_valid,
+         input_timestamp,
+         traact::buffer::LocalGroupBuffer(),
+         output_data,
+         traact::buffer::LocalHeaderBuffer(),
+         output_valid,
+         output_timestamp, traact::buffer::LocalGroupBuffer(),
+         kTimeStepIndex,
+         &timestamp,
+         &event_type);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
     EXPECT_EQ(kTimeStepIndex, buffer.getTimeStepIndex());
@@ -116,8 +134,8 @@ TEST(SingleComponentBuffer, Output) {
 
     std::vector<std::string> buffer_data{"invalid"};
     std::vector<Timestamp> buffer_timestamp{kTimestampZero};
-    std::vector<std::unique_ptr<PortStateShared>> buffer_valid;
-    buffer_valid.emplace_back(std::make_unique<PortStateShared>(PortState::INVALID));
+    std::vector<std::unique_ptr<PortState>> buffer_valid;
+    buffer_valid.emplace_back(std::make_unique<PortState>(PortState::INVALID));
 
     LocalDataBuffer input_data{};
     LocalValidBuffer input_valid{};
@@ -130,9 +148,18 @@ TEST(SingleComponentBuffer, Output) {
     EventType event_type = EventType::CONFIGURE;
     ComponentBuffer buffer
         (kComponentIndex,
-         input_data, traact::buffer::LocalHeaderBuffer(), input_valid, input_timestamp,
-         output_data, traact::buffer::LocalHeaderBuffer(), output_valid, output_timestamp,
-         kTimeStepIndex, &timestamp, &event_type);
+         input_data,
+         traact::buffer::LocalHeaderBuffer(),
+         input_valid,
+         input_timestamp,
+         traact::buffer::LocalGroupBuffer(),
+         output_data,
+         traact::buffer::LocalHeaderBuffer(),
+         output_valid,
+         output_timestamp, traact::buffer::LocalGroupBuffer(),
+         kTimeStepIndex,
+         &timestamp,
+         &event_type);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
     EXPECT_EQ(kTimeStepIndex, buffer.getTimeStepIndex());

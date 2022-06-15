@@ -9,20 +9,21 @@
 namespace traact::pattern::instance {
 struct TRAACT_CORE_EXPORT GraphInstance {
  public:
-    typedef typename std::shared_ptr<GraphInstance> Ptr;
+    using Ptr = std::shared_ptr<GraphInstance>;
+    using WeakPtr = std::weak_ptr<GraphInstance>;
     GraphInstance();
     GraphInstance(const std::string &name);
 
-    PatternInstance::Ptr addPattern(std::string pattern_id, Pattern::Ptr pattern);
+    PatternInstance::Ptr addPattern(std::string pattern_id, const Pattern::Ptr& pattern, int time_domain = 0);
 
     PatternInstance::Ptr getPattern(const std::string &pattern_id) const;
 
     std::set<PatternInstance::Ptr> getAll() const;
 
-    bool connect(std::string source_component,
-                 std::string producer_port,
-                 std::string sink_component,
-                 std::string consumer_port);
+    void connect(const std::string& source_component,
+                 const std::string& producer_port,
+                 const std::string& sink_component,
+                 const std::string& consumer_port);
     bool disconnect(std::string sink_component, std::string consumer_port);
 
     traact::pattern::instance::PortInstance::ConstPtr getPort(const ComponentID_PortName &id) const;
@@ -40,6 +41,9 @@ struct TRAACT_CORE_EXPORT GraphInstance {
                                                                  const std::string &consumer_port);
     std::optional<std::string> checkSourceAndSinkConnectionError(const traact::pattern::instance::ComponentID_PortName &source,
                                                                  const traact::pattern::instance::ComponentID_PortName &sink);
+    void initializeGraphPortConnections(PortGroupInstance &port_group_instance);
+ private:
+    void forAllPatternInstances(const std::function<void (const PortGroupInstance&)>& func) const;
 };
 }
 

@@ -14,7 +14,7 @@ const std::string &Component::getName() const {
     return name_;
 }
 
-bool Component::configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) {
+bool Component::configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data) {
     return true;
 }
 

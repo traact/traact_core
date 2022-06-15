@@ -17,7 +17,7 @@ TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
     buffer_timestamp_.resize(buffer_data_.size());
     buffer_valid_.reserve(buffer_data_.size());
     for (size_t i = 0; i < buffer_data_.size(); ++i) {
-        buffer_valid_.emplace_back(std::make_unique<PortStateShared >(PortState::INVALID));
+        buffer_valid_.emplace_back(std::make_unique<PortState>(PortState::INVALID));
         //buffer_valid_.emplace_back(PortState::INVALID);
     }
 
@@ -26,45 +26,11 @@ TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
         auto component_index = component_config.first;
         const auto &instance_id = component_config.second.instance_id;
 
-        const auto &port_inputs = component_config.second.buffer_to_port_inputs;
-
         if (component_count != component_index) {
             throw std::invalid_argument("Component ids of TimeStepBufferConfig must start at 0 and be continuous");
         }
 
-        LocalDataBuffer input_data_buffer;
-        LocalHeaderBuffer input_header_buffer;
-        LocalValidBuffer input_valid_buffer;
-        LocalTimestampBuffer input_timestamp_buffer;
-        createLocalBuffer(port_inputs,
-                          input_data_buffer,
-                          input_header_buffer,
-                          input_valid_buffer,
-                          input_timestamp_buffer);
-
-        const auto &port_outputs = component_config.second.buffer_to_port_output;
-        LocalDataBuffer output_data_buffer;
-        LocalHeaderBuffer output_header_buffer;
-        LocalValidBuffer output_valid_buffer;
-        LocalTimestampBuffer output_timestamp_buffer;
-        createLocalBuffer(port_outputs,
-                          output_data_buffer,
-                          output_header_buffer,
-                          output_valid_buffer,
-                          output_timestamp_buffer);
-
-        component_buffers_list_.emplace_back(std::make_unique<ComponentBuffer>(component_index,
-                                                                               input_data_buffer,
-                                                                               input_header_buffer,
-                                                                               input_valid_buffer,
-                                                                               input_timestamp_buffer,
-                                                                               output_data_buffer,
-                                                                               output_header_buffer,
-                                                                               output_valid_buffer,
-                                                                               output_timestamp_buffer,
-                                                                               time_step_index_,
-                                                                               &current_ts_,
-                                                                               &current_message_));
+        component_buffers_list_.emplace_back(createComponentBuffer(component_config.second, component_index));
 
         ++component_count;
         component_buffer_to_index_.emplace(instance_id, component_index);
@@ -103,7 +69,7 @@ void TimeStepBuffer::createLocalBuffer(const std::vector<std::pair<int, int>> &p
         data_buffer[port.second] = buffer_data_[port.first];
         header_buffer[port.second] = header_data_[port.first];
         timestamp_buffer[port.second] = &buffer_timestamp_[port.first];
-        valid_buffer[port.second] = buffer_valid_.at(port.first).get();
+        valid_buffer[port.second] = buffer_valid_[port.first].get();
     }
 }
 
@@ -151,6 +117,56 @@ void TimeStepBuffer::resetNewEvent() {
 
 EventType TimeStepBuffer::getEventType() {
     return current_message_;
+}
+std::unique_ptr<ComponentBuffer> TimeStepBuffer::createComponentBuffer(const BufferConfig &config,
+                                                                       int component_index) {
+    const auto &port_inputs = config.buffer_to_port_input;
+    const auto &port_outputs = config.buffer_to_port_output;
+
+    LocalDataBuffer input_data_buffer;
+    LocalHeaderBuffer input_header_buffer;
+    LocalValidBuffer input_valid_buffer;
+    LocalTimestampBuffer input_timestamp_buffer;
+    LocalGroupBuffer input_group_buffer;
+
+    LocalDataBuffer output_data_buffer;
+    LocalHeaderBuffer output_header_buffer;
+    LocalValidBuffer output_valid_buffer;
+    LocalTimestampBuffer output_timestamp_buffer;
+    LocalGroupBuffer output_group_buffer;
+
+
+    createLocalBuffer(port_inputs,
+                      input_data_buffer,
+                      input_header_buffer,
+                      input_valid_buffer,
+                      input_timestamp_buffer);
+    std::copy(config.port_group_config_output.begin(),
+              config.port_group_config_output.end(),
+              std::back_inserter(output_group_buffer));
+
+    createLocalBuffer(port_outputs,
+                      output_data_buffer,
+                      output_header_buffer,
+                      output_valid_buffer,
+                      output_timestamp_buffer);
+    std::copy(config.port_group_config_input.begin(),
+              config.port_group_config_input.end(),
+              std::back_inserter(input_group_buffer));
+    return std::make_unique<ComponentBuffer>(component_index,
+                                             input_data_buffer,
+                                             input_header_buffer,
+                                             input_valid_buffer,
+                                             input_timestamp_buffer,
+                                             input_group_buffer,
+                                             output_data_buffer,
+                                             output_header_buffer,
+                                             output_valid_buffer,
+                                             output_timestamp_buffer,
+                                             output_group_buffer,
+                                             time_step_index_,
+                                             &current_ts_,
+                                             &current_message_);
 }
 }
 

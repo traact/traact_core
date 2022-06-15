@@ -26,7 +26,7 @@ class ApplicationSyncSink : public Component {
         std::string pattern_name = "ApplicationSyncSink_" + std::string(HeaderType::NativeTypeName);
         pattern::Pattern::Ptr
             pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SINK);
-        pattern->addConsumerPort("input", HeaderType::MetaType);
+        pattern->addConsumerPort("input", HeaderType::NativeTypeName);
         pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "input");
         return pattern;
     }

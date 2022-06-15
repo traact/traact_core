@@ -31,29 +31,37 @@ struct TRAACT_CORE_EXPORT Port {
          int t_port_index,
          int t_time_domain);
 
-    const std::string &getName() const;
+    [[nodiscard]] const std::string &getName() const;
 
-    std::string name;
-    std::string datatype;
-    PortType port_type;
-    int port_index;
-    int time_domain;
+    std::string name{"invalid"};
+    std::string datatype{"invalid"};
+    PortType port_type{PortType::NONE};
+    int port_index{-1};
+    int time_domain{-1};
 
 };
 
 struct TRAACT_CORE_EXPORT PortGroup {
     PortGroup();
-    PortGroup(const std::string &name, int min, int max);
+    PortGroup(const std::string &name,
+              int group_index,
+              int min,
+              int max);
+
+    [[nodiscard]] const std::string &getName() const;
+
+    std::string name{"invalid"};
+    int group_index{-1};
+    int min{-1};
+    int max{-1};
+    nlohmann::json parameter{};
 
     std::vector<Port> producer_ports{};
     std::vector<Port> consumer_ports{};
     std::map<std::string, spatial::CoordinateSystem> coordinate_systems{};
     // set of edges: source name, destination name, port name
     std::set<std::tuple<std::string, std::string, std::string> > edges{};
-    nlohmann::json parameter{};
-    std::string name;
-    int min;
-    int max;
+    int getPortCount(PortType type, int time_domain);
 };
 }
 

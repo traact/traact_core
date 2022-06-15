@@ -12,7 +12,7 @@ class TestAsyncSourceComponent : public TestComponent{
         std::string pattern_name = "TestAsyncSourceComponent";
         traact::pattern::Pattern::Ptr
             pattern = std::make_shared<traact::pattern::Pattern>(pattern_name, traact::Concurrency::SERIAL, traact::component::ComponentType::ASYNC_SOURCE);
-        pattern->addProducerPort("output", TestStringHeader::MetaType);
+        pattern->addProducerPort("output", TestStringHeader::NativeTypeName);
 
         return pattern;
     }

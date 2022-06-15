@@ -12,7 +12,7 @@ class TestSyncSinkComponent : public TestComponent{
         std::string pattern_name = "TestSyncSinkComponent";
         traact::pattern::Pattern::Ptr
             pattern = std::make_shared<traact::pattern::Pattern>(pattern_name, traact::Concurrency::SERIAL, traact::component::ComponentType::SYNC_SINK);
-        pattern->addConsumerPort("input", TestStringHeader::MetaType);
+        pattern->addConsumerPort("input", TestStringHeader::NativeTypeName);
 
         return pattern;
     }

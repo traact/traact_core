@@ -27,6 +27,17 @@ static std::set<T> getValues(const std::map<K, T> &values) {
     return std::move(result);
 }
 
+template<template <typename> typename Container, typename T>
+bool containsName(const Container<T> &vecOfElements, const std::string &name) {
+    auto it = std::find_if(std::begin(vecOfElements), std::begin(vecOfElements), [&name](const T &val) {
+        if (val->getName() == name)
+            return true;
+        return false;
+    });
+
+    return it != vecOfElements.end();
+}
+
 template<typename T>
 bool vectorContainsName(const std::vector<T> &vecOfElements, const std::string &name) {
     auto it = std::find_if(vecOfElements.begin(), vecOfElements.end(), [&name](const T &val) {
@@ -38,16 +49,19 @@ bool vectorContainsName(const std::vector<T> &vecOfElements, const std::string &
     return it != vecOfElements.end();
 }
 
+
 template<typename T>
-const T *vectorGetForName(const std::vector<T> &vecOfElements, const std::string &name) {
-    auto it = std::find_if(vecOfElements.begin(), vecOfElements.end(), [name](const T &val) {
+ auto* vectorGetForName(const std::vector<T> &vecOfElements, const std::string &name) {
+    auto it = std::find_if(vecOfElements.cbegin(), vecOfElements.cend(), [name](const T &val) {
         if (val.getName() == name)
             return true;
         return false;
     });
 
-    if (it == vecOfElements.end()) {
-        SPDLOG_ERROR("used vectorGetForName with unkown name");
+
+    if (it == vecOfElements.cend()) {
+        //SPDLOG_TRACE("used vectorGetForName with unknown name {0}", name);
+        return typename std::vector<T>::const_iterator::pointer(nullptr);
     }
 
     return &(*it);
@@ -62,8 +76,8 @@ T *vectorGetForName(std::vector<T> &vecOfElements, const std::string &name) {
     });
 
     if (it == vecOfElements.end()) {
-        SPDLOG_ERROR("used vectorGetForName with unknown name");
-        return nullptr;
+        //SPDLOG_TRACE("used vectorGetForName with unknown name {0}", name);
+        return typename std::vector<T>::iterator::pointer(nullptr);
     }
 
     return &(*it);

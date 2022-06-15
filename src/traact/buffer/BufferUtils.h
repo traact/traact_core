@@ -13,12 +13,17 @@ enum class PortState : bool {
     VALID = true
 } ;
 
-using PortStateShared = PortState;
+struct PortGroupConfig{
+    int group_offset;
+    int group_port_count;
+    int size;
+};
 
 using LocalDataBuffer = std::vector<void *>;
 using LocalHeaderBuffer = std::vector<void *>;
 using LocalTimestampBuffer = std::vector<Timestamp *>;
-using LocalValidBuffer = std::vector<PortStateShared *>;
+using LocalValidBuffer = std::vector<PortState *>;
+using LocalGroupBuffer = std::vector<PortGroupConfig>;
 using DataTypeNameVector = std::vector<std::string>;
 }
 

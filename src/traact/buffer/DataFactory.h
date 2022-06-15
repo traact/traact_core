@@ -49,7 +49,7 @@ class TRAACT_CORE_EXPORT TemplatedDefaultDataFactory : public DataFactory {
     }
 
     std::string getTypeName() override {
-        return std::string(T::MetaType);
+        return std::string(T::NativeTypeName);
     }
     void *createObject() override {
         return new typename T::NativeType;

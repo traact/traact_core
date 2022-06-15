@@ -1,8 +1,6 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "modernize-use-nodiscard"
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_DATAFLOWPATTERN_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_DATAFLOWPATTERN_H_
+#ifndef TRAACT_CORE_SRC_TRAACT_PATTERN_PATTERN_H_
+#define TRAACT_CORE_SRC_TRAACT_PATTERN_PATTERN_H_
 
 #include <string>
 #include <set>
@@ -15,71 +13,102 @@
 
 namespace traact::pattern {
 
-// how to fix loss of method chaining: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern. But this would lead to a set of base classes, ...
 struct TRAACT_CORE_EXPORT Pattern {
  public:
-    typedef typename std::shared_ptr<Pattern> Ptr;
+    using Ptr = std::shared_ptr<Pattern>;
     Pattern();
+    Pattern(Pattern&) = default;
+    Pattern(Pattern&&) = default;
+
+
 
     Pattern(std::string name,
-            Concurrency concurrency,
+            Concurrency t_concurrency,
             component::ComponentType component_type);
-    virtual ~Pattern();
+    ~Pattern() = default;
 
-    Pattern &addProducerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1, int time_domain = 0);
-    Pattern &addConsumerPort(const std::string &name, const std::string &data_meta_type, int port_index = -1, int time_domain = 0);
-    traact::pattern::Pattern &beginPortGroup(const std::string &name, int min=0, int max = std::numeric_limits<int>::max());
+    Pattern &addPort(std::string port_name, int time_domain, PortType port_type, std::string type_name, PortGroup& port_group);
+
+    Pattern &addProducerPort(const std::string &port_name,
+                             const std::string &data_meta_type,
+                             int port_index = -1,
+                             int time_domain = 0);
+    Pattern &addConsumerPort(const std::string &port_name,
+                             const std::string &data_meta_type,
+                             int port_index = -1,
+                             int time_domain = 0);
+
+    traact::pattern::Pattern &beginPortGroup(const std::string &port_group_name,
+                                             int min = 0,
+                                             int max = std::numeric_limits<int>::max());
     Pattern &endPortGroup();
 
-    template<typename Port> Pattern &addProducerPort(std::string name, int time_domain = 0){
-        if (util::vectorContainsName(producer_ports, name))
-            throw std::invalid_argument("Name of port already in use, Component: " + name + " Port: " + name);
-
-
-        if (is_group_port)
-            group_ports.back().producer_ports.emplace_back(name, Port::Header::MetaType, PortType::PRODUCER, Port::PortIdx,time_domain);
-        else
-            producer_ports.emplace_back(name, Port::Header::MetaType, PortType::PRODUCER, Port::PortIdx,time_domain);
-
+    template<typename Port>
+    Pattern &addPort(std::string port_name, int time_domain, PortType port_type, PortGroup& port_group) {
+        checkName(port_name, port_group);
+        if(port_type == PortType::PRODUCER){
+            port_group.producer_ports.emplace_back(port_name,
+                                                   Port::Header::NativeTypeName,
+                                                   PortType::PRODUCER,
+                                                   Port::PortIdx,
+                                                   time_domain);
+        } else {
+            port_group.consumer_ports.emplace_back(port_name,
+                                                   Port::Header::NativeTypeName,
+                                                   PortType::CONSUMER,
+                                                   Port::PortIdx,
+                                                   time_domain);
+        }
         return *this;
     }
 
-    template<typename Port> Pattern &addConsumerPort(std::string name, int time_domain = 0){
-        if (util::vectorContainsName(producer_ports, name))
-            throw std::invalid_argument("Name of port already in use, Component: " + name + " Port: " + name);
+    template<typename Port>
+    Pattern &addProducerPort(std::string port_name, int time_domain = 0) {
+        if (is_group_port) {
+            auto &port_group = port_groups.back();
+            return addPort<Port>(port_name, time_domain, PortType::PRODUCER, port_group);
+        } else {
+            auto &port_group = port_groups.front();
+            return addPort<Port>(port_name, time_domain, PortType::PRODUCER, port_group);
+        }
+    }
 
-
-        if (is_group_port)
-            group_ports.back().consumer_ports.emplace_back(name, Port::Header::MetaType, PortType::CONSUMER, Port::PortIdx, time_domain);
-        else
-            consumer_ports.emplace_back(name, Port::Header::MetaType, PortType::CONSUMER, Port::PortIdx, time_domain);
-
-        return *this;
+    template<typename Port>
+    Pattern &addConsumerPort(std::string port_name, int time_domain = 0) {
+        if (is_group_port) {
+            auto &port_group = port_groups.back();
+            return addPort<Port>(port_name, time_domain, PortType::CONSUMER, port_group);
+        } else {
+            auto &port_group = port_groups.front();
+            return addPort<Port>(port_name, time_domain, PortType::CONSUMER, port_group);
+        }
     }
 
     template<typename T>
-    Pattern &addParameter(std::string name,
+    Pattern &addParameter(const std::string& parameter_name,
                           T default_value,
                           T min_value = std::numeric_limits<T>::min(),
                           T max_value = std::numeric_limits<T>::max()) {
-        parameter[name]["default"] = default_value;
-        parameter[name]["value"] = default_value;
-        parameter[name]["min_value"] = min_value;
-        parameter[name]["max_value"] = max_value;
+        auto& default_ports = port_groups.front();
+        default_ports.parameter[parameter_name]["default"] = default_value;
+        default_ports.parameter[parameter_name]["value"] = default_value;
+        default_ports.parameter[parameter_name]["min_value"] = min_value;
+        default_ports.parameter[parameter_name]["max_value"] = max_value;
         return *this;
     }
-    Pattern &addStringParameter(const std::string &name,
+
+    Pattern &addStringParameter(const std::string &parameter_name,
                                 const std::string &default_value);
-    Pattern &addParameter(const std::string &name,
+    Pattern &addParameter(const std::string &parameter_name,
                           const std::string &default_value, const std::set<std::string> &enum_values);
-    Pattern &addParameter(const std::string &name,
+    Pattern &addParameter(const std::string &parameter_name,
                           const nlohmann::json &json_value);
 
     /**
     * Add a node to spatial relationship graph
-    * @param name name of node
+    * @param coordinate_system_name name of node
     */
-    Pattern &addCoordinateSystem(const std::string &name, bool is_multi = false);
+    Pattern &addCoordinateSystem(const std::string &coordinate_system_name, bool is_multi = false);
 
     /**
      * Add edge between two coordinate systems.
@@ -94,26 +123,19 @@ struct TRAACT_CORE_EXPORT Pattern {
 
     Pattern &addTimeDomain(component::ComponentType component_type);
 
+    std::string name{"invalid"};
+    std::vector<Concurrency> concurrency{};
 
-    std::string name;
-    Concurrency concurrency;
-    std::map<std::string, spatial::CoordinateSystem> coordinate_systems_;
-    // set of edges: source name, destination name, port name
-    std::set<std::tuple<std::string, std::string, std::string> > edges_;
-
-    std::vector<Port> producer_ports;
-    std::vector<Port> consumer_ports;
-    std::vector<PortGroup> group_ports;
-    nlohmann::json parameter;
-    std::vector<component::ComponentType> time_domain_component_type;
+    //PortGroup default_ports{};
+    std::vector<PortGroup> port_groups{};
+    std::vector<component::ComponentType> time_domain_component_type{};
 
  private:
     bool is_group_port{false};
+    void checkName(const std::string &name, const PortGroup &port_group) const;
 
 };
 
 }
 
 #endif //TRAACT_INCLUDE_TRAACT_PATTERN_DATAFLOWPATTERN_H_
-
-#pragma clang diagnostic pop

@@ -37,6 +37,7 @@ class TRAACT_CORE_EXPORT Component {
     typedef typename std::function<void(Timestamp, bool)> ReleaseAsyncCallback;
     typedef typename std::function<void(void)> SourceFinishedCallback;
 
+
     Component(std::string name);
 
     virtual ~Component() = default;
@@ -62,11 +63,11 @@ class TRAACT_CORE_EXPORT Component {
      * parameters
      *
      * Use to acquire devices, read configuration files and prepare component to be used.
-     * Also initialize buffers if necessary (e.g. gpu image buffers)
+     * initialization of buffers currently not supported
      *
      * @return false if initialization is not possible (e.g. camera not available)
      */
-    virtual bool configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data);
+    virtual bool configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data);
     /**
      * Called after all components are initialized, the dataflow network is connected and ready to run
      *

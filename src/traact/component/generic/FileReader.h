@@ -22,13 +22,13 @@ class FileReader : public Component {
 
     [[nodiscard]] static traact::pattern::Pattern::Ptr GetBasePattern(const std::string& serializer_name) {
 
-        std::string pattern_name = fmt::format("FileReader_{0}_{1}", serializer_name, T::MetaType);
+        std::string pattern_name = fmt::format("FileReader_{0}_{1}", serializer_name, T::NativeTypeName);
 
         traact::pattern::Pattern::Ptr
             pattern =
             std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SOURCE);
 
-        pattern->addProducerPort("output", T::MetaType);
+        pattern->addProducerPort("output", T::NativeTypeName);
         pattern->addStringParameter("file", "file.json");
 
         pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
@@ -36,8 +36,8 @@ class FileReader : public Component {
         return pattern;
     }
 
-    bool configure(const nlohmann::json &parameter, buffer::ComponentBufferConfig *data) override {
-        bool result = pattern::setValueFromParameter(parameter, "file", filename_, "");
+    bool configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data) override {
+        bool result = pattern::setValueFromParameter(pattern_instance, "file", filename_, "");
         if (result) {
             if (util::fileExists(filename_, getName())) {
                 readValue(data_);

@@ -23,7 +23,7 @@ class ApplicationAsyncSource : public Component {
         std::string pattern_name = "ApplicationAsyncSource_" + std::string(HeaderType::NativeTypeName);
         pattern::Pattern::Ptr
             pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::ASYNC_SOURCE);
-        pattern->addProducerPort("output", HeaderType::MetaType);
+        pattern->addProducerPort("output", HeaderType::NativeTypeName);
         pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
         return pattern;
     }

@@ -163,9 +163,9 @@ void TaskFlowTimeDomain::prepareComponents() {
 
         bool is_endpoint = true;
 
-        for (const auto *port : pattern_instance->getProducerPorts()) {
+        for (const auto *port : pattern_instance->getProducerPorts(time_domain_)) {
             for (const auto *input_port : port->connectedToPtr()) {
-                successors.emplace(input_port->getID().first);
+                successors.emplace(input_port->getId().first);
                 is_endpoint = false;
 
             }
@@ -174,7 +174,7 @@ void TaskFlowTimeDomain::prepareComponents() {
         if (is_endpoint) {
             component_end_points_.emplace(instance_id);
         }
-        if (pattern_instance->getConsumerPorts().empty()) {
+        if (pattern_instance->getConsumerPorts(time_domain_).empty()) {
             component_start_points_.emplace(instance_id);
         }
 
@@ -223,12 +223,11 @@ void TaskFlowTimeDomain::prepareTaskData() {
             auto component_index = time_step_buffer.getComponentIndex(instance_id);
 
             auto &component_buffer = time_step_buffer.getComponentBuffer(component_index);
-            auto function_object = component.second;
-            auto &parameter = component.first->local_pattern.parameter;
+            auto &function_object = component.second;
 
             time_step_data.component_data.emplace(instance_id,
                                                   ComponentData(time_step_buffer, component_buffer, *function_object,
-                                                                component_index, parameter, running_));
+                                                                component_index, *pattern_instance, running_));
         }
     }
 
@@ -243,7 +242,7 @@ void TaskFlowTimeDomain::prepareTaskData() {
         for (int concurrent_index = 0; concurrent_index < time_step_count_; ++concurrent_index) {
             TimeStepData &time_step_data = time_step_data_[concurrent_index];
             auto &component_data = time_step_data.component_data.at(instance_id);
-            for (const auto *port : pattern_instance->getConsumerPorts()) {
+            for (const auto *port : pattern_instance->getConsumerPorts(time_domain_)) {
                 auto input_id = port->connected_to.first;
                 auto &input_data = time_step_data.component_data.at(input_id);
                 component_data.successors_valid.push_back(&input_data.valid_component_call);
@@ -392,7 +391,7 @@ void TaskFlowTimeDomain::createInterTimeStepDependencies() {
             continue;
         }
 
-        if (pattern_instance->getConcurrency() == Concurrency::SERIAL) {
+        if (pattern_instance->getConcurrency(time_domain_) == Concurrency::SERIAL) {
             inter_connect_time_steps(pattern_instance->instance_id);
         }
 

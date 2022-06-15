@@ -1,7 +1,7 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
-#define TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+#ifndef TRAACT_CORE_SRC_TRAACT_PATTERN_INSTANCE_PORTINSTANCE_H_
+#define TRAACT_CORE_SRC_TRAACT_PATTERN_INSTANCE_PORTINSTANCE_H_
 
 #include <traact/pattern/Port.h>
 #include <traact/traact_core_export.h>
@@ -9,38 +9,78 @@
 namespace traact::pattern::instance {
 
 class TRAACT_CORE_EXPORT PatternInstance;
+class TRAACT_CORE_EXPORT PortGroupInstance;
 
 //
 using ComponentID_PortName = std::pair<std::string, std::string>;
 
 struct TRAACT_CORE_EXPORT PortInstance {
-    typedef PortInstance *Ptr;
-    typedef const PortInstance *ConstPtr;
+    using Ptr = PortInstance *;
+    using ConstPtr = const PortInstance *;
 
-    PortInstance();
-    PortInstance(Port port, PatternInstance *pattern_instance);
+    PortInstance() = default;
+    PortInstance(Port t_port, PortGroupInstance *t_port_group_instance);
 
-    const std::string &getName() const;
+    [[nodiscard]] const std::string getName() const;
 
-    const std::string &getDataType() const;
+    [[nodiscard]] const std::string &getDataType() const;
 
-    int getPortIndex() const;
+    [[nodiscard]] int getPortIndex() const;
 
-    std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr() const;
+    [[nodiscard]] std::set<traact::pattern::instance::PortInstance::ConstPtr> connectedToPtr() const;
 
-    ComponentID_PortName getID() const;
+    [[nodiscard]] ComponentID_PortName getId() const;
 
-    bool IsConnected() const;
+    [[nodiscard]] bool isConnected() const;
 
-    PortType GetPortType() const;
+    [[nodiscard]] PortType getPortType() const;
 
-    Port port;
-    bool is_active;
-    ComponentID_PortName connected_to;
-    PatternInstance *pattern_instance;
-
+    Port port{};
+    PortGroupInstance* port_group_instance{nullptr};
+    ComponentID_PortName connected_to{};
+    int getTimeDomain() const;
 };
+
+struct TRAACT_CORE_EXPORT PortGroupInstance {
+
+    PortGroupInstance() = default;
+    PortGroupInstance(PortGroup t_port_group, PatternInstance *t_pattern_instance, int t_port_group_instance_id);
+
+    template<typename T>
+    void setParameter(const std::string& name, T value){
+        port_group.parameter[name]["value"] = value;
+    }
+    [[nodiscard]] std::string getProducerPortName(const std::string &internal_port_name) const;
+    [[nodiscard]] std::string getConsumerPortName(const std::string &internal_port_name) const;
+
+    PortGroup port_group{};
+    PatternInstance* pattern_instance{nullptr};
+    int port_group_instance_index{-1};
+    std::vector<PortInstance> producer_ports;
+    std::vector<PortInstance> consumer_ports;
+
+    int getPortGroupStartIndex(int local_time_domain, PortType port_type) const;
+    int getPortCount(int local_time_domain, PortType port_type) const;
+
+    const std::vector<PortInstance> &getPortList(PortType port_type) const;
+
+    template<typename ParaType, typename DefaultValueType>
+    bool setValueFromParameter(std::string parameter_name,
+                               ParaType &parameter_out,
+                               DefaultValueType default_value) {
+        auto& parameter = port_group.parameter;
+        if (!parameter.contains(parameter_name)) {
+            SPDLOG_WARN("Missing parameter: {0}, using default value: {1}", parameter_name, default_value);
+            parameter_out = default_value;
+            return false;
+        } else {
+            parameter_out = parameter[parameter_name]["value"];
+        }
+        return true;
+    }
+};
+
 
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_PATTERN_INSTANTIATEDPORT_H_
+#endif //TRAACT_CORE_SRC_TRAACT_PATTERN_INSTANCE_PORTINSTANCE_H_

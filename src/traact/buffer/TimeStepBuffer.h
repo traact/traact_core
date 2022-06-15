@@ -12,11 +12,15 @@
 
 namespace traact::buffer {
 
+
 struct BufferConfig {
     component::ComponentType component_type;
     std::string instance_id;
-    std::vector<std::pair<int, int>> buffer_to_port_inputs;
+    std::vector<std::pair<int, int>> buffer_to_port_input;
+    std::vector<PortGroupConfig> port_group_config_input;
     std::vector<std::pair<int, int>> buffer_to_port_output;
+    std::vector<PortGroupConfig> port_group_config_output;
+
 };
 using BufferType = std::vector<void *>;
 
@@ -48,9 +52,11 @@ class TimeStepBuffer {
     std::map<std::string, size_t> component_buffer_to_index_;
     std::vector<std::unique_ptr<ComponentBuffer> > component_buffers_list_;
     std::vector<std::unique_ptr<SourceComponentBuffer> > source_buffer_list_;
-    std::vector<std::unique_ptr<PortStateShared > > buffer_valid_;
-    //std::vector< PortStateShared  > buffer_valid_;
+    std::vector<std::unique_ptr<PortState > > buffer_valid_;
+    //std::vector< PortState  > buffer_valid_;
     std::vector<Timestamp> buffer_timestamp_;
+
+    std::unique_ptr<ComponentBuffer> createComponentBuffer(const BufferConfig &config, int component_index);
 
     void createLocalBuffer(const std::vector<std::pair<int, int>> &port_inputs,
                            LocalDataBuffer &data_buffer,
