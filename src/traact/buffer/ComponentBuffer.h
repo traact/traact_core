@@ -125,6 +125,13 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
         return *static_cast<typename Port::Header *>(output_header_[Port::PortIdx]);
     }
 
+    template<typename Port>
+    typename Port::Header &getOutputHeader(int port_group_index, int port_group_instance_index) const noexcept {
+        const size_t kIndex = output_groups_[port_group_index].group_offset
+            + output_groups_[port_group_index].group_port_count * port_group_instance_index + Port::PortIdx;
+        return *static_cast<typename Port::Header *>(output_header_[kIndex]);
+    }
+
     Timestamp getOutputTimestamp(size_t index) const noexcept;
 
     template<typename Port>

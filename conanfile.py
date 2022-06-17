@@ -24,7 +24,7 @@ class TraactPackage(ConanFile):
             self.requires("gtest/[>=1.11.0]")
             self.requires("approvaltests.cpp/10.12.2")
         self.requires("nlohmann_json/[>=3.7.3]")
-        self.requires("spdlog/[>=1.8.2]")
+        self.requires("spdlog/[>=1.9.1]")
         self.requires("rttr/0.9.7-dev@camposs/stable")
         self.requires("taskflow/3.3.0")
         self.requires("tclap/[>=1.2.4]")
