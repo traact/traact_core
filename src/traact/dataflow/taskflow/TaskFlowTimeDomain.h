@@ -60,6 +60,7 @@ class TaskFlowTimeDomain {
     traact::buffer::TimeDomainManagerConfig time_domain_config_;
     std::atomic_flag source_finished_ = ATOMIC_FLAG_INIT;
     void masterSourceFinished();
+    std::map<std::string, ModuleTask> component_modules_;
 
     std::unique_ptr<DefaultScheduler> scheduler_;
 
@@ -100,6 +101,7 @@ class TaskFlowTimeDomain {
 
     tf::Task createSeamEntryTask(int time_step_index, const std::string &seam_entry_name);
 
+    void createModuleConstraintTasks(int time_step_index);
 };
 }
 

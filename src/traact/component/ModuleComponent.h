@@ -30,6 +30,8 @@ class TRAACT_CORE_EXPORT Module {
 
     virtual bool teardown(ComponentPtr module_component);
 
+    virtual void processTimePoint();
+
 };
 
 /**

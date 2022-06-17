@@ -18,10 +18,12 @@ TaskFlowAsyncScheduler::TaskFlowAsyncScheduler(const buffer::TimeDomainManagerCo
                                                                                                      requested_events_semaphore_(
                                                                                                          kMaxRequestedEvents,
                                                                                                          0,
-                                                                                                         kFreeTaskFlowTimeout) {
+                                                                                                         kFreeTaskFlowTimeout),
+                                                                                                     executor_(config_.cpu_count > 0 ? config_.cpu_count : std::thread::hardware_concurrency() - config_.cpu_count){
     time_step_count_ = config_.ringbuffer_size;
     scheduled_events_.resize(time_step_count_);
     running_ts_.resize(time_step_count_);
+
 }
 
 TaskFlowAsyncScheduler::Event::Event(const Timestamp &timestamp, EventType event_type, int component_index)

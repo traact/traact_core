@@ -106,7 +106,9 @@ bool traact::facade::Facade::blockingStart() {
 }
 
 void traact::facade::Facade::MasterSourceFinished() {
-    stop();
+    std::async(std::launch::async, [&](){
+        stop();
+    });
 }
 
 std::vector<traact::pattern::Pattern::Ptr> traact::facade::Facade::GetAllAvailablePatterns() {

@@ -21,6 +21,9 @@ bool Module::stop(ComponentPtr module_component) {
 bool Module::teardown(ComponentPtr module_component) {
     return true;
 }
+void Module::processTimePoint() {
+
+}
 
 ModuleComponent::ModuleComponent(std::string name, ModuleType module_type)
     : Component(std::move(name)), module_type_(module_type) {

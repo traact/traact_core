@@ -2,20 +2,23 @@
 
 #include "TaskFlowInFlowScheduler.h"
 
+#include <utility>
+
 namespace traact::dataflow {
 TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManagerConfig &config, std::shared_ptr<
     buffer::TimeDomainBuffer> time_domain_buffer, std::string graph_name, int time_domain, tf::Taskflow *taskflow)
     : config_(config),
-      time_domain_buffer_(time_domain_buffer),
-      latest_running_ts_{config_.max_offset},
-      free_taskflows_semaphore_(config_.ringbuffer_size,
+      time_domain_buffer_(std::move(time_domain_buffer)),
+      executor_(config_.cpu_count > 0 ? config_.cpu_count : std::thread::hardware_concurrency() - config_.cpu_count),
+      time_step_count_(config_.ringbuffer_size), latest_running_ts_{config_.max_offset},
+      time_step_latest_(-1), free_taskflows_semaphore_(config_.ringbuffer_size,
                                 config_.ringbuffer_size,
-                                kFreeTaskFlowTimeout), graph_name_(graph_name), time_domain_(time_domain),
+                                kFreeTaskFlowTimeout), graph_name_(std::move(graph_name)), time_domain_(time_domain),
       taskflow_(taskflow),
       time_domain_clock_(config_.sensor_frequency, config_.max_offset, 1.0) {
 
-    time_step_count_ = config_.ringbuffer_size;
-    time_step_latest_ = -1;
+
+
     running_taskflows_.resize(time_step_count_, false);
     running_timestamps_.resize(time_step_count_, kTimestampZero);
     latest_scheduled_component_timestamp_.resize(time_domain_buffer_->getCountSources(), kTimestampZero);

@@ -111,10 +111,10 @@ class WaitForInit {
         while(!is_init) {
             //wait on the mutex until notify is called
             if(cv_.wait_for(lock, timeout_) == std::cv_status::timeout) {
-                return false;
+                return is_init;
             }
         }
-        return true;
+        return is_init;
     }
 
 

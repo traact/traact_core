@@ -16,6 +16,14 @@ static const constexpr char *kSeamEntryFormat{"{0}_SEAM_{1}"};
 static const constexpr char *kSeamStartFormat{"{0}_SEAM_START_{1}"};
 static const constexpr char *kSeamEndFormat{"{0}_SEAM_END_{1}"};
 
+static const constexpr char *kModuleStart{"MODULE_START_{0}_{1}"};
+static const constexpr char *kModuleMiddle{"MODULE_MIDDLE_{0}_{1}"};
+static const constexpr char *kModuleEnd{"MODULE_END_{0}_{1}"};
+
+static const constexpr char *kModuleStartName{"MODULE_START_{0}"};
+static const constexpr char *kModuleMiddleName{"MODULE_MIDDLE_{0}"};
+static const constexpr char *kModuleEndName{"MODULE_END_{0}"};
+
 namespace traact::dataflow {
 
 TaskFlowTimeDomain::TaskFlowTimeDomain(int time_domain,
@@ -40,6 +48,7 @@ void TaskFlowTimeDomain::init() {
 
     for (int time_step_index = 0; time_step_index < time_step_count_; ++time_step_index) {
         createTimeStepTasks(time_step_index);
+        createModuleConstraintTasks(time_step_index);
     }
 
     createInterTimeStepDependencies();
@@ -89,6 +98,63 @@ void TaskFlowTimeDomain::createTimeStepTasks(const int time_step_index) {
     }
     time_step_data.component_id_to_task.emplace(kTimeStepEnd, end_task);
 
+}
+
+void TaskFlowTimeDomain::createModuleConstraintTasks(int time_step_index) {
+    auto &time_step_data = time_step_data_[time_step_index];
+
+    for (const auto &[module_key, components] : component_modules_) {
+        auto module_instance = component_graph_->getModule(module_key);
+        bool use_middle = !components.begin_components.empty() && !components.end_components.empty();
+
+        std::string start_task_name = fmt::format(kModuleStart, module_key, time_step_index);
+        std::string middle_task_name = fmt::format(kModuleMiddle, module_key, time_step_index);
+        std::string end_task_name = fmt::format(kModuleEnd, module_key, time_step_index);
+        auto start_task = taskflow_.emplace([]() {}).name(start_task_name);
+        time_step_data.component_id_to_task.emplace(fmt::format(kModuleStartName, module_key), start_task);
+        tf::Task end_task;
+
+        tf::Task begin_components_end_task;
+        tf::Task end_components_start_task;
+
+        if (use_middle) {
+            end_task = taskflow_.emplace([]() {}).name(end_task_name);
+            auto middle_task = taskflow_.emplace([module_instance]() {
+                module_instance->processTimePoint();
+            }).name(middle_task_name);
+
+            time_step_data.component_id_to_task.emplace(fmt::format(kModuleEndName, module_key), end_task);
+            time_step_data.component_id_to_task.emplace(fmt::format(kModuleMiddleName, module_key), middle_task);
+
+            begin_components_end_task = middle_task;
+            end_components_start_task = middle_task;
+
+        } else {
+            end_task = taskflow_.emplace([module_instance]() {
+                module_instance->processTimePoint();
+            }).name(end_task_name);
+            time_step_data.component_id_to_task.emplace(fmt::format(kModuleEndName, module_key), end_task);
+
+            begin_components_end_task = end_task;
+            end_components_start_task = start_task;
+
+        }
+        for (const auto &instance_id : components.begin_components) {
+            start_task.precede(time_step_data.component_id_to_task.at(instance_id));
+            begin_components_end_task.succeed(time_step_data.component_id_to_task.at(instance_id));
+            for (const auto &successor : component_to_successors_[instance_id]) {
+                begin_components_end_task.precede(time_step_data.component_id_to_task.at(successor));
+            }
+        }
+        for (const auto &instance_id : components.end_components) {
+            end_components_start_task.precede(time_step_data.component_id_to_task.at(instance_id));
+            end_task.succeed(time_step_data.component_id_to_task.at(instance_id));
+            for (const auto &successor : component_to_successors_[instance_id]) {
+                end_task.precede(time_step_data.component_id_to_task.at(successor));
+            }
+        }
+
+    }
 }
 
 void TaskFlowTimeDomain::createTask(const int time_step_index, TimeStepData &time_step_data,
@@ -180,6 +246,10 @@ void TaskFlowTimeDomain::prepareComponents() {
 
         component_to_successors_.emplace(instance_id, std::move(successors));
 
+        component.second->setSourceFinishedCallback([&]() {
+            masterSourceFinished();
+        });
+
         switch (component.first->getComponentType(time_domain_)) {
             case component::ComponentType::ASYNC_SOURCE:
             case component::ComponentType::INTERNAL_SYNC_SOURCE: {
@@ -199,9 +269,33 @@ void TaskFlowTimeDomain::prepareComponents() {
             case component::ComponentType::ASYNC_FUNCTIONAL:
             case component::ComponentType::SYNC_SINK:
             case component::ComponentType::INVALID:
-            default:
+            default:break;
+        }
 
-                break;
+        auto module_comp_tmp =
+            std::dynamic_pointer_cast<component::ModuleComponent, component::Component>(component.second);
+
+        if (module_comp_tmp) {
+            std::string module_key = module_comp_tmp->getModuleKey();
+
+            switch (component.first->getComponentType(time_domain_)) {
+                case component::ComponentType::ASYNC_SINK:
+                case component::ComponentType::SYNC_SINK:
+                case component::ComponentType::ASYNC_SOURCE:
+                case component::ComponentType::INTERNAL_SYNC_SOURCE:
+                case component::ComponentType::SYNC_FUNCTIONAL: {
+                    component_modules_[module_key].begin_components.emplace_back(instance_id);
+                    break;
+                }
+                case component::ComponentType::SYNC_SOURCE: {
+                    component_modules_[module_key].end_components.emplace_back(instance_id);
+                    break;
+                }
+                case component::ComponentType::ASYNC_FUNCTIONAL:
+                case component::ComponentType::INVALID:
+                default:throw std::invalid_argument(fmt::format("invalid component type of {0}", instance_id));
+                    break;
+            }
         }
 
     }
@@ -341,6 +435,43 @@ void TaskFlowTimeDomain::createInterTimeStepDependencies() {
         start_entries_.push_back(start_entries_.size() + 1);
     };
 
+    auto connect_end_to_next_start = [&](std::string start_name, std::string end_name) {
+
+        auto seam_entry_name = fmt::format(kSeamEntryFormat, start_name, 0);
+        auto seam_start_name = fmt::format(kSeamStartFormat, start_name, 0);
+        auto seam_end_name = fmt::format(kSeamEndFormat, start_name, 0);
+
+        auto seam_entry = createSeamEntryTask(0, seam_entry_name);
+        auto seam_start = taskflow_.emplace([]() {}).name(seam_start_name);
+        auto seam_end = taskflow_.emplace([]() {}).name(seam_end_name);
+
+
+
+        for (int current_time_step_index = 0; current_time_step_index < time_step_count_ - 1;
+             ++current_time_step_index) {
+            int next_time_step_index = current_time_step_index + 1;
+            auto &current_end_tasks = time_step_data_[current_time_step_index].component_id_to_task.at(end_name);
+            auto &next_start_tasks = time_step_data_[next_time_step_index].component_id_to_task.at(start_name);
+            current_end_tasks.precede(next_start_tasks);
+
+            auto time_step_end_task = time_step_data_[current_time_step_index].component_id_to_task.at(kTimeStepEnd);
+            current_end_tasks.precede(time_step_end_task);
+        }
+
+        auto &last_end_task = time_step_data_.back().component_id_to_task.at(end_name);
+        auto &fist_start_task = time_step_data_.front().component_id_to_task.at(start_name);
+        auto last_time_step_end_task = time_step_data_.back().component_id_to_task.at(kTimeStepEnd);
+
+        last_end_task.precede(seam_entry);
+        seam_entry.precede(seam_start, seam_end);
+        seam_start.precede(fist_start_task);
+
+        last_end_task.precede(last_time_step_end_task);
+
+        start_entry.precede(seam_entry);
+        start_entries_.push_back(start_entries_.size() + 1);
+    };
+
     auto inter_connect_time_steps = [&](const std::string &instance_id) {
 
         auto seam_entry_name = fmt::format(kSeamEntryFormat, instance_id, 0);
@@ -395,6 +526,12 @@ void TaskFlowTimeDomain::createInterTimeStepDependencies() {
             inter_connect_time_steps(pattern_instance->instance_id);
         }
 
+    }
+
+    for (const auto &[module_key, module_components] : component_modules_) {
+        auto module_start_task = fmt::format(kModuleStartName, module_key);
+        auto module_end_task = fmt::format(kModuleEndName, module_key);
+        connect_end_to_next_start( module_start_task, module_end_task);
     }
 }
 

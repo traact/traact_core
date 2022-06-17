@@ -16,12 +16,15 @@ using Timestamp = std::chrono::time_point<std::chrono::system_clock, TimeDuratio
 static const constexpr Timestamp kTimestampZero(TimeDuration(0));
 
 using TimestampSteady = std::chrono::time_point<std::chrono::steady_clock, TimeDuration>;
+static const constexpr TimestampSteady kTimestampSteadyZero(TimeDuration(0));
 
 static const constexpr TimeDuration kDefaultTimeout = std::chrono::milliseconds(100);
+static const constexpr TimeDuration kDefaultWaitingTimeout = std::chrono::milliseconds(10000);
 static const constexpr TimeDuration kDataflowStopTimeout = std::chrono::seconds(5);
 static const constexpr int kDefaultTimeDomain{0};
 static const constexpr char* kDefaultPortGroupName{"Default"};
 static const constexpr int kDefaultPortGroupIndex{0};
+
 struct TRAACT_CORE_EXPORT TimestampHashCompare {
     static size_t hash(const Timestamp &x) {
         return std::hash<size_t>{}(x.time_since_epoch().count());
@@ -127,6 +130,7 @@ struct TRAACT_CORE_EXPORT TimeDomainManagerConfig {
     double sensor_frequency{30};
     SourceMode source_mode{SourceMode::WAIT_FOR_BUFFER};
     MissingSourceEventMode missing_source_event_mode{MissingSourceEventMode::WAIT_FOR_EVENT};
+    int cpu_count{0};
     std::string master_source{"invalid"};
 
 };

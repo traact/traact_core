@@ -11,6 +11,12 @@ namespace traact::dataflow {
     template<typename T, size_t N>
     using SmallVector = std::vector<T>;
 
+    struct ModuleTask {
+        std::string module_key;
+        std::vector<std::string> begin_components;
+        std::vector<std::string> end_components;
+    };
+
 }
 
 #endif //TRAACT_CORE_SRC_TRAACT_DATAFLOW_TASKFLOW_TASKFLOWUTILS_H_

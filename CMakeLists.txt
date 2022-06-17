@@ -95,7 +95,7 @@ set(CORE_SRC src/traact/traact.h
         src/traact/util/EnumToString.cpp
         src/traact/util/EnumToString.h
         src/traact/traact_plugins.h
-        src/traact/facade/rttr/traact_plugins_rttr.h src/traact/component/generic_components.h src/traact/component/generic/Buffer.h src/traact/component/ComponentFactory.h src/traact/dataflow/taskflow/TaskFlowAsyncScheduler.cpp src/traact/dataflow/taskflow/TaskFlowAsyncScheduler.h src/traact/dataflow/taskflow/TaskFlowInFlowScheduler.cpp src/traact/dataflow/taskflow/TaskFlowInFlowScheduler.h src/traact/dataflow/taskflow/TimeDomainClock.cpp src/traact/dataflow/taskflow/TimeDomainClock.h)
+        src/traact/facade/rttr/traact_plugins_rttr.h src/traact/component/generic_components.h src/traact/component/generic/Buffer.h src/traact/component/ComponentFactory.h src/traact/dataflow/taskflow/TaskFlowAsyncScheduler.cpp src/traact/dataflow/taskflow/TaskFlowAsyncScheduler.h src/traact/dataflow/taskflow/TaskFlowInFlowScheduler.cpp src/traact/dataflow/taskflow/TaskFlowInFlowScheduler.h src/traact/dataflow/taskflow/TimeDomainClock.cpp src/traact/dataflow/taskflow/TimeDomainClock.h src/traact/util/FpsCounter.cpp src/traact/util/FpsCounter.h src/traact/util/CircularBuffer.cpp src/traact/util/CircularBuffer.h)
 
 
 add_library(${CONAN_PACKAGE_NAME} SHARED ${CORE_SRC})

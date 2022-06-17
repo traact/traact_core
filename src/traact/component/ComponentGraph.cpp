@@ -105,5 +105,14 @@ traact::buffer::TimeDomainManagerConfig ComponentGraph::getTimeDomainConfig(size
     }
 
 }
+Module::Ptr ComponentGraph::getModule(const std::string module_key) {
+    auto result = module_map_.find(module_key);
+    if(result == module_map_.end()){
+        return nullptr;
+    } else {
+        return result->second;
+    }
+
+}
 
 }
