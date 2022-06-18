@@ -57,6 +57,7 @@ PortGroupInstance::PortGroupInstance(PortGroup t_port_group,
     : port_group(std::move(t_port_group)),
       pattern_instance(t_pattern_instance),
       port_group_instance_index(t_port_group_instance_id) {
+
     for (const auto &consumer_port : port_group.consumer_ports) {
         consumer_ports.emplace_back(consumer_port, this);
     }

@@ -77,6 +77,20 @@ void TaskFlowTimeDomain::createTimeStepTasks(const int time_step_index) {
         }
         createTask(time_step_index, time_step_data, component);
 
+        // connect sync source to any other input of a connected component
+        if(component.first->getComponentType(time_domain_) == component::ComponentType::SYNC_SOURCE){
+            for (const auto *port : pattern_instance->getProducerPorts(time_domain_)) {
+                for (const auto *input_port : port->connectedToPtr()) {
+                    for(const auto& other_input : input_port->port_group_instance->pattern_instance->getConsumerPorts(time_domain_)){
+                        if(other_input->isConnected() && other_input->connected_to.first != pattern_instance->instance_id){
+                            component_to_successors_[other_input->connected_to.first].emplace(pattern_instance->instance_id);
+                            break;
+                        }
+                    }
+                }
+            }
+
+        }
     }
 
     for (const auto &component_successors : component_to_successors_) {
@@ -338,6 +352,9 @@ void TaskFlowTimeDomain::prepareTaskData() {
             auto &component_data = time_step_data.component_data.at(instance_id);
             for (const auto *port : pattern_instance->getConsumerPorts(time_domain_)) {
                 auto input_id = port->connected_to.first;
+                if(input_id.empty()){
+                    throw std::invalid_argument(fmt::format("component input not connected {0} {1}", port->getId().first, port->getId().second));
+                }
                 auto &input_data = time_step_data.component_data.at(input_id);
                 component_data.successors_valid.push_back(&input_data.valid_component_call);
 

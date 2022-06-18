@@ -14,6 +14,7 @@ PatternInstance::PatternInstance(std::string t_instance_id,
     port_groups_.resize(local_pattern.port_groups.size());
     auto default_group_instance = std::make_shared<PortGroupInstance>(local_pattern.port_groups.at(0), this, 0);
 
+
     port_groups_[kDefaultPortGroupIndex].emplace_back(default_group_instance);
 
     for (const auto &port_group : local_pattern.port_groups) {
@@ -158,7 +159,8 @@ PortGroupInstance &PatternInstance::instantiatePortGroup(const std::string &port
 
     auto &group_list = port_groups_[port_group_index];
 
-    group_list.emplace_back(std::make_shared<PortGroupInstance>(*group_blue_print, this, group_list.size()));
+    auto new_port_group = std::make_shared<PortGroupInstance>(*group_blue_print, this, group_list.size());
+    group_list.emplace_back(new_port_group);
 
     return *group_list.back();
 }

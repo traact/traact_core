@@ -42,14 +42,13 @@ struct TRAACT_CORE_EXPORT PatternInstance {
 
     template<typename T>
         void setParameter(const std::string& name, T value){
-        port_groups_.at(kDefaultPortGroupIndex)[0]->port_group.parameter[name]["value"] = value;
+        port_groups_.at(kDefaultPortGroupIndex)[0]->template setParameter(name, value);
         }
 
-    template<typename ParaType, typename DefaultValueType>
-    bool setValueFromParameter(std::string parameter_name,
-                               ParaType &parameter_out,
-                               DefaultValueType default_value) const {
-        return port_groups_.at(kDefaultPortGroupIndex).front()->template setValueFromParameter(parameter_name, parameter_out, default_value);
+    template<typename ParaType>
+    bool setValueFromParameter(std::string parameter_name, ParaType &parameter_out) const {
+        return port_groups_.at(kDefaultPortGroupIndex).front()->template setValueFromParameter(parameter_name,
+                                                                                               parameter_out);
     }
 
     [[nodiscard]] int getPortGroupCount(const std::string &port_group_name) const;
