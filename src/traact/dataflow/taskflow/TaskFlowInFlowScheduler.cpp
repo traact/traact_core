@@ -131,7 +131,6 @@ TaskFlowInFlowScheduler::requestSourceBuffer(Timestamp timestamp, int component_
     std::unique_lock guard(request_mutex_);
     SPDLOG_TRACE("request from: {0} timestamp: {1} has lock", component_index, timestamp);
 
-
     /**
      * check if timestamp is newer then last requested timestamp of this source.
      * the timestamp must be increasing, no source can request a timestamp twice or
@@ -329,7 +328,17 @@ void TaskFlowInFlowScheduler::cancelSourceCancelOldest(Timestamp timestamp) {
 }
 
 void TaskFlowInFlowScheduler::scheduleNonDataEventAndWait(EventType type, WaitForInit &init_finished) {
-    scheduleEvent(type, kTimestampZero);
+
+    {
+        std::unique_lock guard(request_mutex_);
+        scheduleEvent(type, kTimestampZero);
+        if(type == EventType::STOP){
+            stop_scheduled_ = true;
+        }
+
+    }
+
+
     while (!init_finished.tryWait()) {
         SPDLOG_WARN("waiting for event to finish: graph: {0} time domain: {1} event type: {2}",
                     graph_name_, time_domain_, type);
@@ -392,6 +401,12 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
 
 std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSourceBufferNewTimestamp(Timestamp timestamp,
                                                                                                       int component_index) {
+    /**
+     * if the stop event is scheduled then refuse all new data events
+     */
+    if(stop_scheduled_){
+        return requestSourceBufferInvalid();
+    }
     switch (config_.source_mode) {
         case SourceMode::WAIT_FOR_BUFFER: {
             return requestSourceBufferNewTimestampWait(timestamp, component_index);

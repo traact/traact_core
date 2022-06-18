@@ -24,7 +24,10 @@ traact::facade::Facade::~Facade() {
     network_.reset();
     component_graph_.reset();
     graph_instance_.reset();
-
+    if(stop_thread_){
+        stop_thread_->join();
+        stop_thread_.reset();
+    }
 }
 void traact::facade::Facade::loadDataflow(traact::pattern::instance::GraphInstance::Ptr graph_instance) {
     SPDLOG_DEBUG("loading dataflow from graph instance");
@@ -71,10 +74,23 @@ bool traact::facade::Facade::start() {
     return network_->start();
 }
 bool traact::facade::Facade::stop() {
-    should_stop_ = true;
-    bool result = network_->stop();
-    finished_promise_.set_value();
-    return result;
+    bool call_stop{false};
+    {
+        std::unique_lock guard(stop_lock_);
+        if(!should_stop_) {
+            should_stop_ = true;
+            call_stop = true;
+        }
+    }
+
+    if(call_stop){
+        call_stop = network_->stop();
+        finished_promise_.set_value();
+    } else {
+        SPDLOG_WARN("stop already called");
+    }
+
+    return call_stop;
 }
 traact::component::Component::Ptr traact::facade::Facade::getComponent(std::string id) {
     return component_graph_->getComponent(id);
@@ -106,9 +122,16 @@ bool traact::facade::Facade::blockingStart() {
 }
 
 void traact::facade::Facade::MasterSourceFinished() {
-    std::async(std::launch::async, [&](){
-        stop();
-    });
+    SPDLOG_TRACE("Facade source finished callback");
+    std::unique_lock guard(stop_lock_);
+
+    if(!stop_thread_){
+        stop_thread_ = std::make_shared<std::thread>([local_facade = this](){
+            SPDLOG_TRACE("Facade source finished in thread");
+            local_facade->stop();
+        });
+    }
+    SPDLOG_TRACE("Facade source finished callback done");
 }
 
 std::vector<traact::pattern::Pattern::Ptr> traact::facade::Facade::GetAllAvailablePatterns() {

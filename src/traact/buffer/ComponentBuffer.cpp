@@ -75,5 +75,15 @@ bool ComponentBuffer::isAllInputValid() const noexcept {
     }
     return true;
 }
+bool ComponentBuffer::isInputGroupValid(int port_group_index, int port_group_instance_index) const noexcept {
+    bool result{true};
+    for (int port_index = 0; port_index < input_groups_[port_group_index].size; ++port_index) {
+        const size_t kIndex = output_groups_[port_group_index].group_offset
+            + output_groups_[port_group_index].group_port_count * port_group_instance_index + port_index;
+
+        result = result && isInputValid(kIndex);
+    }
+    return result;
+}
 
 }

@@ -24,7 +24,7 @@ class FileRecorder : public FileWriter<T> {
 
         pattern->addConsumerPort("input", T::NativeTypeName);
 
-        pattern->addStringParameter("file", "file.json");
+        pattern->addStringParameter("File", "file.json");
 
         pattern->addCoordinateSystem("A")
             .addCoordinateSystem("B")

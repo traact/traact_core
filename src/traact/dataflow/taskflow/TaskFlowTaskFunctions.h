@@ -10,16 +10,22 @@ namespace traact::dataflow {
 
 struct ComponentData {
 
-    ComponentData(buffer::TimeStepBuffer &t_time_step_buffer, buffer::ComponentBuffer &t_buffer,
-                  component::Component &t_component, int t_component_index, pattern::instance::PatternInstance &t_pattern_instance,
+    ComponentData(buffer::TimeStepBuffer &t_time_step_buffer,
+                  buffer::ComponentBuffer &t_buffer,
+                  component::Component &t_component,
+                  int t_component_index,
+                  pattern::instance::PatternInstance &t_pattern_instance,
                   std::atomic<bool> &t_running) : time_step_buffer(t_time_step_buffer), buffer(t_buffer),
                                                   component(t_component), component_index(t_component_index),
                                                   pattern_instance(t_pattern_instance), running(t_running) {}
-    ComponentData(ComponentData&& other) : time_step_buffer(other.time_step_buffer),
-                                           buffer(other.buffer), component(other.component), component_index(other.component_index),
-                                           pattern_instance(other.pattern_instance), running(other.running), successors_valid(std::move(other.successors_valid)),
-                                           valid_component_call(other.valid_component_call.load())
-    {
+    ComponentData(ComponentData &&other) : time_step_buffer(other.time_step_buffer),
+                                           buffer(other.buffer),
+                                           component(other.component),
+                                           component_index(other.component_index),
+                                           pattern_instance(other.pattern_instance),
+                                           running(other.running),
+                                           successors_valid(std::move(other.successors_valid)),
+                                           valid_component_call(other.valid_component_call.load()) {
 
     }
 
@@ -43,129 +49,146 @@ struct TimeStepData {
 
 inline void taskSource(ComponentData &local_data) {
 
-    SPDLOG_TRACE("SourceComponent: {0} start waiting", local_data.component.getName());
-    auto lock = local_data.time_step_buffer.getSourceLock(local_data.component_index);
-    auto status = lock.wait_for(kDefaultTimeout);
-    while (status != std::future_status::ready && local_data.running) {
-        status = lock.wait_for(kDefaultTimeout);
-    }
-    if (status != std::future_status::ready || !local_data.running) {
+    try {
+        SPDLOG_TRACE("SourceComponent: {0} start waiting", local_data.component.getName());
+        auto lock = local_data.time_step_buffer.getSourceLock(local_data.component_index);
+        auto status = lock.wait_for(kDefaultTimeout);
+        while (status != std::future_status::ready && local_data.running) {
+            status = lock.wait_for(kDefaultTimeout);
+        }
+        if (status != std::future_status::ready || !local_data.running) {
+            //std::atomic_thread_fence(std::memory_order_release);
+            local_data.valid_component_call.store(false, std::memory_order_release);
+            SPDLOG_TRACE("SourceComponent: {0} invalid waiting or not running", local_data.component.getName());
+            return;
+        }
+        SPDLOG_TRACE("SourceComponent: {0} ts: {1} {2} start", local_data.component.getName(),
+                     local_data.time_step_buffer.getTimestamp(), local_data.time_step_buffer.getEventType());
+
+        bool component_result{false};
+
+        switch (local_data.time_step_buffer.getEventType()) {
+
+            case EventType::CONFIGURE: {
+                component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
+                break;
+            }
+
+            case EventType::START: {
+                component_result = local_data.component.start();
+                break;
+            }
+
+            case EventType::DATA: {
+                component_result = local_data.valid_component_call = lock.get();
+                break;
+            }
+            case EventType::STOP: {
+                component_result = local_data.component.stop();
+                break;
+            }
+
+            case EventType::TEARDOWN: {
+                component_result = local_data.component.teardown();
+                break;
+            }
+
+            case EventType::DATAFLOW_NO_OP:
+            case EventType::DATAFLOW_STOP: {
+                break;
+            }
+            case EventType::INVALID:
+            default: {
+                assert(!"Invalid MessageType");
+            }
+
+        }
+
+        SPDLOG_TRACE("SourceComponent: {0} ts: {1} {2} done", local_data.component.getName(),
+                     local_data.time_step_buffer.getTimestamp(), local_data.time_step_buffer.getEventType());
+
         //std::atomic_thread_fence(std::memory_order_release);
-        local_data.valid_component_call.store(false, std::memory_order_release);
-        return;
+        local_data.valid_component_call.store(component_result, std::memory_order_release);
+    } catch (std::exception e) {
+        SPDLOG_ERROR("{0}, components must not throw exceptions ", e.what());
+    } catch (...) {
+        SPDLOG_ERROR("unknown throw in source component, components must not throw exceptions");
     }
 
-    bool component_result{false};
-
-    switch (local_data.time_step_buffer.getEventType()) {
-
-        case EventType::CONFIGURE: {
-            component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
-            break;
-        }
-
-        case EventType::START: {
-            component_result = local_data.component.start();
-            break;
-        }
-
-        case EventType::DATA: {
-            component_result = local_data.valid_component_call = lock.get();
-            break;
-        }
-        case EventType::STOP: {
-            component_result = local_data.component.stop();
-            break;
-        }
-
-        case EventType::TEARDOWN: {
-            component_result = local_data.component.teardown();
-            break;
-        }
-
-        case EventType::DATAFLOW_NO_OP:
-        case EventType::DATAFLOW_STOP: {
-            break;
-        }
-        case EventType::INVALID:
-        default: {
-            assert(!"Invalid MessageType");
-        }
-
-    }
-
-    SPDLOG_TRACE("SourceComponent: {0} ts: {1} done", local_data.component.getName(),
-                 local_data.time_step_buffer.getTimestamp());
-
-    //std::atomic_thread_fence(std::memory_order_release);
-    local_data.valid_component_call.store(component_result, std::memory_order_release);
 }
 
 inline void taskGenericComponent(ComponentData &local_data) {
-    SPDLOG_TRACE("Component {0}: start ts: {1}",
-                 local_data.component.getName(),
-                 local_data.buffer.getTimestamp());
-
-    bool all_input_valid = true;
-    for (auto *valid : local_data.successors_valid) {
-        bool local_valid = std::atomic_load_explicit(valid, std::memory_order_acquire);
-        //std::atomic_thread_fence(std::memory_order_acquire);
-        all_input_valid = all_input_valid && local_valid;
-    }
-
-
-    if (!all_input_valid) {
-        SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
+    try {
+        SPDLOG_TRACE("Component {0}: start ts {1} {2}",
                      local_data.component.getName(),
                      local_data.buffer.getTimestamp(),
                      local_data.time_step_buffer.getEventType());
-        //std::atomic_thread_fence(std::memory_order_release);
-        local_data.valid_component_call.store(false, std::memory_order_release);
-        return;
-    }
 
-    bool component_result{false};
-    switch (local_data.time_step_buffer.getEventType()) {
-        case EventType::CONFIGURE: {
-            component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
-            break;
+        bool all_input_valid = true;
+        for (auto *valid : local_data.successors_valid) {
+            bool local_valid = std::atomic_load_explicit(valid, std::memory_order_acquire);
+            //std::atomic_thread_fence(std::memory_order_acquire);
+            all_input_valid = all_input_valid && local_valid;
         }
-        case EventType::START: {
-            component_result = local_data.component.start();
-            break;
-        }
-        case EventType::DATA: {
 
-            if (local_data.buffer.isAllInputValid()) {
-                component_result = local_data.component.processTimePoint(local_data.buffer);
-            } else {
-                component_result = local_data.component.processTimePointWithInvalid(local_data.buffer);
+        if (!all_input_valid) {
+            SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
+                         local_data.component.getName(),
+                         local_data.buffer.getTimestamp(),
+                         local_data.time_step_buffer.getEventType());
+            //std::atomic_thread_fence(std::memory_order_release);
+            local_data.valid_component_call.store(false, std::memory_order_release);
+            return;
+        }
+
+        bool component_result{false};
+        switch (local_data.time_step_buffer.getEventType()) {
+            case EventType::CONFIGURE: {
+                component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
+                break;
+            }
+            case EventType::START: {
+                component_result = local_data.component.start();
+                break;
+            }
+            case EventType::DATA: {
+
+                if (local_data.buffer.isAllInputValid()) {
+                    component_result = local_data.component.processTimePoint(local_data.buffer);
+                } else {
+                    component_result = local_data.component.processTimePointWithInvalid(local_data.buffer);
+                }
+
+                break;
+            }
+            case EventType::STOP: {
+                component_result = local_data.component.stop();
+                break;
             }
 
-            break;
-        }
-        case EventType::STOP: {
-            component_result = local_data.component.stop();
-            break;
+            case EventType::TEARDOWN: {
+                component_result = local_data.component.teardown();
+                break;
+            }
+
+            case EventType::DATAFLOW_NO_OP:
+            case EventType::DATAFLOW_STOP:break;
+            case EventType::INVALID:assert(!"Invalid MessageType");
+            default:break;
         }
 
-        case EventType::TEARDOWN: {
-            component_result = local_data.component.teardown();
-            break;
-        }
+        SPDLOG_TRACE("Component {0}: finished ts {1} {2}",
+                     local_data.component.getName(),
+                     local_data.buffer.getTimestamp(),
+                     local_data.time_step_buffer.getEventType());
 
-        case EventType::DATAFLOW_NO_OP:
-        case EventType::DATAFLOW_STOP:break;
-        case EventType::INVALID:assert(!"Invalid MessageType");
-        default:break;
+        //std::atomic_thread_fence(std::memory_order_release);
+        local_data.valid_component_call.store(component_result, std::memory_order_release);
+    } catch (std::exception e) {
+        SPDLOG_ERROR("{0}, components must not throw exceptions ", e.what());
+    } catch (...) {
+        SPDLOG_ERROR("unknown throw in source component, components must not throw exceptions");
     }
-
-    SPDLOG_TRACE("Component {0}: finished ts {1}",
-                 local_data.component.getName(),
-                 local_data.buffer.getTimestamp());
-
-    //std::atomic_thread_fence(std::memory_order_release);
-    local_data.valid_component_call.store(component_result, std::memory_order_release);
 }
 }
 

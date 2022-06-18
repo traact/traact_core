@@ -27,7 +27,7 @@ class FilePlayer : public Component {
             std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::ASYNC_SOURCE);
 
         pattern->addProducerPort("output", T::NativeTypeName);
-        pattern->addStringParameter("file", "file.json");
+        pattern->addStringParameter("File", "file.json");
 
         pattern->addCoordinateSystem("A")
             .addCoordinateSystem("B")
@@ -37,7 +37,7 @@ class FilePlayer : public Component {
     }
 
     bool configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data) override {
-        bool result = pattern::setValueFromParameter(pattern_instance, "file", filename_, "");
+        bool result = pattern::setValueFromParameter(pattern_instance, "File", filename_, "");
         if (!result) {
             return false;
         }
@@ -84,6 +84,7 @@ class FilePlayer : public Component {
             if (!readTimestamp(ts)) {
                 SPDLOG_INFO("{0}: End of file or error when trying to read next data, exit thread");
                 running_ = false;
+                setSourceFinished();
                 return;
             }
 

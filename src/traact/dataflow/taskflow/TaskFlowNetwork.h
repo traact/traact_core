@@ -22,6 +22,7 @@ class TRAACT_CORE_EXPORT TaskFlowNetwork : public Network {
     bool stop() override;
  private:
     std::vector<std::shared_ptr<TaskFlowGraph>> task_graphs_;
+    bool is_running_{false};
 
 };
 }

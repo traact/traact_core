@@ -19,13 +19,19 @@ bool traact::dataflow::TaskFlowNetwork::start() {
         graph->start();
     }
 
+    is_running_ = result;
+
     return result;
 }
 
 bool traact::dataflow::TaskFlowNetwork::stop() {
-    for (auto &graph : task_graphs_) {
-        graph->stop();
+    if(is_running_){
+        for (auto &graph : task_graphs_) {
+            graph->stop();
+        }
     }
+    is_running_ = false;
+
     return true;
 }
 

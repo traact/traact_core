@@ -19,7 +19,7 @@ using TimestampSteady = std::chrono::time_point<std::chrono::steady_clock, TimeD
 static const constexpr TimestampSteady kTimestampSteadyZero(TimeDuration(0));
 
 static const constexpr TimeDuration kDefaultTimeout = std::chrono::milliseconds(100);
-static const constexpr TimeDuration kDefaultWaitingTimeout = std::chrono::milliseconds(10000);
+static const constexpr TimeDuration kDefaultWaitingTimeout = std::chrono::milliseconds(1000);
 static const constexpr TimeDuration kDataflowStopTimeout = std::chrono::seconds(5);
 static const constexpr int kDefaultTimeDomain{0};
 static const constexpr char* kDefaultPortGroupName{"Default"};

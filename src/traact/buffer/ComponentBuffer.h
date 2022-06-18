@@ -51,6 +51,13 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
     }
 
     template<typename Port>
+    const typename Port::Header::NativeType & getInput(int port_group_index, int port_group_instance_index) const noexcept {
+        const size_t kIndex = output_groups_[port_group_index].group_offset
+            + output_groups_[port_group_index].group_port_count * port_group_instance_index + Port::PortIdx;
+        return *static_cast<typename Port::Header::NativeType *>(input_buffer_[kIndex]);
+    }
+
+    template<typename Port>
     const typename Port::Header &getInputHeader() const noexcept {
         return *static_cast<typename Port::Header *>(input_header_[Port::PortIdx]);
     }
@@ -69,6 +76,16 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
     [[nodiscard]] bool isInputValid() const noexcept {
         return isInputValid(Port::PortIdx);
     }
+
+    template<typename Port>
+    bool isInputValid(int port_group_index, int port_group_instance_index) const noexcept {
+        const size_t kIndex = output_groups_[port_group_index].group_offset
+            + output_groups_[port_group_index].group_port_count * port_group_instance_index + Port::PortIdx;
+        return isInputValid(kIndex);
+    }
+
+
+    bool isInputGroupValid(int port_group_index, int port_group_instance_index) const noexcept;
 
     [[nodiscard]] bool isAllInputValid() const noexcept;
 

@@ -44,6 +44,8 @@ class TRAACT_CORE_EXPORT Facade {
     bool should_stop_{false};
     std::promise<void> finished_promise_;
     std::shared_future<void> finished_future_;
+    std::mutex stop_lock_;
+    std::shared_ptr<std::thread> stop_thread_{nullptr};
 
     void MasterSourceFinished();
 };

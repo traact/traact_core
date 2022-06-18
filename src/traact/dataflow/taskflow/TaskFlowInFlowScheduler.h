@@ -67,6 +67,7 @@ class TaskFlowInFlowScheduler {
     std::vector<Timestamp> latest_scheduled_component_timestamp_;
     //-----------------------------------------
     TimeDomainClock time_domain_clock_;
+    bool stop_scheduled_{false};
 
 
 
