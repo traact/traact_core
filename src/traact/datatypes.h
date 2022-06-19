@@ -25,6 +25,10 @@ static const constexpr int kDefaultTimeDomain{0};
 static const constexpr char* kDefaultPortGroupName{"Default"};
 static const constexpr int kDefaultPortGroupIndex{0};
 
+static constexpr Timestamp AsTimestamp(uint64_t timestamp){
+    return kTimestampZero + TimeDuration(timestamp);
+}
+
 struct TRAACT_CORE_EXPORT TimestampHashCompare {
     static size_t hash(const Timestamp &x) {
         return std::hash<size_t>{}(x.time_since_epoch().count());

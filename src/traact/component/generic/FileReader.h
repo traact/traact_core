@@ -29,7 +29,7 @@ class FileReader : public Component {
             std::make_shared<traact::pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SOURCE);
 
         pattern->addProducerPort("output", T::NativeTypeName);
-        pattern->addStringParameter("File", "file.json");
+        pattern->addStringParameter("file", "file.json");
 
         pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
 
@@ -38,7 +38,7 @@ class FileReader : public Component {
 
     bool configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data) override {
         try{
-            bool result = pattern::setValueFromParameter(pattern_instance, "File", filename_, "");
+            bool result = pattern::setValueFromParameter(pattern_instance, "file", filename_, "");
             if (result) {
                 if (util::fileExists(filename_, getName())) {
                     readValue(data_);

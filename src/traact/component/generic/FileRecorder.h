@@ -14,9 +14,8 @@ class FileRecorder : public FileWriter<T> {
                                                                                                        serializer_name) {
     }
 
-    static traact::pattern::Pattern::Ptr GetPattern() {
-
-        std::string pattern_name = fmt::format("FileRecorder_{0}_{1}", FileWriter<T>::serializer_name_, T::NativeTypeName);
+    [[nodiscard]] static traact::pattern::Pattern::Ptr GetBasePattern(const std::string& serializer_name) {
+        std::string pattern_name = fmt::format("FileRecorder_{0}_{1}", serializer_name, T::NativeTypeName);
 
         traact::pattern::Pattern::Ptr
             pattern =
@@ -24,7 +23,7 @@ class FileRecorder : public FileWriter<T> {
 
         pattern->addConsumerPort("input", T::NativeTypeName);
 
-        pattern->addStringParameter("File", "file.json");
+        pattern->addStringParameter("file", "file.json");
 
         pattern->addCoordinateSystem("A")
             .addCoordinateSystem("B")
@@ -32,8 +31,6 @@ class FileRecorder : public FileWriter<T> {
 
         return pattern;
     }
-
-
 
 };
 
