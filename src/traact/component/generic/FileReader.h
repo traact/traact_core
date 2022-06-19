@@ -47,7 +47,7 @@ class FileReader : public Component {
             } else {
                 SPDLOG_ERROR("{0}: missing file property", getName());
             }
-        } catch(std::exception e){
+        } catch(std::exception &e){
             SPDLOG_ERROR(e.what());
         }
 

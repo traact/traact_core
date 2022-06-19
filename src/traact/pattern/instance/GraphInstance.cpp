@@ -38,6 +38,12 @@ traact::pattern::instance::GraphInstance::GraphInstance() : name("Invalid") {
 traact::pattern::instance::PatternInstance::Ptr traact::pattern::instance::GraphInstance::addPattern(std::string pattern_id,
                                                                                                      const traact::pattern::Pattern::Ptr &pattern,
                                                                                                      int time_domain) {
+    auto pattern_exists = pattern_instances.find(pattern_id);
+    if(pattern_exists != pattern_instances.end()){
+        auto error = fmt::format("pattern id {0} already exists", pattern_id);
+        SPDLOG_ERROR(error);
+        throw std::invalid_argument(error);
+    }
     PatternInstance::Ptr newPattern = std::make_shared<PatternInstance>(pattern_id, *pattern, this);
     newPattern->local_to_global_time_domain.resize(pattern->concurrency.size(), -1);
     newPattern->local_to_global_time_domain[kDefaultTimeDomain] = time_domain;
@@ -184,8 +190,10 @@ traact::pattern::instance::GraphInstance::checkSourceAndSinkConnectionError(cons
     }
 
     if (prod_port->port.datatype != cons_port->port.datatype) {
-        return fmt::format("Incompatible port datatype {0} -> {1}",
+        return fmt::format("Incompatible port datatype {0}:{1} -> {2}:{3}",
+                           source_component,
                            prod_port->port.datatype,
+                           sink_component,
                            cons_port->port.datatype);
     }
 

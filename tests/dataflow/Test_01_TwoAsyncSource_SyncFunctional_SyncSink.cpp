@@ -245,7 +245,7 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEven
                 local_source->new_value(timestamp, fmt::format(kTestValue,i));
                 wait_for_init.SetInit(true);
             }
-        }catch(std::exception e){
+        }catch(std::exception &e){
             SPDLOG_ERROR(e.what());
         }catch (...){
             SPDLOG_ERROR("some unknown error in async source");
@@ -270,7 +270,7 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEven
                     local_source->new_value(timestamp, fmt::format(kTestValue,i));
                 }
             }
-        }catch(std::exception e){
+        }catch(std::exception &e){
             SPDLOG_ERROR(e.what());
         }catch (...){
             SPDLOG_ERROR("some unknown error in async source");
@@ -320,7 +320,7 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEven
                 SPDLOG_INFO("send source 0: {0}", timestamp);
                 local_source->new_value(timestamp, fmt::format(kTestValue,i));
             }
-        }catch(std::exception e){
+        }catch(std::exception &e){
             SPDLOG_ERROR(e.what());
         }catch (...){
             SPDLOG_ERROR("some unknown error in async source");
@@ -346,7 +346,7 @@ TEST_P(Test_01_TwoAsyncSource_SyncFunctional_SyncSink, DataEventsEverySecondEven
                 }
 
             }
-        }catch(std::exception e){
+        }catch(std::exception &e){
             SPDLOG_ERROR(e.what());
         }catch (...){
             SPDLOG_ERROR("some unknown error in async source");

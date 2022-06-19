@@ -40,6 +40,11 @@ struct ComponentData {
     std::vector<std::atomic_bool *> successors_valid{};
     std::atomic_bool valid_component_call{false};
 
+    TimestampSteady state_last_call{kTimestampSteadyZero};
+    EventType state_last_event_type{EventType::INVALID};
+    int state_last_event_position;
+    bool state_had_error{false};
+
 };
 
 struct TimeStepData {
@@ -50,23 +55,28 @@ struct TimeStepData {
 inline void taskSource(ComponentData &local_data) {
 
     try {
+        local_data.state_last_call = nowSteady();
+        local_data.state_last_event_position = 0;
         SPDLOG_TRACE("SourceComponent: {0} start waiting", local_data.component.getName());
         auto lock = local_data.time_step_buffer.getSourceLock(local_data.component_index);
         auto status = lock.wait_for(kDefaultTimeout);
         while (status != std::future_status::ready && local_data.running) {
             status = lock.wait_for(kDefaultTimeout);
         }
+        local_data.state_last_event_position = 1;
         if (status != std::future_status::ready || !local_data.running) {
             //std::atomic_thread_fence(std::memory_order_release);
-            local_data.valid_component_call.store(false, std::memory_order_release);
+            local_data.valid_component_call.store(true, std::memory_order_release);
             SPDLOG_TRACE("SourceComponent: {0} invalid waiting or not running", local_data.component.getName());
             return;
         }
+        local_data.state_last_event_position = 2;
         SPDLOG_TRACE("SourceComponent: {0} ts: {1} {2} start", local_data.component.getName(),
                      local_data.time_step_buffer.getTimestamp(), local_data.time_step_buffer.getEventType());
 
         bool component_result{false};
 
+        local_data.state_last_event_type = local_data.time_step_buffer.getEventType();
         switch (local_data.time_step_buffer.getEventType()) {
 
             case EventType::CONFIGURE: {
@@ -108,39 +118,49 @@ inline void taskSource(ComponentData &local_data) {
                      local_data.time_step_buffer.getTimestamp(), local_data.time_step_buffer.getEventType());
 
         //std::atomic_thread_fence(std::memory_order_release);
-        local_data.valid_component_call.store(component_result, std::memory_order_release);
-    } catch (std::exception e) {
+        //local_data.valid_component_call.store(component_result, std::memory_order_release);
+        // must be true right now or renderer will stop
+        local_data.valid_component_call.store(true, std::memory_order_release);
+        local_data.state_last_event_position = 3;
+        return;
+    } catch(std::exception &e) {
         SPDLOG_ERROR("{0}, components must not throw exceptions ", e.what());
     } catch (...) {
         SPDLOG_ERROR("unknown throw in source component, components must not throw exceptions");
     }
-
+    local_data.valid_component_call.store(true, std::memory_order_release);
+    local_data.state_had_error = true;
+    local_data.state_last_event_position = 4;
 }
 
 inline void taskGenericComponent(ComponentData &local_data) {
     try {
+        local_data.state_last_call = nowSteady();
+        local_data.state_last_event_position = 0;
         SPDLOG_TRACE("Component {0}: start ts {1} {2}",
                      local_data.component.getName(),
                      local_data.buffer.getTimestamp(),
                      local_data.time_step_buffer.getEventType());
 
         bool all_input_valid = true;
-        for (auto *valid : local_data.successors_valid) {
-            bool local_valid = std::atomic_load_explicit(valid, std::memory_order_acquire);
-            //std::atomic_thread_fence(std::memory_order_acquire);
-            all_input_valid = all_input_valid && local_valid;
-        }
 
-        if (!all_input_valid) {
-            SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
-                         local_data.component.getName(),
-                         local_data.buffer.getTimestamp(),
-                         local_data.time_step_buffer.getEventType());
-            //std::atomic_thread_fence(std::memory_order_release);
-            local_data.valid_component_call.store(false, std::memory_order_release);
-            return;
-        }
+//        for (auto *valid : local_data.successors_valid) {
+//            bool local_valid = std::atomic_load_explicit(valid, std::memory_order_acquire);
+//            //std::atomic_thread_fence(std::memory_order_acquire);
+//            all_input_valid = all_input_valid && local_valid;
+//        }
+//
+//        if (!all_input_valid) {
+//            SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
+//                         local_data.component.getName(),
+//                         local_data.buffer.getTimestamp(),
+//                         local_data.time_step_buffer.getEventType());
+//            //std::atomic_thread_fence(std::memory_order_release);
+//            local_data.valid_component_call.store(true, std::memory_order_release);
+//            return;
+//        }
 
+        local_data.state_last_event_type =local_data.time_step_buffer.getEventType();
         bool component_result{false};
         switch (local_data.time_step_buffer.getEventType()) {
             case EventType::CONFIGURE: {
@@ -183,12 +203,19 @@ inline void taskGenericComponent(ComponentData &local_data) {
                      local_data.time_step_buffer.getEventType());
 
         //std::atomic_thread_fence(std::memory_order_release);
-        local_data.valid_component_call.store(component_result, std::memory_order_release);
-    } catch (std::exception e) {
-        SPDLOG_ERROR("{0}, components must not throw exceptions ", e.what());
+        //local_data.valid_component_call.store(component_result, std::memory_order_release);
+        // must be true right now or renderer will stop
+        local_data.valid_component_call.store(true, std::memory_order_release);
+        local_data.state_last_event_position = 3;
+        return;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("{0}, {1}, components must not throw exceptions ", e.what(),local_data.component.getName());
     } catch (...) {
         SPDLOG_ERROR("unknown throw in source component, components must not throw exceptions");
     }
+    local_data.valid_component_call.store(true, std::memory_order_release);
+    local_data.state_had_error = true;
+    local_data.state_last_event_position = 4;
 }
 }
 

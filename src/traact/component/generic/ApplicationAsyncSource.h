@@ -46,7 +46,7 @@ class ApplicationAsyncSource : public Component {
             buffer_p->commit(true);
 
             return true;
-        } catch (std::future_error e) {
+        } catch (std::future_error& e) {
             SPDLOG_ERROR(e.what());
             throw e;
         }

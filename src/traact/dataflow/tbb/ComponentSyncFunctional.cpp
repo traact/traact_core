@@ -113,7 +113,7 @@ TraactMessage ComponentSyncFunctional::operator()(const TraactMessage &in) {
 
 
         //component_buffer.commit();
-    } catch (std::exception e) {
+    } catch(std::exception &e) {
         SPDLOG_ERROR(e.what());
     } catch (...) {
         SPDLOG_ERROR("unknown exception in {0}", component_base_->getName());

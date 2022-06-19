@@ -17,8 +17,14 @@ class FilePlayer : public Component {
                                                                                 serializer_name_(std::move(
                                                                                     serializer_name)) {
     }
+    virtual ~FilePlayer() {
+        running_ = false;
+        if (thread_ && thread_->joinable()) {
+            thread_->join();
+        }
+    }
 
-    [[nodiscard]] static traact::pattern::Pattern::Ptr GetBasePattern(const std::string& serializer_name) {
+    [[nodiscard]] static traact::pattern::Pattern::Ptr GetBasePattern(const std::string &serializer_name) {
 
         std::string pattern_name = fmt::format("FilePlayer_{0}_{1}", serializer_name, T::NativeTypeName);
 
@@ -36,7 +42,8 @@ class FilePlayer : public Component {
         return pattern;
     }
 
-    bool configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data) override {
+    bool configure(const pattern::instance::PatternInstance &pattern_instance,
+                   buffer::ComponentBufferConfig *data) override {
         bool result = pattern::setValueFromParameter(pattern_instance, "File", filename_, "");
         if (!result) {
             return false;
@@ -84,7 +91,6 @@ class FilePlayer : public Component {
             if (!readTimestamp(ts)) {
                 SPDLOG_INFO("{0}: End of file or error when trying to read next data, exit thread");
                 running_ = false;
-                setSourceFinished();
                 return;
             }
 
@@ -102,7 +108,6 @@ class FilePlayer : public Component {
 
         }
     }
-
 
 };
 

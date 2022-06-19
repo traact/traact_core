@@ -12,7 +12,6 @@
 #include "TaskFlowTaskFunctions.h"
 #include <traact/buffer/DataBufferFactory.h>
 #include "TaskFlowUtils.h"
-#include "TaskFlowAsyncScheduler.h"
 #include "TaskFlowInFlowScheduler.h"
 
 
@@ -33,6 +32,9 @@ class TaskFlowTimeDomain {
     void stop();
 
     std::future<buffer::SourceComponentBuffer *> requestSourceBuffer(Timestamp timestamp, int component_index);
+
+    void printState();
+
  private:
     const int time_domain_;
     component::ComponentGraph::Ptr  component_graph_;
@@ -102,6 +104,11 @@ class TaskFlowTimeDomain {
     tf::Task createSeamEntryTask(int time_step_index, const std::string &seam_entry_name);
 
     void createModuleConstraintTasks(int time_step_index);
+    std::optional<std::string> findSyncSourceStartPoint(const std::pair<component::ComponentGraph::PatternPtr,
+                                                                        component::ComponentGraph::ComponentPtr> &pair,
+                                                        int time_step);
+
+
 };
 }
 

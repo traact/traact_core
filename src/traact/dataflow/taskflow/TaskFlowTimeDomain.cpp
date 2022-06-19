@@ -63,7 +63,9 @@ void TaskFlowTimeDomain::init() {
                                                     time_domain_buffer_,
                                                     component_graph_->getName(),
                                                     time_domain_,
-                                                    &taskflow_);
+                                                    &taskflow_, [&]() {
+            printState();
+        });
 }
 
 void TaskFlowTimeDomain::createTimeStepTasks(const int time_step_index) {
@@ -77,20 +79,6 @@ void TaskFlowTimeDomain::createTimeStepTasks(const int time_step_index) {
         }
         createTask(time_step_index, time_step_data, component);
 
-        // connect sync source to any other input of a connected component
-        if(component.first->getComponentType(time_domain_) == component::ComponentType::SYNC_SOURCE){
-            for (const auto *port : pattern_instance->getProducerPorts(time_domain_)) {
-                for (const auto *input_port : port->connectedToPtr()) {
-                    for(const auto& other_input : input_port->port_group_instance->pattern_instance->getConsumerPorts(time_domain_)){
-                        if(other_input->isConnected() && other_input->connected_to.first != pattern_instance->instance_id){
-                            component_to_successors_[other_input->connected_to.first].emplace(pattern_instance->instance_id);
-                            break;
-                        }
-                    }
-                }
-            }
-
-        }
     }
 
     for (const auto &component_successors : component_to_successors_) {
@@ -254,7 +242,8 @@ void TaskFlowTimeDomain::prepareComponents() {
         if (is_endpoint) {
             component_end_points_.emplace(instance_id);
         }
-        if (pattern_instance->getConsumerPorts(time_domain_).empty()) {
+        if (pattern_instance->getConsumerPorts(time_domain_).empty()
+            && pattern_instance->getComponentType(time_domain_) != component::ComponentType::SYNC_SOURCE) {
             component_start_points_.emplace(instance_id);
         }
 
@@ -277,7 +266,18 @@ void TaskFlowTimeDomain::prepareComponents() {
                 component.second->setRequestCallback(request_source_callback);
                 break;
             }
-            case component::ComponentType::SYNC_SOURCE:
+            case component::ComponentType::SYNC_SOURCE: {
+                std::optional<std::string> sync_source_start = findSyncSourceStartPoint(component, 0);
+                if (!sync_source_start.has_value()) {
+                    auto error = fmt::format(
+                        "sync source {0} has no start point (other non sync source, there should be at least one async source)",
+                        pattern_instance->instance_id);
+                    SPDLOG_ERROR(error);
+                    throw std::invalid_argument(error);
+                }
+                component_to_successors_[sync_source_start.value()].emplace(pattern_instance->instance_id);
+                break;
+            }
             case component::ComponentType::ASYNC_SINK:
             case component::ComponentType::SYNC_FUNCTIONAL:
             case component::ComponentType::ASYNC_FUNCTIONAL:
@@ -313,6 +313,7 @@ void TaskFlowTimeDomain::prepareComponents() {
         }
 
     }
+
 }
 
 void TaskFlowTimeDomain::prepareTaskData() {
@@ -352,8 +353,10 @@ void TaskFlowTimeDomain::prepareTaskData() {
             auto &component_data = time_step_data.component_data.at(instance_id);
             for (const auto *port : pattern_instance->getConsumerPorts(time_domain_)) {
                 auto input_id = port->connected_to.first;
-                if(input_id.empty()){
-                    throw std::invalid_argument(fmt::format("component input not connected {0} {1}", port->getId().first, port->getId().second));
+                if (input_id.empty()) {
+                    throw std::invalid_argument(fmt::format("component input not connected {0} {1}",
+                                                            port->getId().first,
+                                                            port->getId().second));
                 }
                 auto &input_data = time_step_data.component_data.at(input_id);
                 component_data.successors_valid.push_back(&input_data.valid_component_call);
@@ -462,8 +465,6 @@ void TaskFlowTimeDomain::createInterTimeStepDependencies() {
         auto seam_start = taskflow_.emplace([]() {}).name(seam_start_name);
         auto seam_end = taskflow_.emplace([]() {}).name(seam_end_name);
 
-
-
         for (int current_time_step_index = 0; current_time_step_index < time_step_count_ - 1;
              ++current_time_step_index) {
             int next_time_step_index = current_time_step_index + 1;
@@ -548,7 +549,7 @@ void TaskFlowTimeDomain::createInterTimeStepDependencies() {
     for (const auto &[module_key, module_components] : component_modules_) {
         auto module_start_task = fmt::format(kModuleStartName, module_key);
         auto module_end_task = fmt::format(kModuleEndName, module_key);
-        connect_end_to_next_start( module_start_task, module_end_task);
+        connect_end_to_next_start(module_start_task, module_end_task);
     }
 }
 
@@ -587,6 +588,38 @@ tf::Task TaskFlowTimeDomain::createSeamEntryTask(int time_step_index, const std:
             return 0;
         }
     }).name(seam_entry_name);
+}
+std::optional<std::string> TaskFlowTimeDomain::findSyncSourceStartPoint(const std::pair<component::ComponentGraph::PatternPtr,
+                                                                                        component::ComponentGraph::ComponentPtr> &pair,
+                                                                        int time_step) {
+    // find the latest point in dataflow where the sync source needs to be triggered to allow maximum wait for
+    // time domain syncing components
+    // for now use first async source
+    for (const auto &pattern : component_graph_->getPatternsForTimeDomain(time_domain_)) {
+        if (pattern.first->getComponentType(time_domain_) == component::ComponentType::ASYNC_SOURCE) {
+            return pattern.first->instance_id;
+        }
+    }
+    return {};
+}
+void TaskFlowTimeDomain::printState() {
+    std::stringstream ss;
+    ss << "State of dataflow network\n";
+    int time_step_buffer = 0;
+    for (const auto &data : time_step_data_) {
+        ss << "time step buffer " << time_step_buffer << ":\n";
+        for (const auto &component_data : data.component_data) {
+            ss << fmt::format("{0} last call: {1} position: {2} event type: {3} error: {4}\n",
+                              component_data.first,
+                              component_data.second.state_last_call,
+                              component_data.second.state_last_event_position,
+                              component_data.second.state_last_event_type,
+                              component_data.second.state_had_error);
+        }
+        ++time_step_buffer;
+    }
+
+    SPDLOG_WARN(ss.str());
 }
 
 }

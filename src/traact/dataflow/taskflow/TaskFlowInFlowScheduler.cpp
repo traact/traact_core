@@ -6,7 +6,7 @@
 
 namespace traact::dataflow {
 TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManagerConfig &config, std::shared_ptr<
-    buffer::TimeDomainBuffer> time_domain_buffer, std::string graph_name, int time_domain, tf::Taskflow *taskflow)
+    buffer::TimeDomainBuffer> time_domain_buffer, std::string graph_name, int time_domain, tf::Taskflow *taskflow, std::function<void(void)> on_timeout)
     : config_(config),
       time_domain_buffer_(std::move(time_domain_buffer)),
       executor_(config_.cpu_count > 0 ? config_.cpu_count : std::thread::hardware_concurrency() - config_.cpu_count),
@@ -15,7 +15,8 @@ TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManager
                                 config_.ringbuffer_size,
                                 kFreeTaskFlowTimeout), graph_name_(std::move(graph_name)), time_domain_(time_domain),
       taskflow_(taskflow),
-      time_domain_clock_(config_.sensor_frequency, config_.max_offset, 1.0) {
+      time_domain_clock_(config_.sensor_frequency, config_.max_offset, 1.0),
+      on_timeout_(std::move(on_timeout)){
 
 
 
@@ -100,7 +101,23 @@ void TaskFlowInFlowScheduler::timeStepEnded(int time_step_index) {
 void TaskFlowInFlowScheduler::stop() {
 
     try{
-        scheduleNonDataEventAndWait(EventType::STOP, stop_finished_);
+
+        auto stop_scheduled = std::async(std::launch::async, [&](){
+            scheduleNonDataEventAndWait(EventType::STOP, stop_finished_);
+        });
+
+        auto stop_status = stop_scheduled.wait_for(kDataflowStopTimeout);
+        if(stop_status == std::future_status::timeout){
+            SPDLOG_WARN("timeout scheduling stop event, canceling older events that have not received input yet");
+            {
+                std::unique_lock guard_flow(flow_mutex_);
+                for (int i = 0; i < time_domain_buffer_->getCountSources(); ++i) {
+                    cancelSourceWaitForEvent(now(), i);
+                }
+            }
+
+        }
+
         scheduleNonDataEventAndWait(EventType::TEARDOWN, teardown_finished_);
 
         // stop event for every time step in the taskflow
@@ -115,8 +132,11 @@ void TaskFlowInFlowScheduler::stop() {
         auto status = taskflow_future_.wait_for(kDataflowStopTimeout);
         if (status != std::future_status::ready) {
             SPDLOG_WARN("could not stop task flow time domain {0} {1}", graph_name_, time_domain_);
+            if(on_timeout_){
+                on_timeout_();
+            }
         }
-    } catch (std::exception e){
+    } catch(std::exception &e){
         SPDLOG_ERROR(e.what());
     } catch (...){
         SPDLOG_ERROR("unknown error trying to stop dataflow");
@@ -342,6 +362,9 @@ void TaskFlowInFlowScheduler::scheduleNonDataEventAndWait(EventType type, WaitFo
     while (!init_finished.tryWait()) {
         SPDLOG_WARN("waiting for event to finish: graph: {0} time domain: {1} event type: {2}",
                     graph_name_, time_domain_, type);
+        if(on_timeout_){
+            on_timeout_();
+        }
     }
 }
 
@@ -387,14 +410,25 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
                                   "requestSourceBufferScheduled, source component index {0} timestamp {1}, rejected value");
                               return nullptr;
                           } else {
-                              source_set_input_[component_index][time_step_index]->store(true, std::memory_order_relaxed);
-                              SPDLOG_TRACE(
-                                  "requestSourceBufferScheduled, source component future, taskflow {0} component {1} timestamp {2}",
-                                  time_step_index,
-                                  component_index,
-                                  timestamp);
-                              return time_domain_buffer_->getTimeStepBuffer(time_step_index).getSourceComponentBuffer(
-                                  component_index);
+                              {
+                                  std::unique_lock guard(flow_mutex_);
+                                  if(source_set_input_[component_index][time_step_index]->load(std::memory_order_acquire)) {
+                                      SPDLOG_WARN("requested source buffer was canceled");
+                                      return nullptr;
+                                  } else {
+                                      source_set_input_[component_index][time_step_index]->store(true, std::memory_order_release);
+                                      SPDLOG_TRACE(
+                                          "requestSourceBufferScheduled, source component future, taskflow {0} component {1} timestamp {2}",
+                                          time_step_index,
+                                          component_index,
+                                          timestamp);
+                                      return time_domain_buffer_->getTimeStepBuffer(time_step_index).getSourceComponentBuffer(
+                                          component_index);
+                                  }
+
+                              }
+
+
                           }
                       });
 }

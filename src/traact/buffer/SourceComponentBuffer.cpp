@@ -38,7 +38,7 @@ void SourceComponentBuffer::cancel() {
                      local_output_buffer_.getTimeStepIndex(),
                      getTimestamp());
         source_lock_.set_value(true);
-    }catch (std::future_error e){
+    }catch (std::future_error& e){
         SPDLOG_ERROR(e.what());
         // TODO this should not happen, but any operation in the task flow should not throw, otherwise everything stops
         //throw e;
