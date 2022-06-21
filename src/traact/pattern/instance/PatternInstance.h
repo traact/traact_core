@@ -51,6 +51,12 @@ struct TRAACT_CORE_EXPORT PatternInstance {
                                                                                                parameter_out);
     }
 
+    template<typename ParaType>
+    bool setValueFromParameter(int group_index, int instance_index, std::string parameter_name, ParaType &parameter_out) const {
+        return port_groups_.at(group_index).at(instance_index)->template setValueFromParameter(parameter_name,
+                                                                                               parameter_out);
+    }
+
     [[nodiscard]] int getPortGroupCount(const std::string &port_group_name) const;
     PortGroupInfo getPortGroupInfo(const std::string &port_group_name) const;
     PortGroupInstance& instantiatePortGroup(const std::string& port_group_name);

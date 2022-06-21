@@ -48,4 +48,7 @@ void SourceComponentBuffer::cancel() {
 
 
 }
+void SourceComponentBuffer::setOutputInvalid(size_t index) const noexcept {
+    local_output_buffer_.setOutputInvalid(index);
+}
 }

@@ -5,20 +5,27 @@
 #include <utility>
 
 namespace traact::dataflow {
-TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManagerConfig &config, std::shared_ptr<
-    buffer::TimeDomainBuffer> time_domain_buffer, std::string graph_name, int time_domain, tf::Taskflow *taskflow, std::function<void(void)> on_timeout)
+TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManagerConfig &config,
+                                                 std::shared_ptr<
+                                                     buffer::TimeDomainBuffer> time_domain_buffer,
+                                                 std::string graph_name,
+                                                 int time_domain,
+                                                 tf::Taskflow *taskflow,
+                                                 std::function<void(void)> on_timeout)
     : config_(config),
       time_domain_buffer_(std::move(time_domain_buffer)),
       executor_(config_.cpu_count > 0 ? config_.cpu_count : std::thread::hardware_concurrency() - config_.cpu_count),
-      time_step_count_(config_.ringbuffer_size), latest_running_ts_{config_.max_offset},
-      time_step_latest_(-1), free_taskflows_semaphore_(config_.ringbuffer_size,
+      time_step_count_(config_.ringbuffer_size),
+      latest_running_ts_{config_.max_offset},
+      time_step_latest_(-1),
+      free_taskflows_semaphore_(config_.ringbuffer_size,
                                 config_.ringbuffer_size,
-                                kFreeTaskFlowTimeout), graph_name_(std::move(graph_name)), time_domain_(time_domain),
+                                kFreeTaskFlowTimeout),
+      graph_name_(std::move(graph_name)),
+      time_domain_(time_domain),
       taskflow_(taskflow),
       time_domain_clock_(config_.sensor_frequency, config_.max_offset, 1.0),
-      on_timeout_(std::move(on_timeout)){
-
-
+      on_timeout_(std::move(on_timeout)) {
 
     running_taskflows_.resize(time_step_count_, false);
     running_timestamps_.resize(time_step_count_, kTimestampZero);
@@ -100,14 +107,14 @@ void TaskFlowInFlowScheduler::timeStepEnded(int time_step_index) {
 }
 void TaskFlowInFlowScheduler::stop() {
 
-    try{
+    try {
 
-        auto stop_scheduled = std::async(std::launch::async, [&](){
+        auto stop_scheduled = std::async(std::launch::async, [&]() {
             scheduleNonDataEventAndWait(EventType::STOP, stop_finished_);
         });
 
         auto stop_status = stop_scheduled.wait_for(kDataflowStopTimeout);
-        if(stop_status == std::future_status::timeout){
+        if (stop_status == std::future_status::timeout) {
             SPDLOG_WARN("timeout scheduling stop event, canceling older events that have not received input yet");
             {
                 std::unique_lock guard_flow(flow_mutex_);
@@ -132,13 +139,13 @@ void TaskFlowInFlowScheduler::stop() {
         auto status = taskflow_future_.wait_for(kDataflowStopTimeout);
         if (status != std::future_status::ready) {
             SPDLOG_WARN("could not stop task flow time domain {0} {1}", graph_name_, time_domain_);
-            if(on_timeout_){
+            if (on_timeout_) {
                 on_timeout_();
             }
         }
-    } catch(std::exception &e){
+    } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
-    } catch (...){
+    } catch (...) {
         SPDLOG_ERROR("unknown error trying to stop dataflow");
     }
 
@@ -352,17 +359,16 @@ void TaskFlowInFlowScheduler::scheduleNonDataEventAndWait(EventType type, WaitFo
     {
         std::unique_lock guard(request_mutex_);
         scheduleEvent(type, kTimestampZero);
-        if(type == EventType::STOP){
+        if (type == EventType::STOP) {
             stop_scheduled_ = true;
         }
 
     }
 
-
     while (!init_finished.tryWait()) {
         SPDLOG_WARN("waiting for event to finish: graph: {0} time domain: {1} event type: {2}",
                     graph_name_, time_domain_, type);
-        if(on_timeout_){
+        if (on_timeout_) {
             on_timeout_();
         }
     }
@@ -412,11 +418,12 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
                           } else {
                               {
                                   std::unique_lock guard(flow_mutex_);
-                                  if(source_set_input_[component_index][time_step_index]->load(std::memory_order_acquire)) {
+                                  if (source_set_input_[component_index][time_step_index]->load(std::memory_order_acquire)) {
                                       SPDLOG_WARN("requested source buffer was canceled");
                                       return nullptr;
                                   } else {
-                                      source_set_input_[component_index][time_step_index]->store(true, std::memory_order_release);
+                                      source_set_input_[component_index][time_step_index]->store(true,
+                                                                                                 std::memory_order_release);
                                       SPDLOG_TRACE(
                                           "requestSourceBufferScheduled, source component future, taskflow {0} component {1} timestamp {2}",
                                           time_step_index,
@@ -428,7 +435,6 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
 
                               }
 
-
                           }
                       });
 }
@@ -438,7 +444,7 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
     /**
      * if the stop event is scheduled then refuse all new data events
      */
-    if(stop_scheduled_){
+    if (stop_scheduled_) {
         return requestSourceBufferInvalid();
     }
     switch (config_.source_mode) {
@@ -483,7 +489,7 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
  */
 std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSourceBufferNewTimestampWait(Timestamp timestamp,
                                                                                                           int component_index) {
-    if (isNextExpectedTimestamp(timestamp)) {
+    if (time_domain_clock_.isNextExpectedTimestamp(timestamp)) {
         // 1: timestamp is next expected time step
         auto expected_timestamp = time_domain_clock_.getNextExpectedTimestamp();
         SPDLOG_TRACE("Schedule event ts: {0} {1} with expected timestamp: {2}",
@@ -491,16 +497,25 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
                      EventType::DATA,
                      expected_timestamp);
         scheduleEvent(EventType::DATA, expected_timestamp);
-    } else if (isFurtherAheadThenNextExpectedTimestamp(timestamp)) {
+    } else if (time_domain_clock_.isFurtherAheadThenNextExpectedTimestamp(timestamp)) {
         // 2: timestamp is further ahead then the next expected time step
 
         Timestamp queue_timestamp;
+        size_t padding_count{0};
         do {
-            queue_timestamp = getNextExpectedDataTimestamp();
-            SPDLOG_WARN("scheduling padding event ts: {0}", queue_timestamp);
+            queue_timestamp = time_domain_clock_.getNextExpectedTimestamp();
+//            SPDLOG_TRACE("scheduling padding event ts: {0} until {1}, count {2}",
+//                         queue_timestamp,
+//                         timestamp,
+//                         padding_count);
             schedulePaddingEvent(EventType::DATA, queue_timestamp, component_index);
-        } while (!isNextExpectedTimestamp(timestamp));
+            ++padding_count;
 
+        } while (!time_domain_clock_.isNextExpectedTimestampOrBigger(timestamp));
+
+        if (padding_count > 2) {
+            SPDLOG_WARN("source is more than two frames ahead of last measurement, scheduled {0} padding events", padding_count);
+        }
         auto expected_timestamp = time_domain_clock_.getNextExpectedTimestamp();
         SPDLOG_TRACE("Schedule event ts: {0} {1} with expected timestamp: {2}",
                      timestamp,
@@ -508,10 +523,11 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
                      expected_timestamp);
         scheduleEvent(EventType::DATA, expected_timestamp);
     } else {
-        throw std::invalid_argument(fmt::format(
+        SPDLOG_ERROR(
             "trying to requestSourceBufferNewTimestampWait, but timestamp was valid (newer than any other reported by this component), not running or scheduled, not the next time step or any after that. time continuum broke for for timestamp: {0} component index: {1}",
             timestamp,
-            component_index));
+            component_index);
+        return requestSourceBufferInvalid();
     }
 
     return requestSourceBufferScheduled(timestamp, component_index);
@@ -545,27 +561,21 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
         return requestSourceBufferInvalid();
     }
 }
-bool TaskFlowInFlowScheduler::isNextExpectedTimestamp(Timestamp timestamp) {
-    return time_domain_clock_.isNextExpectedTimestamp(timestamp);
-}
-bool TaskFlowInFlowScheduler::isFurtherAheadThenNextExpectedTimestamp(Timestamp timestamp) {
-    return time_domain_clock_.isFurtherAheadThenNextExpectedTimestamp(timestamp);
-}
+
 bool TaskFlowInFlowScheduler::isInvalidNextRequestedTimeStamp(Timestamp timestamp, int component_index) {
     if (timestamp + config_.max_offset < time_domain_clock_.getInitTimestamp() - config_.max_offset) {
-        SPDLOG_ERROR("timestamp smaller then initial timestep: initial: {0} requested: {1}", time_domain_clock_.getInitTimestamp(), timestamp);
+        SPDLOG_ERROR("timestamp smaller then initial timestep: initial: {0} requested: {1}",
+                     time_domain_clock_.getInitTimestamp(),
+                     timestamp);
         return true;
     }
 
-    return timestamp <= latest_scheduled_component_timestamp_.at(component_index);
+    return timestamp+config_.max_offset <= latest_scheduled_component_timestamp_.at(component_index)-config_.max_offset;
 }
 std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSourceBufferInvalid() {
     std::promise<buffer::SourceComponentBuffer *> value;
     value.set_value(nullptr);
     return value.get_future();
-}
-Timestamp TaskFlowInFlowScheduler::getNextExpectedDataTimestamp() {
-    return time_domain_clock_.getNextExpectedTimestamp();
 }
 
 void TaskFlowInFlowScheduler::scheduleEvent(EventType message_type, Timestamp timestamp) {
@@ -599,7 +609,7 @@ int TaskFlowInFlowScheduler::scheduleDataEventImmediately(Timestamp timestamp, i
     if (free_taskflows_semaphore_.try_wait()) {
         SPDLOG_TRACE("Schedule event immediately ts: {0} {1}", timestamp, EventType::DATA);
 
-        latest_scheduled_ts_ = time_domain_clock_.getNextExpectedTimestamp();
+        latest_scheduled_ts_ = timestamp;
 
         time_step_latest_++;
         time_step_latest_ = time_step_latest_ % time_step_count_;
@@ -652,7 +662,7 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
     } else {
         SPDLOG_TRACE("non data event, commit all source components");
         for (int source_index = 0; source_index < time_domain_buffer_->getCountSources(); ++source_index) {
-            source_set_input_[source_index][time_step_latest_]->store(true,std::memory_order_relaxed);
+            source_set_input_[source_index][time_step_latest_]->store(true, std::memory_order_relaxed);
             time_step_buffer.getSourceComponentBuffer(source_index)->commit(true);
         }
 

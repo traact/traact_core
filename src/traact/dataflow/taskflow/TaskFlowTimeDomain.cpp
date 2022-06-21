@@ -259,9 +259,8 @@ void TaskFlowTimeDomain::prepareComponents() {
 
                 auto component_index = time_domain_buffer_->getComponentIndex(instance_id);
                 auto request_source_callback =
-                    [this, component_index](auto &&timestamp) -> std::future<buffer::SourceComponentBuffer *> {
-                        return requestSourceBuffer(std::forward<decltype(timestamp)>(timestamp),
-                                                   component_index);
+                    [this, component_index](Timestamp timestamp) -> std::future<buffer::SourceComponentBuffer *> {
+                        return requestSourceBuffer(timestamp, component_index);
                     };
                 component.second->setRequestCallback(request_source_callback);
                 break;

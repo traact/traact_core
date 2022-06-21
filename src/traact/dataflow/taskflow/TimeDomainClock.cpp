@@ -77,4 +77,7 @@ TimeDomainClock::TimeDomainClock(double expected_sensor_frequency, const TimeDur
 Timestamp TimeDomainClock::getInitTimestamp() {
     return initial_timestamp_mean_;
 }
+bool TimeDomainClock::isNextExpectedTimestampOrBigger(Timestamp next_timestamp) const {
+    return isNextExpectedTimestamp(next_timestamp) || next_timestamp >= expected_next_timestamp_;
+}
 }

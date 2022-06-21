@@ -98,11 +98,10 @@ class TaskFlowInFlowScheduler {
                                                                                      int component_index);
     std::future<buffer::SourceComponentBuffer *> requestSourceBufferNewTimestampImmediate(Timestamp timestamp,
                                                                                           int component_index);
-    bool isNextExpectedTimestamp(Timestamp timestamp);
-    bool isFurtherAheadThenNextExpectedTimestamp(Timestamp timestamp);
+
     bool isInvalidNextRequestedTimeStamp(Timestamp timestamp, int component_index);
     std::future<buffer::SourceComponentBuffer *> requestSourceBufferInvalid();
-    Timestamp getNextExpectedDataTimestamp();
+
     void schedulePaddingEvent(EventType message_type, Timestamp timestamp, int component_index);
     int scheduleDataEventImmediately(Timestamp timestamp, int component_index);
 };

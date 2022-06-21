@@ -18,6 +18,7 @@ namespace traact::dataflow {
 
 
         bool isNextExpectedTimestamp(Timestamp next_timestamp) const;
+        bool isNextExpectedTimestampOrBigger(Timestamp next_timestamp) const;
         bool isFurtherAheadThenNextExpectedTimestamp(Timestamp next_timestamp) const;
 
         Timestamp getNextExpectedTimestamp();

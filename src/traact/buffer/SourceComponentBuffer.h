@@ -30,8 +30,25 @@ class TRAACT_CORE_EXPORT SourceComponentBuffer {
     }
 
     template<typename Port>
+    typename Port::Header::NativeType &getOutput(int port_group_index, int port_group_instance_index) const noexcept {
+        return local_output_buffer_.template getOutput<Port>(port_group_index, port_group_instance_index);
+    }
+
+    template<typename Port>
     typename Port::Header &getOutputHeader() const {
         return local_output_buffer_.template getOutputHeader<Port>();
+    }
+
+    template<typename Port>
+    typename Port::Header &getOutputHeader(int port_group_index, int port_group_instance_index) const noexcept {
+        return local_output_buffer_.template getOutputHeader<Port>(port_group_index, port_group_instance_index);
+    }
+
+    void setOutputInvalid(size_t index) const noexcept;
+
+    template<typename Port>
+    void setOutputInvalid() const noexcept {
+        local_output_buffer_.template setOutputInvalid<Port>();
     }
 
     size_t getOutputCount();
