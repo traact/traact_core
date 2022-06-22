@@ -627,7 +627,7 @@ int TaskFlowInFlowScheduler::scheduleDataEventImmediately(Timestamp timestamp, i
 
         return time_step_latest_;
     } else {
-        -1;
+        return -1;
     }
 }
 

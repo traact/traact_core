@@ -70,4 +70,33 @@ std::vector<std::string> globFiles(const std::string &path, const std::string &f
     return result;
 }
 
+bool createDirectoryRecursive(cppfs::FileHandle file_handle){
+    if(file_handle.exists()){
+        return true;
+    } else {
+        auto parent = file_handle.parentDirectory();
+        bool parent_parent = createDirectoryRecursive(parent);
+        if(parent_parent){
+            return parent.createDirectory();
+        } else {
+            return false;
+        }
+    }
+}
+
+bool TRAACT_CORE_EXPORT createFileDirectory(const std::string &filename) {
+    cppfs::FileHandle file_handle = cppfs::fs::open(filename);
+    auto parent = file_handle.parentDirectory();
+    if(parent.exists()){
+        return true;
+    } else {
+        bool parent_parent = createDirectoryRecursive(parent);
+        if(parent_parent){
+            return parent.createDirectory();
+        } else {
+            return false;
+        }
+    }
+}
+
 }
