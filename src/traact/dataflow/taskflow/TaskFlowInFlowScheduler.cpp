@@ -394,7 +394,11 @@ bool TaskFlowInFlowScheduler::isTimestampScheduled(Timestamp timestamp) {
 std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSourceBufferRunning(Timestamp timestamp,
                                                                                                  int component_index,
                                                                                                  int time_step_index) {
-    source_set_input_[component_index][time_step_index]->store(true, std::memory_order_relaxed);
+    {
+        std::unique_lock guard(flow_mutex_);
+        source_set_input_[component_index][time_step_index]->store(true, std::memory_order_relaxed);
+    }
+
     return std::async(std::launch::deferred,
                       [&, timestamp, component_index, time_step_index]() -> buffer::SourceComponentBuffer * {
                           SPDLOG_TRACE("requestSourceBufferRunning, time step: {0} component: {1} timestamp: {2}",
@@ -627,6 +631,7 @@ int TaskFlowInFlowScheduler::scheduleDataEventImmediately(Timestamp timestamp, i
 
         return time_step_latest_;
     } else {
+        SPDLOG_TRACE("Schedule event, no free time steps ts: {0} {1}", timestamp, EventType::DATA);
         return -1;
     }
 }
