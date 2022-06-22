@@ -13,7 +13,7 @@ set(TEST_SOURCES
         #dataflow/tbb/DataflowMessageReceiver.cpp
         #dataflow/tbb/DataflowMessageReceiver.h
         buffer/SingleComponentBufferTest.cpp
-        TestDatatypes.h TestDatatypes.cpp TestComponents.cpp TestComponents.h TestAsyncSourceComponent.cpp TestAsyncSourceComponent.h TestSyncSinkComponent.cpp TestSyncSinkComponent.h dataflow/Test_00_SourceSink.cpp TestComponentState.cpp TestComponentState.h dataflow/Test_01_TwoAsyncSource_SyncFunctional_SyncSink.cpp TestSyncFunctionalComponent.cpp TestSyncFunctionalComponent.h dataflow/taskflow/Test_TimeDomainClock.cpp)
+        TestDatatypes.h TestDatatypes.cpp TestComponents.cpp TestComponents.h TestAsyncSourceComponent.cpp TestAsyncSourceComponent.h TestSyncSinkComponent.cpp TestSyncSinkComponent.h dataflow/Test_00_SourceSink.cpp TestComponentState.cpp TestComponentState.h dataflow/Test_01_TwoAsyncSource_SyncFunctional_SyncSink.cpp TestSyncFunctionalComponent.cpp TestSyncFunctionalComponent.h dataflow/taskflow/Test_TimeDomainClock.cpp pattern/test_serialization.cpp)
 
 add_executable(core_tests ${TEST_SOURCES})
 

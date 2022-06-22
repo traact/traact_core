@@ -7,58 +7,47 @@ namespace ns {
 using nlohmann::json;
 
 void to_json(json &jobj, const traact::pattern::Pattern &obj) {
-//    jobj["pattern_name"] = obj.name;
-//    jobj["concurrency"] = static_cast<int>(obj.concurrency);
-//    jobj["parameter"] = obj.parameter;
-//
-//    json::iterator find_it = jobj.find("producer_ports");
-//    if (!obj.producer_ports.empty()) {
-//        json jports;
-//        for (const auto &producer_port : obj.producer_ports) {
-//            json jport;
-//            to_json(jport, producer_port);
-//            jports.emplace_back(jport);
-//        }
-//        jobj["producer_ports"] = jports;
-//    }
-//    if (!obj.consumer_ports.empty()) {
-//        json jports;
-//        for (const auto &producer_port : obj.consumer_ports) {
-//            json jport;
-//            to_json(jport, producer_port);
-//            jports.emplace_back(jport);
-//        }
-//        jobj["consumer_ports"] = jports;
-//    }
+    jobj["pattern_name"] = obj.name;
+
+
+    auto& json_concurrency = jobj["time_domains"];
+
+    for (size_t i = 0; i < obj.time_domain_component_type.size(); ++i) {
+        json type_td;
+        type_td["component_type"] = obj.time_domain_component_type[i];
+        type_td["concurrency"] = obj.concurrency[i];
+        json_concurrency.emplace_back(type_td);
+    }
+
+    auto& json_port_groups = jobj["port_groups"];
+    for (const auto & port_group : obj.port_groups) {
+        json json_port_group;
+        to_json(json_port_group, port_group);
+        json_port_groups.emplace_back(json_port_group);
+    }
 }
 void from_json(const json &jobj, traact::pattern::Pattern &obj) {
-//    jobj["pattern_name"].get_to(obj.name);
-//    int concurrency_tmp;
-//    jobj["concurrency"].get_to(concurrency_tmp);
-//    obj.concurrency = static_cast<traact::Concurrency>(concurrency_tmp);
-//    obj.parameter = jobj["parameter"];
-//
-//    auto find_it = jobj.find("producer_ports");
-//    if (find_it != jobj.end()) {
-//        json jports = *find_it;
-//
-//        for (const auto &jproducer_port : jports) {
-//            traact::pattern::Port port;
-//            from_json(jproducer_port, port);
-//            obj.producer_ports.emplace_back(std::move(port));
-//        }
-//    }
-//
-//    find_it = jobj.find("consumer_ports");
-//    if (find_it != jobj.end()) {
-//        json jports = *find_it;
-//
-//        for (const auto &jconsumer_port : jports) {
-//            traact::pattern::Port port;
-//            from_json(jconsumer_port, port);
-//            obj.consumer_ports.emplace_back(std::move(port));
-//        }
-//    }
+    jobj["pattern_name"].get_to(obj.name);
+
+    auto find_it = jobj.find("time_domains");
+    if (find_it != jobj.end()) {
+        json json_time_domains = *find_it;
+        for (const auto &json_type_td : json_time_domains) {
+            obj.time_domain_component_type.emplace_back(json_type_td["component_type"].get<traact::component::ComponentType>());
+            obj.concurrency.emplace_back(json_type_td["concurrency"].get<traact::Concurrency>());
+        }
+    }
+
+    find_it = jobj.find("port_groups");
+    if (find_it != jobj.end()) {
+        obj.port_groups.clear();
+        json json_port_groups = *find_it;
+        for (const auto &json_port_group : json_port_groups) {
+            traact::pattern::PortGroup port_group;
+            from_json(json_port_group, port_group);
+            obj.port_groups.emplace_back(std::move(port_group));
+        }
+    }
 
 }
 

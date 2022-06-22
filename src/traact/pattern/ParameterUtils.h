@@ -22,7 +22,7 @@ bool setValueFromParameter(const traact::pattern::instance::PatternInstance &pat
                            std::string parameter_name,
                            ParaType &parameter_out,
                            DefaultValueType default_value) {
-    auto& parameter = pattern_instance.port_groups_.at(kDefaultPortGroupIndex)[0]->port_group.parameter;
+    auto& parameter = pattern_instance.port_groups.at(kDefaultPortGroupIndex)[0]->port_group.parameter;
     if (!parameter.contains(parameter_name)) {
         SPDLOG_WARN("Missing parameter: {0}, using default value: {1}", parameter_name, default_value);
         parameter_out = default_value;
@@ -39,7 +39,7 @@ bool setValueFromParameter(const traact::pattern::instance::PatternInstance &pat
                            ParaType &paramter_out,
                            DefaultValueType default_value,
                            const std::map<std::string, ParaType> &key_value) {
-    auto& parameter = pattern_instance.port_groups_.at(kDefaultPortGroupIndex)[0]->port_group.parameter;
+    auto& parameter = pattern_instance.port_groups.at(kDefaultPortGroupIndex)[0]->port_group.parameter;
     if (!parameter.contains(parameter_name)) {
         SPDLOG_WARN("Missing parameter: {0}, using default value: {1}", parameter_name, default_value);
         paramter_out = key_value.at(default_value);

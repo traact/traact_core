@@ -247,7 +247,7 @@ void TaskFlowTimeDomain::prepareComponents() {
             component_start_points_.emplace(instance_id);
         }
 
-        component_to_successors_.emplace(instance_id, std::move(successors));
+        component_to_successors_[instance_id].insert(successors.begin(), successors.end());
 
         component.second->setSourceFinishedCallback([&]() {
             masterSourceFinished();

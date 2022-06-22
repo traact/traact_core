@@ -38,7 +38,7 @@ class Test_00_SourceSink: public ::testing::TestWithParam<int> {
         buffer::TimeDomainManagerConfig td_config;
         td_config.time_domain = 0;
         td_config.ringbuffer_size = GetParam();
-        td_config.master_source = "source";
+
         td_config.source_mode = SourceMode::WAIT_FOR_BUFFER;
         td_config.missing_source_event_mode = MissingSourceEventMode::WAIT_FOR_EVENT;
         td_config.max_offset = std::chrono::milliseconds(0);

@@ -52,6 +52,7 @@ TEST(SingleComponentBuffer, Empty) {
     EXPECT_EQ(0, buffer.getOutputCount());
 }
 
+
 TEST(SingleComponentBuffer, Input) {
     using namespace traact;
     using namespace traact::buffer;

@@ -135,8 +135,6 @@ struct TRAACT_CORE_EXPORT TimeDomainManagerConfig {
     SourceMode source_mode{SourceMode::WAIT_FOR_BUFFER};
     MissingSourceEventMode missing_source_event_mode{MissingSourceEventMode::WAIT_FOR_EVENT};
     int cpu_count{0};
-    std::string master_source{"invalid"};
-
 };
 }
 

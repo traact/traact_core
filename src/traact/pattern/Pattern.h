@@ -19,13 +19,13 @@ struct TRAACT_CORE_EXPORT Pattern {
     Pattern();
     Pattern(Pattern&) = default;
     Pattern(Pattern&&) = default;
-
-
-
     Pattern(std::string name,
             Concurrency t_concurrency,
             component::ComponentType component_type);
     ~Pattern() = default;
+    Pattern & operator= ( const Pattern & ) = default;
+    Pattern & operator= ( Pattern && ) = default;
+
 
     Pattern &addPort(std::string port_name, int time_domain, PortType port_type, std::string type_name, PortGroup& port_group);
 
@@ -125,10 +125,8 @@ struct TRAACT_CORE_EXPORT Pattern {
 
     std::string name{"invalid"};
     std::vector<Concurrency> concurrency{};
-
-    //PortGroup default_ports{};
-    std::vector<PortGroup> port_groups{};
     std::vector<component::ComponentType> time_domain_component_type{};
+    std::vector<PortGroup> port_groups{};
 
  private:
     bool is_group_port{false};

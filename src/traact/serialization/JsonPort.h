@@ -13,6 +13,10 @@ void TRAACT_CORE_EXPORT to_json(json &jobj, const traact::pattern::Port &obj);
 
 void TRAACT_CORE_EXPORT from_json(const json &jobj, traact::pattern::Port &obj);
 
+void TRAACT_CORE_EXPORT to_json(json &jobj, const traact::pattern::PortGroup &obj);
+
+void TRAACT_CORE_EXPORT from_json(const json &jobj, traact::pattern::PortGroup &obj);
+
 } // namespace ns
 
 #endif //TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPORT_H_

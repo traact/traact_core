@@ -57,11 +57,7 @@ struct TRAACT_CORE_EXPORT PortGroupInstance {
     [[nodiscard]] std::string getProducerPortName(const std::string &internal_port_name) const;
     [[nodiscard]] std::string getConsumerPortName(const std::string &internal_port_name) const;
 
-    PortGroup port_group{};
-    PatternInstance* pattern_instance{nullptr};
-    int port_group_instance_index{-1};
-    std::vector<PortInstance> producer_ports;
-    std::vector<PortInstance> consumer_ports;
+
 
     int getPortGroupStartIndex(int local_time_domain, PortType port_type) const;
     int getPortCount(int local_time_domain, PortType port_type) const;
@@ -87,6 +83,12 @@ struct TRAACT_CORE_EXPORT PortGroupInstance {
         }
         return true;
     }
+
+    PortGroup port_group{};
+    PatternInstance* pattern_instance{nullptr};
+    int port_group_instance_index{-1};
+    std::vector<PortInstance> producer_ports;
+    std::vector<PortInstance> consumer_ports;
 };
 
 

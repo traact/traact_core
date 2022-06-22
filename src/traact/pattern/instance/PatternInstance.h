@@ -42,19 +42,19 @@ struct TRAACT_CORE_EXPORT PatternInstance {
 
     template<typename T>
         void setParameter(const std::string& name, T value){
-        port_groups_.at(kDefaultPortGroupIndex)[0]->template setParameter(name, value);
+        port_groups.at(kDefaultPortGroupIndex)[0]->template setParameter(name, value);
         }
 
     template<typename ParaType>
     bool setValueFromParameter(std::string parameter_name, ParaType &parameter_out) const {
-        return port_groups_.at(kDefaultPortGroupIndex).front()->template setValueFromParameter(parameter_name,
-                                                                                               parameter_out);
+        return port_groups.at(kDefaultPortGroupIndex).front()->template setValueFromParameter(parameter_name,
+                                                                                              parameter_out);
     }
 
     template<typename ParaType>
     bool setValueFromParameter(int group_index, int instance_index, std::string parameter_name, ParaType &parameter_out) const {
-        return port_groups_.at(group_index).at(instance_index)->template setValueFromParameter(parameter_name,
-                                                                                               parameter_out);
+        return port_groups.at(group_index).at(instance_index)->template setValueFromParameter(parameter_name,
+                                                                                              parameter_out);
     }
 
     [[nodiscard]] int getPortGroupCount(const std::string &port_group_name) const;
@@ -67,8 +67,8 @@ struct TRAACT_CORE_EXPORT PatternInstance {
     GraphInstance *parent_graph{nullptr};
     Pattern local_pattern{};
 
-    std::vector< std::vector<std::shared_ptr<PortGroupInstance>> > port_groups_{};
-    std::map<std::string, int> port_group_name_to_index_;
+    std::vector< std::vector<std::shared_ptr<PortGroupInstance>> > port_groups{};
+    std::map<std::string, int> port_group_name_to_index;
     std::vector<int> local_to_global_time_domain;
     int getPortGroupIndex(const std::string &group_name) const;
     std::tuple<int, int, int> getPortGroupOffset(int port_group_index, PortType port_type, int local_time_domain) const;

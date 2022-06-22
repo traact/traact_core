@@ -10,7 +10,7 @@ bool would_connect_to_self_recursive(const traact::pattern::instance::PatternIns
     if (test_comp == prod_comp)
         return true;
 
-    for (const auto &port_groups : test_comp->port_groups_) {
+    for (const auto &port_groups : test_comp->port_groups) {
         for (const auto &port_group_instance : port_groups) {
             for (const auto &tmp : port_group_instance->producer_ports) {
                 if (!tmp.isConnected())
@@ -66,7 +66,7 @@ traact::pattern::instance::PortInstance::ConstPtr traact::pattern::instance::Gra
 void traact::pattern::instance::GraphInstance::initializeGraphConnections() {
     for (auto &pattern_instance : pattern_instances) {
         pattern_instance.second->parent_graph = this;
-        for (auto &group_port_instances : pattern_instance.second->port_groups_) {
+        for (auto &group_port_instances : pattern_instance.second->port_groups) {
             for (auto &group_port_instance : group_port_instances) {
                 group_port_instance->pattern_instance = pattern_instance.second.get();
                 initializeGraphPortConnections(*group_port_instance);
@@ -232,7 +232,7 @@ void traact::pattern::instance::GraphInstance::initializeGraphPortConnections(tr
 }
 void GraphInstance::forAllPatternInstances(const std::function<void(const PortGroupInstance &)> &func) const {
     for (auto &pattern_instance : pattern_instances) {
-        for (auto &group_port_instances : pattern_instance.second->port_groups_) {
+        for (auto &group_port_instances : pattern_instance.second->port_groups) {
             for (auto &group_port_instance : group_port_instances) {
                 func(*group_port_instance);
             }

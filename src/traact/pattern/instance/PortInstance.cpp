@@ -76,9 +76,9 @@ int PortGroupInstance::getPortCount(int local_time_domain, PortType port_type) c
 }
 int PortGroupInstance::getPortGroupStartIndex(int local_time_domain, PortType port_type) const {
     int result = 0;
-    for (int group_index = 0; group_index < pattern_instance->port_group_name_to_index_.size(); ++group_index) {
+    for (int group_index = 0; group_index < pattern_instance->port_group_name_to_index.size(); ++group_index) {
         auto group_name = pattern_instance->local_pattern.port_groups[group_index].name;
-        const auto &port_group_list = pattern_instance->port_groups_[group_index];
+        const auto &port_group_list = pattern_instance->port_groups[group_index];
 
         for (const auto &port_group_instance : port_group_list) {
             if (group_name == port_group.name

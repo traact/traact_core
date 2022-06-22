@@ -3,8 +3,7 @@
 #ifndef TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERNINSTANCE_H_
 #define TRAACT_INCLUDE_TRAACT_SERIALIZATION_JSONPATTERNINSTANCE_H_
 
-#include <traact/serialization/JsonPattern.h>
-#include <traact/serialization/JsonPortInstance.h>
+
 #include <traact/pattern/instance/PatternInstance.h>
 #include <traact/traact_core_export.h>
 namespace ns {
