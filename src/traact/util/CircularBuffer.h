@@ -3,6 +3,7 @@
 #ifndef TRAACT_CORE_SRC_TRAACT_UTIL_CIRCULARBUFFER_H_
 #define TRAACT_CORE_SRC_TRAACT_UTIL_CIRCULARBUFFER_H_
 
+#include <cstdint>
 #include <array>
 
 namespace traact::util {
