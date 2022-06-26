@@ -61,6 +61,7 @@ struct TRAACT_CORE_EXPORT PatternInstance {
     PortGroupInfo getPortGroupInfo(const std::string &port_group_name) const;
     PortGroupInstance& instantiatePortGroup(const std::string& port_group_name);
     bool isInTimeDomain(int global_time_domain) const;
+    const std::string& getName() const;
 
     std::string instance_id{"invalid"};
     std::string display_name{"invalid"};

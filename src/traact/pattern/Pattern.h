@@ -87,8 +87,8 @@ struct TRAACT_CORE_EXPORT Pattern {
     template<typename T>
     Pattern &addParameter(const std::string& parameter_name,
                           T default_value,
-                          T min_value = std::numeric_limits<T>::min(),
-                          T max_value = std::numeric_limits<T>::max()) {
+                          T min_value = std::numeric_limits<T>::min()/2,
+                          T max_value = std::numeric_limits<T>::max()/2) {
         auto& default_ports = port_groups.front();
         default_ports.parameter[parameter_name]["default"] = default_value;
         default_ports.parameter[parameter_name]["value"] = default_value;

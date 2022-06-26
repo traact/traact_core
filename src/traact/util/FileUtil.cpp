@@ -8,6 +8,15 @@
 #include <cppfs/FileIterator.h>
 namespace traact::util {
 
+bool fileExists(const std::string &filename) {
+    cppfs::FileHandle fh = cppfs::fs::open(filename);
+    if (fh.exists() && fh.isFile()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool fileExists(const std::string &filename, const std::string &component_name) {
     cppfs::FileHandle fh = cppfs::fs::open(filename);
     if (fh.exists() && fh.isFile()) {

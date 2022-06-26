@@ -10,6 +10,7 @@ namespace traact::util {
 template<typename T, uint32_t N>
 class CircularBuffer {
  public:
+    using BufferType = std::array<T, N>;
     void clear() {
         current_index_ = -1;
         current_size_ = 0;
@@ -33,6 +34,14 @@ class CircularBuffer {
         return data_[index];
     }
 
+    T& front() {
+        return const_cast<T&>(front());
+    }
+
+    T& back() {
+        return const_cast<T&>(back());
+    }
+
     const T& front() const {
         auto index = current_index_ - (current_size_-1);
         if(index < 0){
@@ -43,6 +52,32 @@ class CircularBuffer {
 
     const T& back() const {
         return data_[current_index_];
+    }
+
+    T* begin() noexcept {
+        return const_cast<T*>(static_cast<const CircularBuffer &>(*this).begin());
+    }
+
+    T* end() noexcept {
+        return const_cast<T*>(static_cast<const CircularBuffer &>(*this).end());
+    }
+
+    const T* begin() const noexcept {
+        if(current_size_ == 0) {
+            return nullptr;
+        } else {
+            return &front();
+        }
+
+    }
+
+    const T* end() const noexcept {
+        if(current_size_ == 0) {
+            return nullptr;
+        } else {
+            return (&back())+1;
+        }
+
     }
 
  private:

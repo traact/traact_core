@@ -52,7 +52,34 @@ struct TRAACT_CORE_EXPORT PortGroupInstance {
 //        if(!port_group.parameter.contains("name")){
 //            SPDLOG_WARN("unknown parameter name {0}", name);
 //        }
-        port_group.parameter[name]["value"] = value;
+        nlohmann::json new_value = value;
+        switch(port_group.parameter[name]["default"].type()){
+            case nlohmann::detail::value_t::string:{
+                port_group.parameter[name]["value"] = new_value.template get<std::string>();
+                break;
+            }
+            case nlohmann::detail::value_t::number_float:{
+                port_group.parameter[name]["value"] = new_value.template get<double>();
+                break;
+            }
+            case nlohmann::detail::value_t::number_unsigned:{
+                port_group.parameter[name]["value"] = new_value.template get<uint64_t>();
+                break;
+            }
+            case nlohmann::detail::value_t::number_integer:{
+                port_group.parameter[name]["value"] = new_value.template get<int64_t>();
+                break;
+            }
+            case nlohmann::detail::value_t::boolean :{
+                port_group.parameter[name]["value"] = new_value.template get<bool>();
+                break;
+            }
+            default:{
+                port_group.parameter[name]["value"] = new_value;
+                break;
+            }
+        }
+
     }
     [[nodiscard]] std::string getProducerPortName(const std::string &internal_port_name) const;
     [[nodiscard]] std::string getConsumerPortName(const std::string &internal_port_name) const;

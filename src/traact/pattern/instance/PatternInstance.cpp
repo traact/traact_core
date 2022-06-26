@@ -189,5 +189,8 @@ std::tuple<int, int, int> PatternInstance::getPortGroupOffset(int port_group_ind
     int group_port_count = port_group_list.front()->getPortCount(local_time_domain, port_type);
     return {group_offset, group_port_count,port_group_list.size()};
 }
+const std::string &PatternInstance::getName() const {
+    return instance_id;
+}
 
 }

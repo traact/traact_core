@@ -11,6 +11,8 @@ namespace traact::util {
 
 bool TRAACT_CORE_EXPORT fileExists(const std::string &filename, const std::string &component_name);
 
+bool TRAACT_CORE_EXPORT fileExists(const std::string &filename);
+
 bool TRAACT_CORE_EXPORT createFileDirectory(const std::string &filename);
 
 bool TRAACT_CORE_EXPORT hasEnding(std::string const &full_string, std::string const &ending);
