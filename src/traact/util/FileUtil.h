@@ -3,6 +3,7 @@
 #ifndef TRAACTMULTI_TRAACT_FACADE_INCLUDE_TRAACT_UTIL_FILEUTIL_H_
 #define TRAACTMULTI_TRAACT_FACADE_INCLUDE_TRAACT_UTIL_FILEUTIL_H_
 
+#include <string>
 #include <set>
 #include <vector>
 #include "traact/traact_core_export.h"
