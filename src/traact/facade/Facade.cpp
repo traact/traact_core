@@ -14,7 +14,7 @@ traact::facade::Facade::Facade(PluginFactory::Ptr plugin_factory, dataflow::Netw
       finished_future_(finished_promise_.get_future()) {
 
     network_->setGenericFactoryObjects(factory_);
-    network_->setMasterSourceFinishedCallback(std::bind(&Facade::MasterSourceFinished, this));
+    network_->setMasterSourceFinishedCallback(std::bind(&Facade::stopAsync, this));
 
 }
 traact::facade::Facade::~Facade() {
@@ -121,7 +121,7 @@ bool traact::facade::Facade::blockingStart() {
     return true;
 }
 
-void traact::facade::Facade::MasterSourceFinished() {
+void traact::facade::Facade::stopAsync() {
     SPDLOG_TRACE("Facade source finished callback");
     std::unique_lock guard(stop_lock_);
 

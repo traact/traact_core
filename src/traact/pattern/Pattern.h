@@ -30,11 +30,11 @@ struct TRAACT_CORE_EXPORT Pattern {
     Pattern &addPort(std::string port_name, int time_domain, PortType port_type, std::string type_name, PortGroup& port_group);
 
     Pattern &addProducerPort(const std::string &port_name,
-                             const std::string &data_meta_type,
+                             const std::string &data_type_name,
                              int port_index = -1,
                              int time_domain = 0);
     Pattern &addConsumerPort(const std::string &port_name,
-                             const std::string &data_meta_type,
+                             const std::string &data_type_name,
                              int port_index = -1,
                              int time_domain = 0);
 
@@ -87,8 +87,8 @@ struct TRAACT_CORE_EXPORT Pattern {
     template<typename T>
     Pattern &addParameter(const std::string& parameter_name,
                           T default_value,
-                          T min_value = std::numeric_limits<T>::min()/2,
-                          T max_value = std::numeric_limits<T>::max()/2) {
+                          T min_value = T(0),
+                          T max_value = T(1000)) {
         auto& default_ports = port_groups.front();
         default_ports.parameter[parameter_name]["default"] = default_value;
         default_ports.parameter[parameter_name]["value"] = default_value;

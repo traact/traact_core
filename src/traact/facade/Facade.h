@@ -25,6 +25,7 @@ class TRAACT_CORE_EXPORT Facade {
     std::shared_future<void> getFinishedFuture();
 
     bool stop();
+    void stopAsync();
 
     pattern::Pattern::Ptr instantiatePattern(const std::string &pattern_name);
 
@@ -47,7 +48,7 @@ class TRAACT_CORE_EXPORT Facade {
     std::mutex stop_lock_;
     std::shared_ptr<std::thread> stop_thread_{nullptr};
 
-    void MasterSourceFinished();
+
 };
 }
 

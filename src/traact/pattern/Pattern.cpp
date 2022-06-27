@@ -39,26 +39,26 @@ Pattern &Pattern::addPort(std::string port_name,
 }
 
 Pattern &Pattern::addProducerPort(const std::string &port_name,
-                                  const std::string &data_meta_type,
+                                  const std::string &data_type_name,
                                   int port_index, int time_domain) {
     if (is_group_port) {
         auto &port_group = port_groups.back();
-        return addPort(port_name, time_domain, PortType::PRODUCER, data_meta_type, port_group);
+        return addPort(port_name, time_domain, PortType::PRODUCER, data_type_name, port_group);
     } else {
         auto &port_group = port_groups.front();
-        return addPort(port_name, time_domain, PortType::PRODUCER, data_meta_type, port_group);
+        return addPort(port_name, time_domain, PortType::PRODUCER, data_type_name, port_group);
     }
 }
 Pattern &Pattern::addConsumerPort(const std::string &port_name,
-                                  const std::string &data_meta_type,
+                                  const std::string &data_type_name,
                                   int port_index,
                                   int time_domain) {
     if (is_group_port) {
         auto &port_group = port_groups.back();
-        return addPort(port_name, time_domain, PortType::CONSUMER, data_meta_type, port_group);
+        return addPort(port_name, time_domain, PortType::CONSUMER, data_type_name, port_group);
     } else {
         auto &port_group = port_groups.front();
-        return addPort(port_name, time_domain, PortType::CONSUMER, data_meta_type, port_group);
+        return addPort(port_name, time_domain, PortType::CONSUMER, data_type_name, port_group);
     }
 }
 

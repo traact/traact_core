@@ -62,6 +62,11 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
         return *static_cast<typename Port::Header *>(input_header_[Port::PortIdx]);
     }
 
+    template<typename HeaderType>
+    const HeaderType &getInputHeader(int index) const noexcept {
+        return *static_cast<HeaderType *>(input_header_[index]);
+    }
+
 //    template<typename Port, typename ReturnType>
 //    ReturnType getInputAs() const noexcept {
 //        auto *data = static_cast<typename Port::Header::NativeType *>(input_buffer_[Port::PortIdx]);
