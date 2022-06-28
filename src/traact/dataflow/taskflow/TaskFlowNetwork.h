@@ -18,6 +18,7 @@ class TRAACT_CORE_EXPORT TaskFlowNetwork : public Network {
 
     ~TaskFlowNetwork() override;
     bool start() override;
+    virtual void propertyChanged() override;
 
     bool stop() override;
  private:

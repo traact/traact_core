@@ -40,3 +40,9 @@ traact::dataflow::TaskFlowNetwork::~TaskFlowNetwork() {
         graph->teardown();
     }
 }
+void traact::dataflow::TaskFlowNetwork::propertyChanged() {
+    for (auto &graph : task_graphs_) {
+        graph->propertyChanged();
+    }
+
+}

@@ -25,6 +25,8 @@ class TaskFlowInFlowScheduler {
 
     void stop();
 
+    void propertyChanged();
+
  private:
     struct ScheduledEvent {
         ScheduledEvent() = default;

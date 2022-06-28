@@ -677,5 +677,9 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
 TaskFlowInFlowScheduler::~TaskFlowInFlowScheduler() {
 
 }
+void TaskFlowInFlowScheduler::propertyChanged() {
+
+    scheduleEvent(EventType::CONFIGURE, kTimestampZero);
+}
 
 } // traact

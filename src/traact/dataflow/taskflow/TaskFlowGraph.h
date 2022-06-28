@@ -21,6 +21,7 @@ class TaskFlowGraph {
     void start();
     void stop();
     void teardown();
+    void propertyChanged();
 
  private:
 

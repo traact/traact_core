@@ -620,5 +620,9 @@ void TaskFlowTimeDomain::printState() {
 
     SPDLOG_WARN(ss.str());
 }
+void TaskFlowTimeDomain::propertyChanged() {
+    scheduler_->propertyChanged();
+
+}
 
 }

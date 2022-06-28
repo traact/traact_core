@@ -55,5 +55,11 @@ TaskFlowGraph::TaskFlowGraph(buffer::DataBufferFactoryPtr generic_factory_object
         generic_factory_objects)), component_graph_(std::move(component_graph)), source_finished_callback_(std::move(callback)) {
 
 }
+void TaskFlowGraph::propertyChanged() {
+    for (auto &task_flow_time_domain : task_flow_time_domains_) {
+        task_flow_time_domain->propertyChanged();
+    }
+
+}
 
 } // traact

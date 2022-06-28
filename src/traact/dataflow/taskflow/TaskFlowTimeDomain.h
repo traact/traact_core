@@ -30,7 +30,7 @@ class TaskFlowTimeDomain {
     void init();
     void start();
     void stop();
-
+    void propertyChanged();
     std::future<buffer::SourceComponentBuffer *> requestSourceBuffer(Timestamp timestamp, int component_index);
 
     void printState();
