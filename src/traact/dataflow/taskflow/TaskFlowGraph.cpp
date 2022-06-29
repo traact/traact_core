@@ -55,9 +55,9 @@ TaskFlowGraph::TaskFlowGraph(buffer::DataBufferFactoryPtr generic_factory_object
         generic_factory_objects)), component_graph_(std::move(component_graph)), source_finished_callback_(std::move(callback)) {
 
 }
-void TaskFlowGraph::propertyChanged() {
+void TaskFlowGraph::parameterChanged(const std::string &instance_id) {
     for (auto &task_flow_time_domain : task_flow_time_domains_) {
-        task_flow_time_domain->propertyChanged();
+        task_flow_time_domain->parameterChanged(instance_id);
     }
 
 }

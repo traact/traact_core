@@ -39,8 +39,10 @@ class TimeStepBuffer {
     std::future<bool> getSourceLock(size_t component_idx);
     void resetNewEvent();
     void setEvent(Timestamp timestamp, EventType message_type);
+    void setEvent(Timestamp timestamp, EventType message_type, std::string changed_pattern);
     Timestamp getTimestamp();
     EventType getEventType();
+    const std::string& getChangedPattern() const;
 
  private:
     const size_t time_step_index_;
@@ -55,6 +57,7 @@ class TimeStepBuffer {
     std::vector<std::unique_ptr<PortState > > buffer_valid_;
     //std::vector< PortState  > buffer_valid_;
     std::vector<Timestamp> buffer_timestamp_;
+    std::string changed_pattern_instance_id_;
 
     std::unique_ptr<ComponentBuffer> createComponentBuffer(const BufferConfig &config, int component_index);
 

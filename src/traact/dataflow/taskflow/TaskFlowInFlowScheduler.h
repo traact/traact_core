@@ -9,12 +9,18 @@
 #include "TaskFlowUtils.h"
 #include <taskflow/taskflow.hpp>
 #include "TimeDomainClock.h"
+#include "TaskFlowTaskFunctions.h"
 
 namespace traact::dataflow {
 class TaskFlowInFlowScheduler {
  public:
-    TaskFlowInFlowScheduler(const buffer::TimeDomainManagerConfig &config, std::shared_ptr<
-        buffer::TimeDomainBuffer> time_domain_buffer, std::string graph_name, int time_domain, tf::Taskflow *taskflow, std::function<void(void)> on_timeout);
+    TaskFlowInFlowScheduler(const buffer::TimeDomainManagerConfig &config,
+                            std::shared_ptr<
+                                buffer::TimeDomainBuffer> time_domain_buffer,
+                            std::string graph_name,
+                            int time_domain,
+                            tf::Taskflow *taskflow,
+                            std::function<void(void)> on_timeout);
     ~TaskFlowInFlowScheduler();
     void start();
     void globalTaskFlowStart();
@@ -25,15 +31,17 @@ class TaskFlowInFlowScheduler {
 
     void stop();
 
-    void propertyChanged();
+    void parameterChanged(const std::string &instance_id);
 
  private:
     struct ScheduledEvent {
         ScheduledEvent() = default;
-        ScheduledEvent(Timestamp &timestamp, EventType event_type, std::vector<int> invalid_sources);
+        ScheduledEvent(Timestamp timestamp, EventType event_type, std::vector<int> invalid_sources);
+        ScheduledEvent(Timestamp timestamp, EventType event_type, std::vector<int> invalid_sources, const std::string& changed_pattern);
         Timestamp timestamp{Timestamp::max()};
         EventType event_type{EventType::INVALID};
         std::vector<int> invalid_sources{};
+        std::string changed_pattern_instance_id{""};
     };
     buffer::TimeDomainManagerConfig config_;
     std::shared_ptr<buffer::TimeDomainBuffer> time_domain_buffer_;
@@ -106,6 +114,7 @@ class TaskFlowInFlowScheduler {
 
     void schedulePaddingEvent(EventType message_type, Timestamp timestamp, int component_index);
     int scheduleDataEventImmediately(Timestamp timestamp, int component_index);
+    void scheduleParameterChangedEvent(const std::string &instance_id);
 };
 }
 

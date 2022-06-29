@@ -12,11 +12,13 @@ std::string toString<EventType>(const EventType &value) {
         case traact::EventType::CONFIGURE:return "CONFIGURE";
         case traact::EventType::START:return "START";
         case traact::EventType::DATA:return "DATA";
+        case EventType::PARAMETER_CHANGE:return "PARAMETER_CHANGE";
         case traact::EventType::STOP:return "STOP";
         case traact::EventType::TEARDOWN:return "TEARDOWN";
         case traact::EventType::DATAFLOW_NO_OP:return "DATAFLOW_NO_OP";
         case traact::EventType::DATAFLOW_STOP:return "DATAFLOW_STOP";
         default:return "unknown EventType value";
+
     }
 }
 

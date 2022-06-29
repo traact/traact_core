@@ -358,7 +358,7 @@ void TaskFlowTimeDomain::prepareTaskData() {
                                                             port->getId().second));
                 }
                 auto &input_data = time_step_data.component_data.at(input_id);
-                component_data.successors_valid.push_back(&input_data.valid_component_call);
+                component_data.predecessors_valid.push_back(&input_data.valid_component_call);
 
             }
         }
@@ -620,8 +620,8 @@ void TaskFlowTimeDomain::printState() {
 
     SPDLOG_WARN(ss.str());
 }
-void TaskFlowTimeDomain::propertyChanged() {
-    scheduler_->propertyChanged();
+void TaskFlowTimeDomain::parameterChanged(const std::string &instance_id) {
+    scheduler_->parameterChanged(instance_id);
 
 }
 

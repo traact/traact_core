@@ -65,6 +65,7 @@ enum class EventType : uint8_t {
     CONFIGURE,
     START,
     DATA,
+    PARAMETER_CHANGE,
     STOP,
     TEARDOWN,
     DATAFLOW_NO_OP,

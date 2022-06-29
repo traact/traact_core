@@ -26,7 +26,7 @@ class TRAACT_CORE_EXPORT Network {
 
     virtual bool start() = 0;
     virtual bool stop() = 0;
-    virtual void propertyChanged() = 0;
+    virtual void parameterChanged(const std::string &instance_id) = 0;
 
     void setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback);
 

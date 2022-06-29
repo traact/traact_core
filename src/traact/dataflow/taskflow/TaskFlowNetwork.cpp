@@ -40,9 +40,9 @@ traact::dataflow::TaskFlowNetwork::~TaskFlowNetwork() {
         graph->teardown();
     }
 }
-void traact::dataflow::TaskFlowNetwork::propertyChanged() {
+void traact::dataflow::TaskFlowNetwork::parameterChanged(const std::string &instance_id) {
     for (auto &graph : task_graphs_) {
-        graph->propertyChanged();
+        graph->parameterChanged(instance_id);
     }
 
 }

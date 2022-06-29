@@ -21,7 +21,7 @@ class TaskFlowGraph {
     void start();
     void stop();
     void teardown();
-    void propertyChanged();
+    void parameterChanged(const std::string &instance_id);
 
  private:
 

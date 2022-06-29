@@ -27,7 +27,7 @@ class TRAACT_CORE_EXPORT Facade {
     bool stop();
     void stopAsync();
 
-    void propertyChanged();
+    void parameterChanged(const std::string &instance_id);
 
     pattern::Pattern::Ptr instantiatePattern(const std::string &pattern_name);
 

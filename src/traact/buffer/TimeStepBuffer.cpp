@@ -88,6 +88,7 @@ ComponentBuffer &TimeStepBuffer::getComponentBuffer(size_t component_idx) {
 void TimeStepBuffer::setEvent(Timestamp timestamp, EventType message_type) {
     current_ts_ = timestamp;
     current_message_ = message_type;
+    changed_pattern_instance_id_.clear();
 }
 
 traact::Timestamp TimeStepBuffer::getTimestamp() {
@@ -113,6 +114,7 @@ void TimeStepBuffer::resetNewEvent() {
     for (auto &buffer_valid : buffer_valid_) {
         *buffer_valid = PortState::INVALID;
     }
+    changed_pattern_instance_id_.clear();
 }
 
 EventType TimeStepBuffer::getEventType() {
@@ -167,6 +169,14 @@ std::unique_ptr<ComponentBuffer> TimeStepBuffer::createComponentBuffer(const Buf
                                              time_step_index_,
                                              &current_ts_,
                                              &current_message_);
+}
+void TimeStepBuffer::setEvent(Timestamp timestamp, EventType message_type, std::string changed_pattern) {
+    current_ts_ = timestamp;
+    current_message_ = message_type;
+    changed_pattern_instance_id_ = changed_pattern;
+}
+const std::string &TimeStepBuffer::getChangedPattern() const {
+    return changed_pattern_instance_id_;
 }
 }
 

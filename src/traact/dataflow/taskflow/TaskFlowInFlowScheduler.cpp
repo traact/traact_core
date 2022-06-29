@@ -25,7 +25,7 @@ TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManager
       time_domain_(time_domain),
       taskflow_(taskflow),
       time_domain_clock_(config_.sensor_frequency, config_.max_offset, 1.0),
-      on_timeout_(std::move(on_timeout)) {
+      on_timeout_(std::move(on_timeout)){
 
     running_taskflows_.resize(time_step_count_, false);
     running_timestamps_.resize(time_step_count_, kTimestampZero);
@@ -45,10 +45,18 @@ TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManager
 
 }
 
-TaskFlowInFlowScheduler::ScheduledEvent::ScheduledEvent(Timestamp &timestamp,
+TaskFlowInFlowScheduler::ScheduledEvent::ScheduledEvent(Timestamp timestamp,
                                                         EventType event_type,
                                                         std::vector<int> invalid_sources)
     : timestamp(timestamp), event_type(event_type), invalid_sources(std::move(invalid_sources)) {}
+TaskFlowInFlowScheduler::ScheduledEvent::ScheduledEvent(Timestamp timestamp,
+                                                        EventType event_type,
+                                                        std::vector<int> invalid_sources,
+                                                        const std::string &changed_pattern)
+    : timestamp(timestamp), event_type(event_type), invalid_sources(std::move(invalid_sources)),
+      changed_pattern_instance_id(changed_pattern) {
+
+}
 
 void TaskFlowInFlowScheduler::start() {
 
@@ -95,6 +103,7 @@ void TaskFlowInFlowScheduler::timeStepEnded(int time_step_index) {
             break;
         case EventType::TEARDOWN: teardown_finished_.SetInit(true);
             break;
+        case EventType::PARAMETER_CHANGE:
         case EventType::INVALID:
         case EventType::DATA:
         case EventType::DATAFLOW_NO_OP:
@@ -518,7 +527,8 @@ std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSou
         } while (!time_domain_clock_.isNextExpectedTimestampOrBigger(timestamp));
 
         if (padding_count > 2) {
-            SPDLOG_WARN("source is more than two frames ahead of last measurement, scheduled {0} padding events", padding_count);
+            SPDLOG_WARN("source is more than two frames ahead of last measurement, scheduled {0} padding events",
+                        padding_count);
         }
         auto expected_timestamp = time_domain_clock_.getNextExpectedTimestamp();
         SPDLOG_TRACE("Schedule event ts: {0} {1} with expected timestamp: {2}",
@@ -574,7 +584,8 @@ bool TaskFlowInFlowScheduler::isInvalidNextRequestedTimeStamp(Timestamp timestam
         return true;
     }
 
-    return timestamp+config_.max_offset <= latest_scheduled_component_timestamp_.at(component_index)-config_.max_offset;
+    return timestamp + config_.max_offset
+        <= latest_scheduled_component_timestamp_.at(component_index) - config_.max_offset;
 }
 std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSourceBufferInvalid() {
     std::promise<buffer::SourceComponentBuffer *> value;
@@ -653,7 +664,13 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
 
     takeTaskflow(time_step_latest_, next_message.timestamp);
     auto &time_step_buffer = time_domain_buffer_->getTimeStepBuffer(time_step_latest_);
-    time_step_buffer.setEvent(next_message.timestamp, next_message.event_type);
+    if (next_message.event_type == EventType::PARAMETER_CHANGE) {
+        time_step_buffer.setEvent(next_message.timestamp, next_message.event_type, next_message.changed_pattern_instance_id);
+    } else {
+        time_step_buffer.setEvent(next_message.timestamp, next_message.event_type);
+    }
+
+
 
     if (next_message.event_type == EventType::DATA) {
         latest_running_ts_.notifyAll(next_message.timestamp);
@@ -677,9 +694,22 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
 TaskFlowInFlowScheduler::~TaskFlowInFlowScheduler() {
 
 }
-void TaskFlowInFlowScheduler::propertyChanged() {
+void TaskFlowInFlowScheduler::parameterChanged(const std::string &instance_id) {
 
-    scheduleEvent(EventType::CONFIGURE, kTimestampZero);
+    scheduleParameterChangedEvent(instance_id);
+}
+void TaskFlowInFlowScheduler::scheduleParameterChangedEvent(const std::string &instance_id) {
+
+    SPDLOG_TRACE("Schedule event ts: {0} {1}", kTimestampZero, EventType::PARAMETER_CHANGE);
+    std::unique_lock guard_flow(flow_mutex_);
+
+    queued_messages_.emplace_back(kTimestampZero, EventType::PARAMETER_CHANGE, std::vector<int>{}, instance_id);
+
+    if (free_taskflows_semaphore_.try_wait()) {
+        SPDLOG_TRACE("Schedule event ts: {0} {1}, run from queue",
+                     kTimestampZero, EventType::PARAMETER_CHANGE);
+        runTaskFlowFromQueue();
+    }
 }
 
 } // traact

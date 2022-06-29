@@ -24,7 +24,7 @@ struct ComponentData {
                                            component_index(other.component_index),
                                            pattern_instance(other.pattern_instance),
                                            running(other.running),
-                                           successors_valid(std::move(other.successors_valid)),
+                                           predecessors_valid(std::move(other.predecessors_valid)),
                                            valid_component_call(other.valid_component_call.load()) {
 
     }
@@ -37,14 +37,13 @@ struct ComponentData {
     std::atomic<bool> &running;
 
     //tf::SmallVector<bool*> valid_input{};
-    std::vector<std::atomic_bool *> successors_valid{};
+    std::vector<std::atomic_bool *> predecessors_valid{};
     std::atomic_bool valid_component_call{false};
 
     TimestampSteady state_last_call{kTimestampSteadyZero};
     EventType state_last_event_type{EventType::INVALID};
     int state_last_event_position;
     bool state_had_error{false};
-
 };
 
 struct TimeStepData {
@@ -91,6 +90,12 @@ inline void taskSource(ComponentData &local_data) {
 
             case EventType::DATA: {
                 component_result = local_data.valid_component_call = lock.get();
+                break;
+            }
+            case EventType::PARAMETER_CHANGE:{
+                if(local_data.time_step_buffer.getChangedPattern() == local_data.pattern_instance.instance_id){
+                    component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
+                }
                 break;
             }
             case EventType::STOP: {
@@ -144,11 +149,11 @@ inline void taskGenericComponent(ComponentData &local_data) {
 
         bool all_input_valid = true;
 
-//        for (auto *valid : local_data.successors_valid) {
-//            bool local_valid = std::atomic_load_explicit(valid, std::memory_order_acquire);
-//            //std::atomic_thread_fence(std::memory_order_acquire);
-//            all_input_valid = all_input_valid && local_valid;
-//        }
+        for (auto *valid : local_data.predecessors_valid) {
+            bool local_valid = std::atomic_load_explicit(valid, std::memory_order_acquire);
+            //std::atomic_thread_fence(std::memory_order_acquire);
+            all_input_valid = all_input_valid && local_valid;
+        }
 //
 //        if (!all_input_valid) {
 //            SPDLOG_TRACE("{0}: abort ts {1}, message type {2}, successors call to component returned false",
@@ -179,6 +184,12 @@ inline void taskGenericComponent(ComponentData &local_data) {
                     component_result = local_data.component.processTimePointWithInvalid(local_data.buffer);
                 }
 
+                break;
+            }
+            case EventType::PARAMETER_CHANGE:{
+                if(local_data.time_step_buffer.getChangedPattern() == local_data.pattern_instance.instance_id){
+                    component_result = local_data.component.configure(local_data.pattern_instance, nullptr);
+                }
                 break;
             }
             case EventType::STOP: {

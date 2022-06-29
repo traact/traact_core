@@ -141,8 +141,8 @@ std::vector<traact::pattern::Pattern::Ptr> traact::facade::Facade::GetAllAvailab
     }
     return result;
 }
-void traact::facade::Facade::propertyChanged() {
-    network_->propertyChanged();
+void traact::facade::Facade::parameterChanged(const std::string &instance_id) {
+    network_->parameterChanged(instance_id);
 
 }
 
