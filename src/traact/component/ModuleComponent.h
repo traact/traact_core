@@ -43,13 +43,14 @@ class TRAACT_CORE_EXPORT ModuleComponent : public Component {
  public:
     typedef typename std::shared_ptr<ModuleComponent> Ptr;
     ModuleComponent(std::string name, ModuleType module_type);
+    virtual ~ModuleComponent() = default;
 
     ModuleType getModuleType() const;
 
     virtual std::string getModuleKey() = 0;
     virtual Module::Ptr instantiateModule() = 0;
 
-    void setModule(Module::Ptr module);
+    virtual void setModule(Module::Ptr module);
 
     bool configure(const pattern::instance::PatternInstance &pattern_instance, buffer::ComponentBufferConfig *data) override;
     bool start() override;
