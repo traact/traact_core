@@ -37,151 +37,132 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
                     const EventType *message_type);
     ComponentBuffer() = delete;
 
-    [[nodiscard]] size_t getInputCount() const noexcept;
+    [[nodiscard]] size_t getInputCount() const;
 
     template<typename HeaderType>
-    const typename HeaderType::NativeType &getInput(size_t index) const noexcept {
+    const typename HeaderType::NativeType &getInput(size_t index) const {
         return *static_cast<typename HeaderType::NativeType *>(input_buffer_[index]);
     }
 
     template<typename Port>
-    const typename Port::Header::NativeType &getInput() const noexcept {
+    const typename Port::Header::NativeType &getInput() const {
         return *static_cast<typename Port::Header::NativeType *>(input_buffer_[Port::PortIdx]);
-
     }
 
     template<typename Port>
-    const typename Port::Header::NativeType & getInput(int port_group_index, int port_group_instance_index) const noexcept {
+    const typename Port::Header::NativeType &getInput(int port_group_index, int port_group_instance_index) const {
         const size_t kIndex = input_groups_[port_group_index].group_offset
             + input_groups_[port_group_index].group_port_count * port_group_instance_index + Port::PortIdx;
         return *static_cast<typename Port::Header::NativeType *>(input_buffer_[kIndex]);
     }
 
     template<typename Port>
-    const typename Port::Header &getInputHeader() const noexcept {
+    const typename Port::Header &getInputHeader() const {
         return *static_cast<typename Port::Header *>(input_header_[Port::PortIdx]);
     }
 
     template<typename HeaderType>
-    const HeaderType &getInputHeader(int index) const noexcept {
+    const HeaderType &getInputHeader(int index) const {
         return *static_cast<HeaderType *>(input_header_[index]);
     }
 
-//    template<typename Port, typename ReturnType>
-//    ReturnType getInputAs() const noexcept {
-//        auto *data = static_cast<typename Port::Header::NativeType *>(input_buffer_[Port::PortIdx]);
-//        auto *header = static_cast<typename Port::Header *>(input_header_[Port::PortIdx]);
-//        return getBufferAs<ReturnType, typename Port::Header, typename Port::Header::NativeType>(*header, *data);
-//
-//    }
-
-    [[nodiscard]] bool isInputValid(size_t index) const noexcept;
+    [[nodiscard]] bool isInputValid(size_t index) const;
 
     template<typename Port>
-    [[nodiscard]] bool isInputValid() const noexcept {
+    [[nodiscard]] bool isInputValid() const {
         return isInputValid(Port::PortIdx);
     }
 
     template<typename Port>
-    bool isInputValid(int port_group_index, int port_group_instance_index) const noexcept {
+    bool isInputValid(int port_group_index, int port_group_instance_index) const {
         const size_t kIndex = input_groups_[port_group_index].group_offset
             + input_groups_[port_group_index].group_port_count * port_group_instance_index + Port::PortIdx;
         return isInputValid(kIndex);
     }
 
+    bool isInputGroupValid(int port_group_index, int port_group_instance_index) const;
 
-    bool isInputGroupValid(int port_group_index, int port_group_instance_index) const noexcept;
+    [[nodiscard]] bool isAllInputValid() const;
 
-    [[nodiscard]] bool isAllInputValid() const noexcept;
-
-    [[nodiscard]] Timestamp getInputTimestamp(size_t index) const noexcept;
+    [[nodiscard]] Timestamp getInputTimestamp(size_t index) const;
 
     template<typename Port>
-    [[nodiscard]] Timestamp getInputTimestamp() const noexcept {
+    [[nodiscard]] Timestamp getInputTimestamp() const {
         return getInputTimestamp(Port::PortIdx);
 
     }
 
-    [[nodiscard]] size_t getOutputCount() const noexcept;
+    [[nodiscard]] size_t getOutputCount() const;
 
     template<typename HeaderType>
-    typename HeaderType::NativeType &getOutput(size_t index) const noexcept {
-        *output_valid_[index] = PortState::VALID;
-        *output_timestamp_[index] = *timestamp_;
-        return *static_cast<typename HeaderType::NativeType *>(output_buffer_[index]);
-    }
-
-    template<typename HeaderType>
-    typename HeaderType::NativeType &getOutput(size_t index, Timestamp timestamp) const noexcept {
+    typename HeaderType::NativeType &getOutput(size_t index, Timestamp timestamp) const {
         *output_valid_[index] = PortState::VALID;
         *output_timestamp_[index] = timestamp;
         return *static_cast<typename HeaderType::NativeType *>(output_buffer_[index]);
     }
 
-    template<typename Port>
-    typename Port::Header::NativeType &getOutput(int port_group_index, int port_group_instance_index) const noexcept {
+    template<typename HeaderType>
+    typename HeaderType::NativeType &getOutput(size_t index) const {
+        return getOutput<HeaderType>(index, *timestamp_);
+    }
 
+    template<typename Port>
+    typename Port::Header::NativeType &getOutput(int port_group_index, int port_group_instance_index) const {
         const size_t kIndex = output_groups_[port_group_index].group_offset
             + output_groups_[port_group_index].group_port_count * port_group_instance_index + Port::PortIdx;
-        *output_valid_[kIndex] = PortState::VALID;
-        *output_timestamp_[kIndex] = *timestamp_;
-        return *static_cast<typename Port::Header::NativeType *>(output_buffer_[kIndex]);
+        return getOutput<typename Port::Header>(kIndex, *timestamp_);
     }
 
     template<typename Port>
-    typename Port::Header::NativeType &getOutput() const noexcept {
-        *output_valid_[Port::PortIdx] = PortState::VALID;
-        *output_timestamp_[Port::PortIdx] = *timestamp_;
-        return *static_cast<typename Port::Header::NativeType *>(output_buffer_[Port::PortIdx]);
+    typename Port::Header::NativeType &getOutput() const {
+        return getOutput<typename Port::Header>(Port::PortIdx);
     }
 
     template<typename Port>
-    typename Port::Header::NativeType &getOutput(Timestamp timestamp) const noexcept {
-        *output_valid_[Port::PortIdx] = PortState::VALID;
-        *output_timestamp_[Port::PortIdx] = timestamp;
-        return *static_cast<typename Port::Header::NativeType *>(output_buffer_[Port::PortIdx]);
+    typename Port::Header::NativeType &getOutput(Timestamp timestamp) const {
+        return getOutput<typename Port::Header>(Port::PortIdx, timestamp);
     }
 
     template<typename Port>
-    typename Port::Header &getOutputHeader() const noexcept {
+    typename Port::Header &getOutputHeader() const {
         return *static_cast<typename Port::Header *>(output_header_[Port::PortIdx]);
     }
 
     template<typename Port>
-    typename Port::Header &getOutputHeader(int port_group_index, int port_group_instance_index) const noexcept {
+    typename Port::Header &getOutputHeader(int port_group_index, int port_group_instance_index) const {
         const size_t kIndex = output_groups_[port_group_index].group_offset
             + output_groups_[port_group_index].group_port_count * port_group_instance_index + Port::PortIdx;
         return *static_cast<typename Port::Header *>(output_header_[kIndex]);
     }
 
-    Timestamp getOutputTimestamp(size_t index) const noexcept;
+    Timestamp getOutputTimestamp(size_t index) const;
 
     template<typename Port>
-    typename Port::Header::NativeType &getOutputTimestamp() const noexcept {
+    typename Port::Header::NativeType &getOutputTimestamp() const {
         return *getOutputTimestamp(output_buffer_[Port::PortIdx]);
     }
 
-    [[nodiscard]] bool isOutputValid(size_t index) const noexcept;
+    [[nodiscard]] bool isOutputValid(size_t index) const;
 
     template<typename Port>
-    [[nodiscard]] bool isOutputValid() const noexcept {
+    [[nodiscard]] bool isOutputValid() const {
         return isOutputValid(Port::PortIdx);
     }
 
-    void setOutputInvalid(size_t index) const noexcept;
+    void setOutputInvalid(size_t index) const;
 
     template<typename Port>
-    void setOutputInvalid() const noexcept {
+    void setOutputInvalid() const {
         setOutputInvalid(Port::PortIdx);
     }
 
-    [[nodiscard]] Timestamp getTimestamp() const noexcept;
+    [[nodiscard]] Timestamp getTimestamp() const;
 
-    [[nodiscard]] size_t getComponentIndex() const noexcept;
+    [[nodiscard]] size_t getComponentIndex() const;
 
-    [[nodiscard]] size_t getTimeStepIndex() const noexcept;
+    [[nodiscard]] size_t getTimeStepIndex() const;
 
-    [[nodiscard]] EventType getEventType() const noexcept;
+    [[nodiscard]] EventType getEventType() const;
 
  private:
     const size_t component_index_;

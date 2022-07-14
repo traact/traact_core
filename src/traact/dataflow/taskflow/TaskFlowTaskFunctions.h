@@ -5,6 +5,7 @@
 
 #include "traact/buffer/ComponentBuffer.h"
 #include "traact/component/Component.h"
+#include "traact/component/GpuComponent.h"
 
 namespace traact::dataflow {
 

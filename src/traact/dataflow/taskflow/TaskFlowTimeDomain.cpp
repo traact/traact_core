@@ -2,6 +2,7 @@
 
 #include "TaskFlowTimeDomain.h"
 #include <utility>
+#include "TraactGpuGraph.cuh"
 
 std::string timeStepStartTaskName(int index) {
     return fmt::format("TIME_STEP_START_{0}", index);
@@ -80,11 +81,16 @@ void TaskFlowTimeDomain::createTimeStepTasks(const int time_step_index) {
         createTask(time_step_index, time_step_data, component);
 
     }
+    // GPU
+    createGpuTimeStepTasks(time_step_index);
+    //
 
     for (const auto &component_successors : component_to_successors_) {
-        auto &task = time_step_data.component_id_to_task.at(component_successors.first);
-        for (const auto &successor : component_successors.second) {
-            task.precede(time_step_data.component_id_to_task.at(successor));
+        if(!component_successors.second.empty()){
+            auto &task = time_step_data.component_id_to_task.at(component_successors.first);
+            for (const auto &successor : component_successors.second) {
+                task.precede(time_step_data.component_id_to_task.at(successor));
+            }
         }
     }
 
@@ -213,7 +219,9 @@ std::string TaskFlowTimeDomain::getTaskName(const int time_step_index,
 
 void TaskFlowTimeDomain::prepare() {
     prepareComponents();
+    prepareGpuComponents();
     prepareTaskData();
+
 }
 
 void TaskFlowTimeDomain::prepareComponents() {
@@ -314,6 +322,8 @@ void TaskFlowTimeDomain::prepareComponents() {
     }
 
 }
+
+
 
 void TaskFlowTimeDomain::prepareTaskData() {
 
@@ -539,9 +549,13 @@ void TaskFlowTimeDomain::createInterTimeStepDependencies() {
             continue;
         }
 
-        if (pattern_instance->getConcurrency(time_domain_) == Concurrency::SERIAL) {
-            inter_connect_time_steps(pattern_instance->instance_id);
+        auto cuda_graph = getCudaGraph(pattern_instance->instance_id);
+        if(!cuda_graph.has_value()) {
+            if (pattern_instance->getConcurrency(time_domain_) == Concurrency::SERIAL) {
+                inter_connect_time_steps(pattern_instance->instance_id);
+            }
         }
+
 
     }
 
@@ -588,6 +602,7 @@ tf::Task TaskFlowTimeDomain::createSeamEntryTask(int time_step_index, const std:
         }
     }).name(seam_entry_name);
 }
+
 std::optional<std::string> TaskFlowTimeDomain::findSyncSourceStartPoint(const std::pair<component::ComponentGraph::PatternPtr,
                                                                                         component::ComponentGraph::ComponentPtr> &pair,
                                                                         int time_step) {
@@ -601,6 +616,7 @@ std::optional<std::string> TaskFlowTimeDomain::findSyncSourceStartPoint(const st
     }
     return {};
 }
+
 void TaskFlowTimeDomain::printState() {
     std::stringstream ss;
     ss << "State of dataflow network\n";
@@ -620,9 +636,141 @@ void TaskFlowTimeDomain::printState() {
 
     SPDLOG_WARN(ss.str());
 }
+
 void TaskFlowTimeDomain::parameterChanged(const std::string &instance_id) {
     scheduler_->parameterChanged(instance_id);
 
+}
+
+void TaskFlowTimeDomain::prepareGpuComponents() {
+    for (const auto &component : components_) {
+
+        std::shared_ptr<pattern::instance::PatternInstance> pattern_instance = component.first;
+        auto instance_id = component.first->instance_id;
+        if (!pattern_instance) {
+            SPDLOG_WARN("skipping non dataflow pattern : {0}", instance_id);
+            continue;
+        }
+
+        auto gpu_component =
+            std::dynamic_pointer_cast<component::GpuComponent, component::Component>(component.second);
+
+        if (gpu_component) {
+            std::string cuda_graph = gpu_component->getCudaGraphName();
+
+            // replace start and end points of components with cuda graph
+            if(component_end_points_.count(instance_id) > 0){
+                component_end_points_.erase(instance_id);
+                component_end_points_.emplace(cuda_graph);
+            }
+
+            if(component_start_points_.count(instance_id) > 0){
+                component_start_points_.erase(instance_id);
+                component_start_points_.emplace(cuda_graph);
+            }
+
+
+            cuda_graph_to_component[cuda_graph].emplace(instance_id, gpu_component);
+        }
+
+        updateComponentSuccessorsForGpu(instance_id);
+
+    }
+
+}
+void TaskFlowTimeDomain::updateComponentSuccessorsForGpu(const std::string &instance_id) {
+    auto self_graph = getCudaGraph(instance_id);
+
+    if(self_graph.has_value()) {
+        auto cuda_graph = self_graph.value();
+        auto& cuda_successors = cuda_component_to_cuda_successors_[instance_id];
+        auto& graph = component_to_successors_[cuda_graph];
+
+        auto& successors = component_to_successors_[instance_id];
+        for(const auto& successor : successors){
+            auto successor_cuda_graph = getCudaGraph(successor);
+            if(successor_cuda_graph.has_value()){
+                if(successor_cuda_graph.value() == cuda_graph){
+                    cuda_successors.emplace(successor);
+                } else {
+                    graph.emplace(successor);
+                }
+            } else {
+                graph.emplace(successor);
+            }
+        }
+        successors.emplace(cuda_graph);
+    }
+}
+std::optional<std::string> TaskFlowTimeDomain::getCudaGraph(const std::basic_string<char> &instance_id) {
+    auto  component = std::find_if(components_.begin(), components_.end(), [&instance_id](const auto& value){
+       return value.first->instance_id == instance_id;
+    });
+    if(component != components_.end()){
+        auto gpu_comp_tmp =
+            std::dynamic_pointer_cast<component::GpuComponent, component::Component>(component->second);
+
+        if(gpu_comp_tmp){
+            return gpu_comp_tmp->getCudaGraphName();
+        } else {
+            return {};
+        }
+
+    } else {
+
+        if(isCudaGraph(instance_id)){
+            // component is cuda graph
+            return {instance_id};
+        } else {
+            throw std::invalid_argument(fmt::format("unknown component {0} in components list", instance_id));
+        }
+
+    }
+}
+bool TaskFlowTimeDomain::isCudaGraph(const std::basic_string<char> &instance_id) { return cuda_graph_to_component.find(instance_id) != cuda_graph_to_component.end(); }
+
+void TaskFlowTimeDomain::createGpuTimeStepTasks(const int time_step_index) {
+
+    auto &time_step_data = time_step_data_[time_step_index];
+    for(const auto& [graph_name, components] : cuda_graph_to_component){
+        tf::Task cuda_flow = createCudaFlow(graph_name, time_step_index);
+        time_step_data.component_id_to_task.emplace(graph_name, cuda_flow);
+    }
+}
+void TaskFlowTimeDomain::traceDumpTask(const std::string &name, const tf::Task &task) const {
+    std::stringstream subflow_dump;
+    task.dump(subflow_dump);
+    SPDLOG_TRACE("cuda subflow dump {0}: \n{1}", name, subflow_dump.str());
+}
+tf::Task TaskFlowTimeDomain::createCudaFlow(const std::string &cuda_graph_name, int time_step_index) {
+    //auto& buffer = time_domain_buffer_->getTimeStepBuffer(time_step_index);
+    auto &time_step_data = time_step_data_[time_step_index];
+    return createTraactGpuGraph(cuda_graph_name, time_step_index, taskflow_, time_step_data, cuda_graph_to_component[cuda_graph_name], cuda_component_to_cuda_successors_);
+}
+bool TaskFlowTimeDomain::isCudaComponent(const std::string &instance_id) {
+    auto  component = std::find_if(components_.begin(), components_.end(), [&instance_id](const auto& value){
+        return value.first->instance_id == instance_id;
+    });
+    if(component != components_.end()){
+        auto gpu_comp_tmp =
+            std::dynamic_pointer_cast<component::GpuComponent, component::Component>(component->second);
+
+        if(gpu_comp_tmp){
+            return true;
+        } else {
+            return false;
+        }
+
+    } else {
+
+        if(isCudaGraph(instance_id)){
+            // component is cuda graph
+            return false;
+        } else {
+            throw std::invalid_argument(fmt::format("unknown component {0} in components list", instance_id));
+        }
+
+    }
 }
 
 }

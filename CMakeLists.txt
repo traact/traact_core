@@ -8,7 +8,8 @@ endif ()
 
 list(APPEND CMAKE_MODULE_PATH ${CONAN_TRAACT_RUN_ENV_ROOT}/cmake)
 
-project(${CONAN_PACKAGE_NAME}_PROJECT VERSION ${CONAN_PACKAGE_VERSION})
+project(${CONAN_PACKAGE_NAME}_PROJECT VERSION ${CONAN_PACKAGE_VERSION} LANGUAGES CXX CUDA)
+
 
 include(traact_default_library_setup)
 
@@ -109,7 +110,7 @@ set(CORE_SRC src/traact/traact.h
         src/traact/util/FpsCounter.h
         src/traact/util/CircularBuffer.cpp
         src/traact/util/CircularBuffer.h
-        src/traact/component/generic/RawApplicationSyncSink.h src/traact/component/generic/RawApplicationSyncSink.cpp)
+        src/traact/component/generic/RawApplicationSyncSink.h src/traact/component/generic/RawApplicationSyncSink.cpp src/traact/util/ValueWrapper.h src/traact/component/GpuComponent.cpp src/traact/component/GpuComponent.h src/traact/dataflow/taskflow/TraactGpuGraph.cu src/traact/dataflow/taskflow/TraactGpuGraph.cuh)
 
 
 add_library(${CONAN_PACKAGE_NAME} SHARED ${CORE_SRC})

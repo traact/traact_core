@@ -32,42 +32,42 @@ ComponentBuffer::ComponentBuffer(size_t component_index,
 
 }
 
-Timestamp ComponentBuffer::getTimestamp() const noexcept {
+Timestamp ComponentBuffer::getTimestamp() const  {
     return *timestamp_;
 }
 
-size_t ComponentBuffer::getInputCount() const noexcept {
+size_t ComponentBuffer::getInputCount() const  {
     return input_buffer_.size();
 }
 
-size_t ComponentBuffer::getOutputCount() const noexcept {
+size_t ComponentBuffer::getOutputCount() const  {
     return output_buffer_.size();
 }
-size_t ComponentBuffer::getComponentIndex() const noexcept {
+size_t ComponentBuffer::getComponentIndex() const  {
     return component_index_;
 }
-size_t ComponentBuffer::getTimeStepIndex() const noexcept {
+size_t ComponentBuffer::getTimeStepIndex() const  {
     return time_step_index_;
 }
-bool ComponentBuffer::isInputValid(size_t index) const noexcept {
+bool ComponentBuffer::isInputValid(size_t index) const  {
     return *input_valid_[index] == PortState::VALID;
 }
-void ComponentBuffer::setOutputInvalid(size_t index) const noexcept {
+void ComponentBuffer::setOutputInvalid(size_t index) const  {
     *output_valid_[index] = PortState::INVALID;
 }
-EventType ComponentBuffer::getEventType() const noexcept {
+EventType ComponentBuffer::getEventType() const  {
     return *event_type_;
 }
-Timestamp ComponentBuffer::getInputTimestamp(size_t index) const noexcept {
+Timestamp ComponentBuffer::getInputTimestamp(size_t index) const  {
     return *input_timestamp_[index];
 }
-bool ComponentBuffer::isOutputValid(size_t index) const noexcept {
+bool ComponentBuffer::isOutputValid(size_t index) const  {
     return *output_valid_[index] == PortState::VALID;
 }
-Timestamp ComponentBuffer::getOutputTimestamp(size_t index) const noexcept {
+Timestamp ComponentBuffer::getOutputTimestamp(size_t index) const  {
     return *output_timestamp_[index];
 }
-bool ComponentBuffer::isAllInputValid() const noexcept {
+bool ComponentBuffer::isAllInputValid() const  {
 
     for (auto *valid : input_valid_) {
         if(*valid != PortState::VALID)
@@ -75,7 +75,7 @@ bool ComponentBuffer::isAllInputValid() const noexcept {
     }
     return true;
 }
-bool ComponentBuffer::isInputGroupValid(int port_group_index, int port_group_instance_index) const noexcept {
+bool ComponentBuffer::isInputGroupValid(int port_group_index, int port_group_instance_index) const  {
     bool result{true};
     for (int port_index = 0; port_index < input_groups_[port_group_index].size; ++port_index) {
         const size_t kIndex = output_groups_[port_group_index].group_offset

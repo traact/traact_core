@@ -26,6 +26,6 @@ class TraactPackage(ConanFile):
         self.requires("nlohmann_json/[>=3.7.3]")
         self.requires("spdlog/1.10.0")
         self.requires("rttr/0.9.7-dev@camposs/stable")
-        self.requires("taskflow/3.3.0")
+        self.requires("taskflow/3.4.0")
         self.requires("tclap/[>=1.2.4]")
         self.requires("cppfs/1.3.0-r1@camposs/stable")

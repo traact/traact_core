@@ -14,7 +14,9 @@
 #include "TaskFlowUtils.h"
 #include "TaskFlowInFlowScheduler.h"
 
-
+// GPU
+#include "traact/component/GpuComponent.h"
+//
 
 namespace traact::dataflow {
 
@@ -64,6 +66,11 @@ class TaskFlowTimeDomain {
     void masterSourceFinished();
     std::map<std::string, ModuleTask> component_modules_;
 
+    // GPU
+    std::map<std::string, std::map<std::string, std::shared_ptr<component::GpuComponent > > > cuda_graph_to_component;
+    std::map<std::string, std::set<std::string>> cuda_component_to_cuda_successors_;
+    //
+
     std::unique_ptr<DefaultScheduler> scheduler_;
 
 
@@ -108,7 +115,14 @@ class TaskFlowTimeDomain {
                                                                         component::ComponentGraph::ComponentPtr> &pair,
                                                         int time_step);
 
-
+    void prepareGpuComponents();
+    void updateComponentSuccessorsForGpu(const std::string &instance_id);
+    std::optional<std::string> getCudaGraph(const std::basic_string<char> &instance_id);
+    void createGpuTimeStepTasks(const int time_step_index);
+    tf::Task createCudaFlow(const std::string &cuda_graph_name, int time_step_index);
+    bool isCudaGraph(const std::basic_string<char> &instance_id);
+    bool isCudaComponent(const std::string &instance_id);
+    void traceDumpTask(const std::string &name, const tf::Task &task) const;
 };
 }
 
