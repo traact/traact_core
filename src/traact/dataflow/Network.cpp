@@ -6,8 +6,8 @@
 
 namespace traact::dataflow {
 
-void Network::addComponentGraph(ComponentGraphPtr component_graph) {
-    component_graphs_.emplace(std::move(component_graph));
+void Network::setComponentGraph(ComponentGraphPtr component_graph) {
+    component_graph_ = std::move(component_graph);
 }
 
 void Network::setGenericFactoryObjects(buffer::DataBufferFactoryPtr generic_factory_objects) {

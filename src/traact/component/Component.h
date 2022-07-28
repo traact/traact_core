@@ -128,7 +128,7 @@ class TRAACT_CORE_EXPORT Component {
 
     void releaseAsyncCall(Timestamp timestamp, bool valid);
 
-    void setSourceFinishedCallback(const SourceFinishedCallback &finished_callback);
+    void setRequestExitCallback(const SourceFinishedCallback &finished_callback);
     void setSourceFinished();
 
  protected:

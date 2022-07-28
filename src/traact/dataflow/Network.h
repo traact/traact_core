@@ -20,19 +20,20 @@ class TRAACT_CORE_EXPORT Network {
     Network() = default;
     virtual ~Network() = default;
 
-    void addComponentGraph(ComponentGraphPtr component_graph);
+    void setComponentGraph(ComponentGraphPtr component_graph);
 
     void setGenericFactoryObjects(buffer::DataBufferFactoryPtr generic_factory_objects);
 
+    void setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback);
+
     virtual bool start() = 0;
     virtual bool stop() = 0;
-    virtual void parameterChanged(const std::string &instance_id) = 0;
 
-    void setMasterSourceFinishedCallback(component::Component::SourceFinishedCallback callback);
+    virtual void parameterChanged(const std::string &instance_id) = 0;
 
  protected:
 
-    std::set<ComponentGraphPtr> component_graphs_;
+    ComponentGraphPtr component_graph_;
     buffer::DataBufferFactoryPtr generic_factory_objects_;
     component::Component::SourceFinishedCallback master_source_finished_callback_;
 

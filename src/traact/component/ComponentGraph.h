@@ -7,7 +7,6 @@
 #include <set>
 
 #include <traact/component/Component.h>
-#include <traact/component/ModuleComponent.h>
 #include <traact/pattern/instance/PatternInstance.h>
 #include <traact/pattern/instance/GraphInstance.h>
 #include <traact/traact_core_export.h>
@@ -30,11 +29,9 @@ class TRAACT_CORE_EXPORT ComponentGraph {
     traact::buffer::TimeDomainManagerConfig getTimeDomainConfig(size_t time_domain) const;
 
     ComponentPtr getComponent(const std::string &instance_id);
-    Module::Ptr getModule(const std::string module_key);
  private:
     pattern::instance::GraphInstance::Ptr graph_instance_;
     std::set<PatternComponentPair> patterns_;
-    std::map<std::string, Module::Ptr> module_map_;
 };
 }
 

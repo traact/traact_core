@@ -5,25 +5,23 @@
 
 #include "traact/dataflow/Network.h"
 #include <atomic>
-#include "TaskFlowGraph.h"
+#include "TaskFlowTimeDomain.h"
 
 namespace traact::dataflow {
 class TRAACT_CORE_EXPORT TaskFlowNetwork : public Network {
  public:
     TaskFlowNetwork() = default;
-    TaskFlowNetwork(const TaskFlowNetwork&) = default;
-    TaskFlowNetwork(TaskFlowNetwork&&) = default;
-    TaskFlowNetwork& operator=(const TaskFlowNetwork&) = default;
-    TaskFlowNetwork& operator=(TaskFlowNetwork&&) = default;
-
     ~TaskFlowNetwork() override;
-    bool start() override;
-    virtual void parameterChanged(const std::string &instance_id) override;
 
+    bool start() override;
     bool stop() override;
+
+    void parameterChanged(const std::string &instance_id) override;
  private:
-    std::vector<std::shared_ptr<TaskFlowGraph>> task_graphs_;
-    bool is_running_{false};
+    tf::Executor executor_;
+    std::vector<std::unique_ptr<TaskFlowTimeDomain>> task_flow_time_domains_;
+
+    void init();
 
 };
 }

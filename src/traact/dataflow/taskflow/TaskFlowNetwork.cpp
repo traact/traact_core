@@ -2,47 +2,42 @@
 
 #include "TaskFlowNetwork.h"
 
-bool traact::dataflow::TaskFlowNetwork::start() {
+namespace traact::dataflow {
+TaskFlowNetwork::~TaskFlowNetwork() {
 
-    bool result = true;
-
-    for (const ComponentGraphPtr &component_graph : component_graphs_) {
-        task_graphs_.emplace_back(std::make_shared<TaskFlowGraph>(generic_factory_objects_,
-                                                                  component_graph,
-                                                                  master_source_finished_callback_));
-    }
-    for (auto &graph : task_graphs_) {
-        graph->init();
-    }
-
-    for (auto &graph : task_graphs_) {
-        graph->start();
-    }
-
-    is_running_ = result;
-
-    return result;
 }
 
-bool traact::dataflow::TaskFlowNetwork::stop() {
-    if(is_running_){
-        for (auto &graph : task_graphs_) {
-            graph->stop();
-        }
-    }
-    is_running_ = false;
+void TaskFlowNetwork::init() {
 
-    return true;
+    for (const auto &time_domain : component_graph_->getTimeDomains()) {
+        auto task_flow_time_domain = std::make_unique<TaskFlowTimeDomain>(time_domain, component_graph_, generic_factory_objects_, master_source_finished_callback_);
+        task_flow_time_domains_.emplace_back(std::move(task_flow_time_domain));
+    }
+
+    for (auto &task_flow_time_domain : task_flow_time_domains_) {
+        task_flow_time_domain->init();
+    }
+
 }
 
-traact::dataflow::TaskFlowNetwork::~TaskFlowNetwork() {
-    for (auto &graph : task_graphs_) {
-        graph->teardown();
+bool TaskFlowNetwork::start() {
+    init();
+
+    for (auto &task_flow_time_domain : task_flow_time_domains_) {
+        task_flow_time_domain->start();
     }
 }
-void traact::dataflow::TaskFlowNetwork::parameterChanged(const std::string &instance_id) {
-    for (auto &graph : task_graphs_) {
-        graph->parameterChanged(instance_id);
+
+bool TaskFlowNetwork::stop() {
+    for (auto &task_flow_time_domain : task_flow_time_domains_) {
+        task_flow_time_domain->stop();
     }
 
+}
+void TaskFlowNetwork::parameterChanged(const std::string &instance_id) {
+    for (auto &task_flow_time_domain : task_flow_time_domains_) {
+        task_flow_time_domain->parameterChanged(instance_id);
+    }
+
+}
 }

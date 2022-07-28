@@ -69,7 +69,7 @@ void traact::facade::Facade::loadDataflow(std::string filename) {
 
 bool traact::facade::Facade::start() {
 
-    network_->addComponentGraph(component_graph_);
+    network_->setComponentGraph(component_graph_);
 
     return network_->start();
 }

@@ -54,7 +54,7 @@ void Component::setReleaseAsyncCallback(const Component::ReleaseAsyncCallback &r
     release_async_callback_ = release_async_callback;
 }
 
-void Component::setSourceFinishedCallback(const Component::SourceFinishedCallback &finished_callback) {
+void Component::setRequestExitCallback(const Component::SourceFinishedCallback &finished_callback) {
     finished_callback_ = finished_callback;
 }
 

@@ -19,22 +19,6 @@ std::string ComponentGraph::getName() const {
 void ComponentGraph::addPattern(const std::string &pattern_id, ComponentPtr component) {
     SPDLOG_INFO("Graph add: {0} Component: {1}", getName(), component->getName());
 
-    ModuleComponent::Ptr module_comp_tmp = std::dynamic_pointer_cast<ModuleComponent, Component>(component);
-
-    if (module_comp_tmp) {
-        SPDLOG_INFO("Graph: {0} Component: {1} is a module component", getName(), component->getName());
-        std::string module_key = module_comp_tmp->getModuleKey();
-        if (module_map_[module_key]) {
-            SPDLOG_INFO("Graph: {0} Component: {1} module exists", getName(), component->getName());
-            module_comp_tmp->setModule(module_map_[module_key]);
-        } else {
-            SPDLOG_INFO("Graph: {0} Component: {1} create new module", getName(), component->getName());
-            Module::Ptr new_module = module_comp_tmp->instantiateModule();
-            module_comp_tmp->setModule(new_module);
-            module_map_[module_key] = new_module;
-        }
-    }
-
     patterns_.emplace(std::make_pair(graph_instance_->getPattern(pattern_id), std::move(component)));
 
 }
@@ -105,14 +89,6 @@ traact::buffer::TimeDomainManagerConfig ComponentGraph::getTimeDomainConfig(size
     }
 
 }
-Module::Ptr ComponentGraph::getModule(const std::string module_key) {
-    auto result = module_map_.find(module_key);
-    if(result == module_map_.end()){
-        return nullptr;
-    } else {
-        return result->second;
-    }
 
-}
 
 }
