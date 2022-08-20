@@ -25,6 +25,7 @@ dataflow::TraactTaskFlowBuilder::TraactTaskFlowBuilder(tf::Taskflow *taskflow,
 }
 
 void dataflow::TraactTaskFlowBuilder::build(const TraactGraph::SharedPtr& traact_graph) {
+    graph_.dataflow_state = traact_graph->dataflow_state;
     for(auto& builder : builder_){
         builder->buildGraph(traact_graph);
     }

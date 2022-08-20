@@ -24,6 +24,9 @@ bool Module::teardown(ComponentPtr module_component) {
 void Module::processTimePoint() {
 
 }
+bool Module::useConstraints() const {
+    return false;
+}
 
 ModuleComponent::ModuleComponent(std::string name, ModuleType module_type)
     : Component(std::move(name)), module_type_(module_type) {

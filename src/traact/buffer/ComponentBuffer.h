@@ -34,7 +34,8 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
                     LocalGroupBuffer output_groups,
                     size_t time_step_index,
                     const Timestamp *time_step_ts,
-                    const EventType *message_type);
+                    const EventType *message_type,
+                    const int time_domain);
     ComponentBuffer() = delete;
 
     [[nodiscard]] size_t getInputCount() const;
@@ -164,6 +165,8 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
 
     [[nodiscard]] EventType getEventType() const;
 
+    [[nodiscard]] int getTimeDomain() const;
+
  private:
     const size_t component_index_;
 
@@ -182,6 +185,7 @@ class TRAACT_CORE_EXPORT ComponentBuffer {
     const size_t time_step_index_;
     const Timestamp *timestamp_;
     const EventType *event_type_;
+    const int time_domain_;
 
 };
 }

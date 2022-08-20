@@ -19,6 +19,7 @@ struct TraactTaskFlowGraph {
     int time_domain;
     std::shared_ptr<buffer::TimeDomainBuffer> time_domain_buffer;
     std::vector<std::map<std::string, tf::Task>> task_flow_tasks;
+    DataflowState::SharedPtr dataflow_state;
 };
 
 } // traact

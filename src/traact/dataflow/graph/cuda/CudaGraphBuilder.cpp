@@ -47,14 +47,14 @@ void CudaGraphBuilder::updateComponentSuccessorsForGpu(TraactGraph &traact_task_
         auto cuda_graph_name = self_graph.value();
         auto cuda_graph_task = std::dynamic_pointer_cast<TraactCudaTask>(traact_task_flow.tasks.at(cuda_graph_name));
 
-        auto component_task = std::dynamic_pointer_cast<TraactCudaTask>(traact_task_flow.tasks.at(instance_id));
+        auto component_task = traact_task_flow.tasks.at(instance_id);
 
 
         for (const auto &successor : component_task->successors()) {
             auto successor_cuda_graph = getCudaGraph(traact_task_flow, successor->getId());
             if (successor_cuda_graph.has_value()) {
                 if (successor_cuda_graph.value() == cuda_graph_name) {
-                    component_task->addInternalSuccessor(instance_id, successor->getId());
+                    cuda_graph_task->addInternalSuccessor(instance_id, successor->getId());
                 } else {
                     cuda_graph_task->precede(successor);
                 }

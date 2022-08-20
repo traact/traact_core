@@ -71,7 +71,8 @@ bool traact::facade::Facade::start() {
 
     network_->setComponentGraph(component_graph_);
 
-    return network_->start();
+    running_ = network_->start();
+    return running_;
 }
 bool traact::facade::Facade::stop() {
     bool call_stop{false};
@@ -86,6 +87,7 @@ bool traact::facade::Facade::stop() {
     if(call_stop){
         call_stop = network_->stop();
         finished_promise_.set_value();
+        running_ = false;
     } else {
         SPDLOG_WARN("stop already called");
     }
@@ -144,5 +146,11 @@ std::vector<traact::pattern::Pattern::Ptr> traact::facade::Facade::GetAllAvailab
 void traact::facade::Facade::parameterChanged(const std::string &instance_id) {
     network_->parameterChanged(instance_id);
 
+}
+bool traact::facade::Facade::isRunning() const{
+    return running_;
+}
+traact::dataflow::DataflowState::SharedPtr traact::facade::Facade::getDataflowState() {
+    return network_->getDataflowState();
 }
 

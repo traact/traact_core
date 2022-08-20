@@ -11,8 +11,6 @@ static const constexpr char *kModuleStartName{"MODULE_START_{0}"};
 static const constexpr char *kModuleMiddleName{"MODULE_MIDDLE_{0}"};
 static const constexpr char *kModuleEndName{"MODULE_END_{0}"};
 
-
-
 ModuleGraphBuilder::ModuleGraphBuilder(GraphBuilderConfig &config) : GraphBuilder(config) {}
 
 void ModuleGraphBuilder::buildGraph(TraactGraph &traact_task_flow) {
@@ -36,7 +34,7 @@ void ModuleGraphBuilder::extractModules(TraactGraph &traact_task_flow) {
 
         if (module_comp_tmp) {
             std::string module_key = module_comp_tmp->getModuleKey();
-            auto& task = traact_task_flow.tasks.at(instance_id);
+            auto &task = traact_task_flow.tasks.at(instance_id);
 
             switch (component.first->getComponentType(time_domain_)) {
                 case component::ComponentType::ASYNC_SINK:
@@ -59,9 +57,13 @@ void ModuleGraphBuilder::extractModules(TraactGraph &traact_task_flow) {
             component::Module::Ptr module = module_map_[module_key];
 
             if (module) {
-                SPDLOG_INFO("Graph: {0} Component: {1} module exists", config_.component_graph->getName(), component.first->getName());
+                SPDLOG_INFO("Graph: {0} Component: {1} module exists",
+                            config_.component_graph->getName(),
+                            component.first->getName());
             } else {
-                SPDLOG_INFO("Graph: {0} Component: {1} create new module", config_.component_graph->getName(), component.first->getName());
+                SPDLOG_INFO("Graph: {0} Component: {1} create new module",
+                            config_.component_graph->getName(),
+                            component.first->getName());
                 module = module_comp_tmp->instantiateModule();
                 module_map_[module_key] = module;
             }
@@ -75,6 +77,9 @@ void ModuleGraphBuilder::createTasksAndDependencies(TraactGraph &traact_task_flo
     for (const auto &[module_key, components] : component_modules_) {
         auto module_instance = module_map_.at(module_key);
 
+        if(!module_instance->useConstraints()){
+            continue;
+        }
 
         bool use_middle = !components.begin_components.empty() && !components.end_components.empty();
 
@@ -85,17 +90,15 @@ void ModuleGraphBuilder::createTasksAndDependencies(TraactGraph &traact_task_flo
         auto start_task = std::make_shared<ControlFlowTask>(start_task_name);
         traact_task_flow.tasks.emplace(start_task_name, start_task);
 
-        auto module_task = std::make_shared<ModuleTask>(module_key, module_instance);
-
         TraactTask::SharedPtr end_task;
-        TraactTask::SharedPtr  begin_components_end_task;
-        TraactTask::SharedPtr  end_components_start_task;
+        TraactTask::SharedPtr begin_components_end_task;
+        TraactTask::SharedPtr end_components_start_task;
 
         if (use_middle) {
             end_task = std::make_shared<ControlFlowTask>(end_task_name);
             traact_task_flow.tasks.emplace(end_task_name, end_task);
 
-            auto middle_task = module_task;
+            auto middle_task = std::make_shared<ModuleTask>(middle_task_name, module_instance);
 
             traact_task_flow.tasks.emplace(middle_task_name, middle_task);
 
@@ -103,7 +106,7 @@ void ModuleGraphBuilder::createTasksAndDependencies(TraactGraph &traact_task_flo
             end_components_start_task = middle_task;
 
         } else {
-            end_task = module_task;
+            end_task = std::make_shared<ModuleTask>(end_task_name, module_instance);
             traact_task_flow.tasks.emplace(end_task_name, end_task);
 
             begin_components_end_task = end_task;

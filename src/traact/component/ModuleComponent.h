@@ -32,6 +32,8 @@ class TRAACT_CORE_EXPORT Module {
 
     virtual void processTimePoint();
 
+    virtual bool useConstraints() const;
+
 };
 
 /**

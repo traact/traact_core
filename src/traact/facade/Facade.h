@@ -23,6 +23,7 @@ class TRAACT_CORE_EXPORT Facade {
     bool blockingStart();
 
     std::shared_future<void> getFinishedFuture();
+    dataflow::DataflowState::SharedPtr getDataflowState();
 
     bool stop();
     void stopAsync();
@@ -33,11 +34,23 @@ class TRAACT_CORE_EXPORT Facade {
 
     component::Component::Ptr getComponent(std::string id);
 
-    template<typename T> auto getComponentAs(std::string instance_id){
+    template<typename T> auto getComponentAs(std::string instance_id) const {
         return std::dynamic_pointer_cast<T>(component_graph_->getComponent(instance_id));
+    }
+    template<typename T> auto findComponents() const {
+        std::vector<std::shared_ptr<T>> components;
+        for(auto& instance_component : component_graph_->getPatterns()) {
+            auto current_component = std::dynamic_pointer_cast<T>(instance_component.second);
+            if(current_component){
+                components.push_back(current_component);
+            }
+        }
+        return components;
     }
 
     std::vector<pattern::Pattern::Ptr> GetAllAvailablePatterns();
+
+    bool isRunning() const;
 
  private:
     std::shared_ptr<PluginFactory> factory_;
@@ -45,6 +58,7 @@ class TRAACT_CORE_EXPORT Facade {
     component::ComponentGraph::Ptr component_graph_;
     dataflow::Network::Ptr network_;
     bool should_stop_{false};
+    bool running_{false};
     std::promise<void> finished_promise_;
     std::shared_future<void> finished_future_;
     std::mutex stop_lock_;

@@ -15,17 +15,19 @@ struct GraphBuilderConfig {
     using CreateBufferCallback = std::function<BufferCallback(int)>;
 
 
-    GraphBuilderConfig(const buffer::TimeDomainManagerConfig &config,
-                       const component::ComponentGraph::Ptr &component_graph,
-                       const std::shared_ptr<buffer::TimeDomainBuffer> &time_domain_buffer,
-                       const CreateBufferCallback &request_buffer_callback,
-                       const std::function<void(void)> &request_exit_callback);
+    GraphBuilderConfig(const buffer::TimeDomainManagerConfig &t_config,
+                       const component::ComponentGraph::Ptr &t_component_graph,
+                       const std::shared_ptr<buffer::TimeDomainBuffer> &t_time_domain_buffer,
+                       const CreateBufferCallback &t_request_buffer_callback,
+                       const std::function<void(void)> &t_request_exit_callback,
+                       const DataflowState::SharedPtr &t_dataflow_state);
     buffer::TimeDomainManagerConfig config;
     component::ComponentGraph::Ptr  component_graph;
     std::shared_ptr<buffer::TimeDomainBuffer> time_domain_buffer;
 
     CreateBufferCallback create_buffer_callback;
     std::function<void(void)> request_exit_callback;
+    DataflowState::SharedPtr dataflow_state;
 };
 
 struct TraactGraph {
@@ -34,7 +36,7 @@ struct TraactGraph {
 
     std::map<std::string, TraactTask::SharedPtr> tasks;
     std::vector<std::map<std::string, TraactTaskData::SharedPtr>> task_data;
-    std::shared_ptr<DataflowState> dataflow_state{std::make_shared<DataflowState>()};
+    std::shared_ptr<DataflowState> dataflow_state;
     size_t getTimeStepCount();
 
 };

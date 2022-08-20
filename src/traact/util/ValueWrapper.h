@@ -36,7 +36,7 @@ class TRAACT_CORE_EXPORT ValueWrapper{
         value_ = std::move(value);
     }
 
-    private:
+ protected:
     T value_;
     std::shared_ptr<void> owner_{};
 

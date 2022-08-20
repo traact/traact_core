@@ -10,6 +10,7 @@
 
 #include <traact/traact_core_export.h>
 #include <traact/buffer/DataBufferFactory.h>
+#include "traact/dataflow/state/DataflowState.h"
 namespace traact::dataflow {
 
 class TRAACT_CORE_EXPORT Network {
@@ -30,7 +31,7 @@ class TRAACT_CORE_EXPORT Network {
     virtual bool stop() = 0;
 
     virtual void parameterChanged(const std::string &instance_id) = 0;
-
+    virtual DataflowState::SharedPtr getDataflowState() = 0;
  protected:
 
     ComponentGraphPtr component_graph_;

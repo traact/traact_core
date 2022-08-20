@@ -8,11 +8,12 @@ TimeStepBuffer::TimeStepBuffer(size_t time_step_index,
                                BufferType buffer_data,
                                BufferType header_data,
                                const std::map<int,
-                                              BufferConfig> &buffer_config)
+                                              BufferConfig> &buffer_config,
+                               const int time_domain)
     : time_step_index_(time_step_index),
       buffer_data_(std::move(buffer_data)),
       header_data_(std::move(header_data)),
-      current_message_{EventType::INVALID} {
+      current_message_{EventType::INVALID}, time_domain_(time_domain) {
 
     buffer_timestamp_.resize(buffer_data_.size());
     buffer_valid_.reserve(buffer_data_.size());
@@ -168,7 +169,8 @@ std::unique_ptr<ComponentBuffer> TimeStepBuffer::createComponentBuffer(const Buf
                                              output_group_buffer,
                                              time_step_index_,
                                              &current_ts_,
-                                             &current_message_);
+                                             &current_message_,
+                                             time_domain_);
 }
 void TimeStepBuffer::setEvent(Timestamp timestamp, EventType message_type, std::string changed_pattern) {
     current_ts_ = timestamp;
@@ -177,6 +179,13 @@ void TimeStepBuffer::setEvent(Timestamp timestamp, EventType message_type, std::
 }
 const std::string &TimeStepBuffer::getChangedPattern() const {
     return changed_pattern_instance_id_;
+}
+bool TimeStepBuffer::hasComponentBuffer(const std::string &component_name) {
+    auto result = component_buffer_to_index_.find(component_name);
+    return result != component_buffer_to_index_.end();
+}
+int TimeStepBuffer::getTimeDomain() const {
+    return time_domain_;
 }
 }
 

@@ -17,8 +17,10 @@ class TRAACT_CORE_EXPORT TaskFlowNetwork : public Network {
     bool stop() override;
 
     void parameterChanged(const std::string &instance_id) override;
+    virtual DataflowState::SharedPtr getDataflowState() override;
  private:
     tf::Executor executor_;
+    DataflowState::SharedPtr dataflow_state_;
     std::vector<std::unique_ptr<TaskFlowTimeDomain>> task_flow_time_domains_;
 
     void init();

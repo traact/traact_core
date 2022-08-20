@@ -38,7 +38,12 @@ struct export_tag header_name { \
     using NativeType = type; \
     static constexpr const char *NativeTypeName{#type}; \
     static constexpr const char *MetaType{meta}; \
-    const size_t size = sizeof(type); \
+    static constexpr const size_t size = sizeof(type); \
+    header_name() = default;                  \
+    header_name(header_name const& value) = default; \
+    header_name& operator=(header_name const& value) = default; \
+    header_name(header_name && value) = default; \
+    header_name& operator=(header_name && value) = default; \
 }; \
 class header_name##Factory : public traact::buffer::TemplatedDefaultDataFactory<header_name> { \
     TRAACT_PLUGIN_ENABLE(traact::buffer::DataFactory, traact::buffer::TemplatedDefaultDataFactory<header_name>) \
@@ -62,6 +67,7 @@ REGISTER_COMPONENT(component_name##type_name##Factory)
 
 #define REGISTER_DEFAULT_TRAACT_TYPE(type) \
 REGISTER_TYPE(type##Factory)
+
 
 
 #endif//TRAACT_CORE_SRC_TRAACT_TRAACT_H_

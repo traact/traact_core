@@ -31,7 +31,9 @@ class TimeStepBuffer {
                    BufferType buffer_data,
                    BufferType header_data,
                    const std::map<int,
-                                  BufferConfig> &buffer_config);
+                                  BufferConfig> &buffer_config,
+                   const int time_domain);
+    bool hasComponentBuffer(const std::string &component_name);
     size_t getComponentIndex(const std::string &component_name);
     ComponentBuffer &getComponentBuffer(size_t component_idx);
     ComponentBuffer &getComponentBuffer(const std::string &component_name);
@@ -43,11 +45,13 @@ class TimeStepBuffer {
     Timestamp getTimestamp();
     EventType getEventType();
     const std::string& getChangedPattern() const;
+    int getTimeDomain() const;
 
  private:
     const size_t time_step_index_;
     BufferType buffer_data_;
     BufferType header_data_;
+    const int time_domain_;
 
     Timestamp current_ts_;
     EventType current_message_;

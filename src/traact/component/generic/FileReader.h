@@ -67,9 +67,6 @@ class FileReader : public Component {
     std::string filename_;
     const std::string serializer_name_;
     typename T::NativeType data_;
-
-
-
 };
 
 }

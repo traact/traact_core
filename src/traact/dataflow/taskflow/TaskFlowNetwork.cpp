@@ -8,9 +8,9 @@ TaskFlowNetwork::~TaskFlowNetwork() {
 }
 
 void TaskFlowNetwork::init() {
-
+    dataflow_state_ = std::make_shared<DataflowState>();
     for (const auto &time_domain : component_graph_->getTimeDomains()) {
-        auto task_flow_time_domain = std::make_unique<TaskFlowTimeDomain>(time_domain, component_graph_, generic_factory_objects_, master_source_finished_callback_);
+        auto task_flow_time_domain = std::make_unique<TaskFlowTimeDomain>(time_domain, component_graph_, generic_factory_objects_, master_source_finished_callback_, dataflow_state_);
         task_flow_time_domains_.emplace_back(std::move(task_flow_time_domain));
     }
 
@@ -39,5 +39,8 @@ void TaskFlowNetwork::parameterChanged(const std::string &instance_id) {
         task_flow_time_domain->parameterChanged(instance_id);
     }
 
+}
+DataflowState::SharedPtr TaskFlowNetwork::getDataflowState() {
+    return dataflow_state_;
 }
 }

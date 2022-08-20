@@ -10,7 +10,8 @@ namespace traact::dataflow {
 TaskFlowTimeDomain::TaskFlowTimeDomain(int time_domain,
                                        component::ComponentGraph::Ptr component_graph,
                                        buffer::DataBufferFactoryPtr buffer_factory,
-                                       component::Component::SourceFinishedCallback callback)
+                                       component::Component::SourceFinishedCallback callback,
+                                       DataflowState::SharedPtr dataflow_state)
     : generic_factory_objects_(std::move(buffer_factory)),
       source_finished_callback_(std::move(callback)),
       component_graph_(std::move(component_graph)),
@@ -39,7 +40,7 @@ TaskFlowTimeDomain::TaskFlowTimeDomain(int time_domain,
                              component_graph_,
                              time_domain_buffer_,
                              create_buffer_callback,
-                             source_finished_callback_);
+                             source_finished_callback_, dataflow_state);
 
     graph_builder_ = std::make_unique<TraactGraphBuilder>(graph_builder_config);
     task_flow_builder_ = std::make_unique<TraactTaskFlowBuilder>(&taskflow_, time_domain_buffer_, time_domain_config_.time_domain, scheduler_.get());

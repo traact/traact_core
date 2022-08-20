@@ -26,6 +26,7 @@ TraactGraphBuilder::TraactGraphBuilder(GraphBuilderConfig config)
 TraactGraph::SharedPtr TraactGraphBuilder::build() {
 
     traact_graph_ = std::make_shared<TraactGraph>();
+    traact_graph_->dataflow_state = config_.dataflow_state;
 
     for(auto& builder : graph_builder_){
         builder->buildGraph(*traact_graph_);
@@ -45,11 +46,15 @@ void TraactGraphBuilder::createTimeStepTraactTaskData() {
         auto& time_step_buffer = config_.time_domain_buffer->getTimeStepBuffer(i);
 
         for(const auto&[id, task] : traact_graph_->tasks){
-            auto component_index = time_step_buffer.getComponentIndex(id);
-            auto& component_buffer = time_step_buffer.getComponentBuffer(component_index);
-            TaskState& task_state = traact_graph_->dataflow_state->getTaskState(id);
-            auto task_data = std::make_shared<TraactTaskData>(time_step_buffer, component_buffer, task_state, component_index );
-            time_step_data.emplace(id, task_data);
+            if(time_step_buffer.hasComponentBuffer(id)) {
+                auto component_index = time_step_buffer.getComponentIndex(id);
+                auto& component_buffer = time_step_buffer.getComponentBuffer(component_index);
+                TaskState& task_state = traact_graph_->dataflow_state->getTaskState(id);
+                auto task_data = std::make_shared<TraactTaskData>(time_step_buffer, component_buffer, task_state, component_index );
+                time_step_data.emplace(id, task_data);
+            } else {
+                time_step_data.emplace(id, nullptr);
+            }
         }
     }
 }

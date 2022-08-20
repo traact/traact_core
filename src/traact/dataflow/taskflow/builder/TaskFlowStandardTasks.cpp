@@ -46,7 +46,11 @@ void TaskFlowStandardTasks::createTimeStep(int time_step, const TraactGraph::Sha
             task = createTask(control_task, data_pointer);
         }
 
-        task_flow_tasks.emplace(id, task);
+        if(!task.empty()) {
+            task_flow_tasks.emplace(id, task);
+        }
+
+
     }
 }
 tf::Task TaskFlowStandardTasks::createTask(std::shared_ptr<traact::dataflow::ComponentTask> task,

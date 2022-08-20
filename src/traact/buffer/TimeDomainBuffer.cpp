@@ -111,7 +111,8 @@ void TimeDomainBuffer::init(const component::ComponentGraph &component_graph) {
         time_step_buffer_.emplace_back(std::make_unique<TimeStepBuffer>(time_step_index,
                                                                         data_buffer_[time_step_index]->getData(),
                                                                         data_buffer_[time_step_index]->getHeader(),
-                                                                        buffer_config_));
+                                                                        buffer_config_,
+                                                                        time_domain_));
     }
 
 }

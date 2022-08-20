@@ -42,7 +42,7 @@ TEST(SingleComponentBuffer, Empty) {
          output_timestamp, traact::buffer::LocalGroupBuffer(),
          kTimeStepIndex,
          &timestamp,
-         &event_type);
+         &event_type, 0);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
     EXPECT_EQ(kTimeStepIndex, buffer.getTimeStepIndex());
@@ -93,7 +93,7 @@ TEST(SingleComponentBuffer, Input) {
          output_timestamp, traact::buffer::LocalGroupBuffer(),
          kTimeStepIndex,
          &timestamp,
-         &event_type);
+         &event_type, 0);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
     EXPECT_EQ(kTimeStepIndex, buffer.getTimeStepIndex());
@@ -160,7 +160,7 @@ TEST(SingleComponentBuffer, Output) {
          output_timestamp, traact::buffer::LocalGroupBuffer(),
          kTimeStepIndex,
          &timestamp,
-         &event_type);
+         &event_type, 0);
 
     EXPECT_EQ(kComponentIndex, buffer.getComponentIndex());
     EXPECT_EQ(kTimeStepIndex, buffer.getTimeStepIndex());

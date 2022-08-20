@@ -5,5 +5,7 @@
 
 #include <traact/component/generic/ApplicationAsyncSource.h>
 #include <traact/component/generic/ApplicationSyncSink.h>
+#include <traact/component/generic/Buffer.h>
+#include <traact/component/generic/Gate.h>
 
 #endif//TRAACT_CORE_SRC_TRAACT_COMPONENT_GENERIC_COMPONENTS_H_

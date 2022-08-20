@@ -30,7 +30,8 @@ class TaskFlowTimeDomain {
     TaskFlowTimeDomain(int time_domain,
                        component::ComponentGraph::Ptr component_graph,
                        buffer::DataBufferFactoryPtr buffer_factory,
-                       component::Component::SourceFinishedCallback callback);
+                       component::Component::SourceFinishedCallback callback,
+                       DataflowState::SharedPtr dataflow_state);
 
 
 

@@ -655,7 +655,7 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
     time_step_latest_++;
     time_step_latest_ = time_step_latest_ % time_step_count_;
 
-    SPDLOG_INFO("Run task from queue, using time step: {0} ts: {1} {2}",
+    SPDLOG_DEBUG("Run task from queue, using time step: {0} ts: {1} {2}",
                 time_step_latest_, next_message.timestamp, next_message.event_type);
     assert(!running_taskflows_[time_step_latest_]);
     if (next_message.event_type == EventType::DATA && latest_running_ts_.currentValue() == next_message.timestamp) {

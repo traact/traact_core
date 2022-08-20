@@ -18,7 +18,8 @@ ComponentBuffer::ComponentBuffer(size_t component_index,
                                  LocalGroupBuffer output_groups,
                                  size_t time_step_index,
                                  const Timestamp *time_step_ts,
-                                 const EventType *message_type)
+                                 const EventType *message_type,
+                                 const int time_domain)
     : time_step_index_(time_step_index),
       input_buffer_(std::move(input_buffer)),
       input_valid_(std::move(input_valid)),
@@ -28,7 +29,7 @@ ComponentBuffer::ComponentBuffer(size_t component_index,
       output_timestamp_(std::move(output_timestamp)),
       component_index_(component_index), timestamp_(time_step_ts), event_type_(message_type),
       input_header_(input_header), output_header_(output_header), input_groups_(input_groups),
-      output_groups_(output_groups) {
+      output_groups_(output_groups), time_domain_(time_domain) {
 
 }
 
@@ -84,6 +85,9 @@ bool ComponentBuffer::isInputGroupValid(int port_group_index, int port_group_ins
         result = result && isInputValid(kIndex);
     }
     return result;
+}
+int ComponentBuffer::getTimeDomain() const {
+    return time_domain_;
 }
 
 }

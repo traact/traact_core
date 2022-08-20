@@ -40,7 +40,15 @@ void TaskFlowConnections::connectTimeStepComponents(int time_step, const TraactG
     for (const auto &[id, task] : traact_graph->tasks) {
         auto& current_task = task_flow_tasks.at(id);
         for(const auto& successor : task->successors()){
-            current_task.precede(task_flow_tasks.at(successor->getId()));
+            auto successor_task = task_flow_tasks.find(successor->getId());
+            if(successor_task != task_flow_tasks.end()){
+                current_task.precede(successor_task->second);
+            } else{
+                auto error = fmt::format("TaskFlowConnections, task {0}, could not find successor task {1}", id, successor->getId());
+                SPDLOG_ERROR(error);
+                throw std::logic_error(error);
+            }
+
         }
     }
 
