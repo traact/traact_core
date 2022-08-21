@@ -240,5 +240,28 @@ void GraphInstance::forAllPatternInstances(const std::function<void(const PortGr
     }
 
 }
+std::optional<std::string> GraphInstance::checkRunnable() {
+    std::stringstream error_stream;
+    for (auto &pattern_instance : pattern_instances) {
+        for (auto &group_port_instances : pattern_instance.second->port_groups) {
+            for (auto &group_port_instance : group_port_instances) {
+                for(auto& consumer_port : group_port_instance->consumer_ports) {
+                    if(!consumer_port.isConnected()){
+                        error_stream << fmt::format("Input Port {0}:{1} is not connected\n", consumer_port.getId().first, consumer_port.getId().second);
+                    }
+                }
+            }
+        }
+    }
+
+    auto error_string = error_stream.str();
+    if(error_string.empty()){
+        return {};
+    } else {
+        return {error_string};
+    }
+
+
+}
 
 }

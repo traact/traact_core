@@ -31,6 +31,13 @@ traact::facade::Facade::~Facade() {
 }
 void traact::facade::Facade::loadDataflow(traact::pattern::instance::GraphInstance::Ptr graph_instance) {
     SPDLOG_DEBUG("loading dataflow from graph instance");
+
+    auto run_error = graph_instance->checkRunnable();
+    if(run_error){
+        SPDLOG_ERROR(run_error.value());
+        throw std::invalid_argument(run_error.value());
+    }
+
     graph_instance_ = graph_instance;
 
     component_graph_ = std::make_shared<component::ComponentGraph>(graph_instance_);
@@ -68,6 +75,7 @@ void traact::facade::Facade::loadDataflow(std::string filename) {
 }
 
 bool traact::facade::Facade::start() {
+
 
     network_->setComponentGraph(component_graph_);
 

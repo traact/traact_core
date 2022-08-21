@@ -17,17 +17,20 @@ struct TRAACT_CORE_EXPORT Pattern {
  public:
     using Ptr = std::shared_ptr<Pattern>;
     Pattern();
-    Pattern(Pattern&) = default;
-    Pattern(Pattern&&) = default;
+    Pattern(Pattern &) = default;
+    Pattern(Pattern &&) = default;
     Pattern(std::string name,
             Concurrency t_concurrency,
             component::ComponentType component_type);
     ~Pattern() = default;
-    Pattern & operator= ( const Pattern & ) = default;
-    Pattern & operator= ( Pattern && ) = default;
+    Pattern &operator=(const Pattern &) = default;
+    Pattern &operator=(Pattern &&) = default;
 
-
-    Pattern &addPort(std::string port_name, int time_domain, PortType port_type, std::string type_name, PortGroup& port_group);
+    Pattern &addPort(std::string port_name,
+                     int time_domain,
+                     PortType port_type,
+                     std::string type_name,
+                     PortGroup &port_group);
 
     Pattern &addProducerPort(const std::string &port_name,
                              const std::string &data_type_name,
@@ -44,9 +47,9 @@ struct TRAACT_CORE_EXPORT Pattern {
     Pattern &endPortGroup();
 
     template<typename Port>
-    Pattern &addPort(std::string port_name, int time_domain, PortType port_type, PortGroup& port_group) {
+    Pattern &addPort(std::string port_name, int time_domain, PortType port_type, PortGroup &port_group) {
         checkName(port_name, port_group);
-        if(port_type == PortType::PRODUCER){
+        if (port_type == PortType::PRODUCER) {
             port_group.producer_ports.emplace_back(port_name,
                                                    Port::Header::NativeTypeName,
                                                    PortType::PRODUCER,
@@ -85,15 +88,21 @@ struct TRAACT_CORE_EXPORT Pattern {
     }
 
     template<typename T>
-    Pattern &addParameter(const std::string& parameter_name,
+    Pattern &addParameter(const std::string &parameter_name,
                           T default_value,
                           T min_value = T(0),
                           T max_value = T(1000)) {
-        auto& default_ports = port_groups.front();
-        default_ports.parameter[parameter_name]["default"] = default_value;
-        default_ports.parameter[parameter_name]["value"] = default_value;
-        default_ports.parameter[parameter_name]["min_value"] = min_value;
-        default_ports.parameter[parameter_name]["max_value"] = max_value;
+
+        nlohmann::json *parameter;
+        if (is_group_port) {
+            parameter = &port_groups.back().parameter;
+        } else {
+            parameter = &port_groups.front().parameter;
+        }
+        (*parameter)[parameter_name]["default"] = default_value;
+        (*parameter)[parameter_name]["value"] = default_value;
+        (*parameter)[parameter_name]["min_value"] = min_value;
+        (*parameter)[parameter_name]["max_value"] = max_value;
         return *this;
     }
 

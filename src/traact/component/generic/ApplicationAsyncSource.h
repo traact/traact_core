@@ -6,6 +6,7 @@
 #include "traact/component/Component.h"
 #include "traact/traact_plugins.h"
 #include <spdlog/spdlog.h>
+#include "traact/buffer/SourceComponentBuffer.h"
 
 namespace traact::component::facade {
 

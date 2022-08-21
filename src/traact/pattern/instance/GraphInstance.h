@@ -41,6 +41,7 @@ struct TRAACT_CORE_EXPORT GraphInstance {
                                                                  const std::string &consumer_port);
     std::optional<std::string> checkSourceAndSinkConnectionError(const traact::pattern::instance::ComponentID_PortName &source,
                                                                  const traact::pattern::instance::ComponentID_PortName &sink);
+    std::optional<std::string> checkRunnable();
     void initializeGraphPortConnections(PortGroupInstance &port_group_instance);
  private:
     void forAllPatternInstances(const std::function<void (const PortGroupInstance&)>& func) const;
