@@ -44,6 +44,20 @@ class FileReaderWriterModuleComponent : public ModuleComponent {
         return true;
     }
 
+    typename T::NativeType getValue() const{
+        if(value_module_->value_){
+            return value_module_->value_.value();
+        }else {
+            return typename T::NativeType();
+        }
+    }
+
+    virtual void setValue(const typename T::NativeType & value){
+        value_module_->value_ = {value};
+    }
+
+
+
  protected:
     std::string filename_;
     std::shared_ptr<FileReaderWriterModule<T>> value_module_;
@@ -140,6 +154,11 @@ class FileReaderWriterWrite : public FileReaderWriterModuleComponent<T> {
 
 
         return saveValue(data.getTimestamp(), input);
+    }
+
+    virtual void setValue(const typename T::NativeType & value) override {
+        FileReaderWriterModuleComponent<T>::setValue(value);
+        saveValue(now(), value);
     }
 
     virtual bool saveValue(Timestamp timestamp, const typename T::NativeType &value) = 0;
