@@ -159,7 +159,7 @@ class FileReaderWriterWrite : public FileReaderWriterModuleComponent<T> {
         saveValue(now(), value);
     }
 
-    bool saveValue(Timestamp timestamp, const typename T::NativeType &value) = 0;
+    virtual bool saveValue(Timestamp timestamp, const typename T::NativeType &value) = 0;
 
  protected:
     const std::string serializer_name_;
