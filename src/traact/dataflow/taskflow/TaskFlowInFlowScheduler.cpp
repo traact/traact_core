@@ -25,7 +25,7 @@ TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManager
       time_domain_(time_domain),
       taskflow_(taskflow),
       time_domain_clock_(config_.sensor_frequency, config_.max_offset, 1.0),
-      on_timeout_(std::move(on_timeout)){
+      on_timeout_(std::move(on_timeout)) {
 
     running_taskflows_.resize(time_step_count_, false);
     running_timestamps_.resize(time_step_count_, kTimestampZero);
@@ -282,7 +282,7 @@ void TaskFlowInFlowScheduler::takeTaskflow(int taskflow_id,
     running_taskflows_[taskflow_id] = true;
     running_timestamps_[taskflow_id] = next_ts;
     for (int source_index = 0; source_index < time_domain_buffer_->getCountSources(); ++source_index) {
-        source_set_input_[source_index][time_step_latest_]->store(false, std::memory_order_relaxed);
+        source_set_input_[source_index][time_step_latest_]->store(false, std::memory_order_release);
     }
 }
 
@@ -318,7 +318,7 @@ void TaskFlowInFlowScheduler::cancelSourceWaitForEvent(Timestamp timestamp, int 
     // cancel running time steps
     auto min_ts = timestamp - config_.max_offset;
     for (int time_step_index = 0; time_step_index < time_step_count_; ++time_step_index) {
-        auto is_not_set = !source_set_input_[component_index][time_step_index]->load(std::memory_order_relaxed);
+        auto is_not_set = !source_set_input_[component_index][time_step_index]->load(std::memory_order_acquire);
         if (is_not_set && running_taskflows_[time_step_index]
             && running_timestamps_[time_step_index] + config_.max_offset < min_ts) {
             auto &time_step_buffer = time_domain_buffer_->getTimeStepBuffer(time_step_index);
@@ -328,7 +328,8 @@ void TaskFlowInFlowScheduler::cancelSourceWaitForEvent(Timestamp timestamp, int 
                 component_index,
                 time_step_buffer.getTimestamp(),
                 timestamp);
-            source_set_input_[component_index][time_step_index]->store(true, std::memory_order_relaxed);
+
+            source_set_input_[component_index][time_step_index]->store(true, std::memory_order_release);
 
             time_step_buffer.getSourceComponentBuffer(component_index)->cancel();
 
@@ -403,10 +404,9 @@ bool TaskFlowInFlowScheduler::isTimestampScheduled(Timestamp timestamp) {
 std::future<buffer::SourceComponentBuffer *> TaskFlowInFlowScheduler::requestSourceBufferRunning(Timestamp timestamp,
                                                                                                  int component_index,
                                                                                                  int time_step_index) {
-    {
-        std::unique_lock guard(flow_mutex_);
-        source_set_input_[component_index][time_step_index]->store(true, std::memory_order_relaxed);
-    }
+
+    std::unique_lock guard(flow_mutex_);
+    source_set_input_[component_index][time_step_index]->store(true, std::memory_order_release);
 
     return std::async(std::launch::deferred,
                       [&, timestamp, component_index, time_step_index]() -> buffer::SourceComponentBuffer * {
@@ -656,7 +656,7 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
     time_step_latest_ = time_step_latest_ % time_step_count_;
 
     SPDLOG_DEBUG("Run task from queue, using time step: {0} ts: {1} {2}",
-                time_step_latest_, next_message.timestamp, next_message.event_type);
+                 time_step_latest_, next_message.timestamp, next_message.event_type);
     assert(!running_taskflows_[time_step_latest_]);
     if (next_message.event_type == EventType::DATA && latest_running_ts_.currentValue() == next_message.timestamp) {
         SPDLOG_ERROR("same timestamp scheduled twice {0}", next_message.timestamp);
@@ -665,12 +665,12 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
     takeTaskflow(time_step_latest_, next_message.timestamp);
     auto &time_step_buffer = time_domain_buffer_->getTimeStepBuffer(time_step_latest_);
     if (next_message.event_type == EventType::PARAMETER_CHANGE) {
-        time_step_buffer.setEvent(next_message.timestamp, next_message.event_type, next_message.changed_pattern_instance_id);
+        time_step_buffer.setEvent(next_message.timestamp,
+                                  next_message.event_type,
+                                  next_message.changed_pattern_instance_id);
     } else {
         time_step_buffer.setEvent(next_message.timestamp, next_message.event_type);
     }
-
-
 
     if (next_message.event_type == EventType::DATA) {
         latest_running_ts_.notifyAll(next_message.timestamp);
@@ -678,13 +678,13 @@ void TaskFlowInFlowScheduler::runTaskFlowFromQueue() {
             auto *source_buffer = time_step_buffer.getSourceComponentBuffer(invalid_source);
             SPDLOG_TRACE("source for scheduled time step already marked as invalid, component index: {0} ts: {1}",
                          invalid_source, source_buffer->getTimestamp());
-            source_set_input_[invalid_source][time_step_latest_]->store(true, std::memory_order_relaxed);
+            source_set_input_[invalid_source][time_step_latest_]->store(true, std::memory_order_release);
             source_buffer->commit(true);
         }
     } else {
         SPDLOG_TRACE("non data event, commit all source components");
         for (int source_index = 0; source_index < time_domain_buffer_->getCountSources(); ++source_index) {
-            source_set_input_[source_index][time_step_latest_]->store(true, std::memory_order_relaxed);
+            source_set_input_[source_index][time_step_latest_]->store(true, std::memory_order_release);
             time_step_buffer.getSourceComponentBuffer(source_index)->commit(true);
         }
 

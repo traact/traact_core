@@ -11,6 +11,7 @@
 #include <traact/util/FileUtil.h>
 #include <traact/buffer/ComponentBuffer.h>
 
+
 namespace traact::component {
 
 template<typename T>
@@ -44,19 +45,17 @@ class FileReaderWriterModuleComponent : public ModuleComponent {
         return true;
     }
 
-    typename T::NativeType getValue() const{
-        if(value_module_->value_){
+    typename T::NativeType getValue() const {
+        if (value_module_->value_) {
             return value_module_->value_.value();
-        }else {
+        } else {
             return typename T::NativeType();
         }
     }
 
-    virtual void setValue(const typename T::NativeType & value){
+    virtual void setValue(const typename T::NativeType &value) {
         value_module_->value_ = {value};
     }
-
-
 
  protected:
     std::string filename_;
@@ -152,16 +151,15 @@ class FileReaderWriterWrite : public FileReaderWriterModuleComponent<T> {
 
         FileReaderWriterModuleComponent<T>::value_module_->value_ = {input};
 
-
         return saveValue(data.getTimestamp(), input);
     }
 
-    virtual void setValue(const typename T::NativeType & value) override {
+    void setValue(const typename T::NativeType &value) override {
         FileReaderWriterModuleComponent<T>::setValue(value);
         saveValue(now(), value);
     }
 
-    virtual bool saveValue(Timestamp timestamp, const typename T::NativeType &value) = 0;
+    bool saveValue(Timestamp timestamp, const typename T::NativeType &value) = 0;
 
  protected:
     const std::string serializer_name_;
