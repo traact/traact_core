@@ -23,11 +23,19 @@ class ApplicationSyncSink : public Component {
     }
 
     static pattern::Pattern::Ptr GetPattern() {
-        std::string pattern_name = "ApplicationSyncSink_" + std::string(HeaderType::NativeTypeName);
+        static const std::string base_name = "ApplicationSyncSink";
+        std::string pattern_name = base_name + "_" + std::string(HeaderType::NativeTypeName);
+        auto display_name = fmt::format("{0} ({1})","Application Sink (sync)", HeaderType::MetaType);
         pattern::Pattern::Ptr
             pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::SYNC_SINK);
-        pattern->addConsumerPort("input", HeaderType::NativeTypeName);
-        pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "input");
+        pattern->addConsumerPort("input", HeaderType::NativeTypeName)
+            .setDisplayName(display_name)
+            .setDescription("Provide data from the dataflow network to the user application")
+            .addTag(pattern::tags::kApplication)
+            .addTag(pattern::tags::kTemplated)
+            .addCoordinateSystem("A")
+            .addCoordinateSystem("B")
+            .addEdge("A", "B", "input");
         return pattern;
     }
 

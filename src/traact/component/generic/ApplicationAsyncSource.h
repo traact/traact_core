@@ -1,7 +1,7 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_FACADE_APPLICATIONASYNCSOURCE_H_
-#define TRAACT_CORE_SRC_TRAACT_COMPONENT_FACADE_APPLICATIONASYNCSOURCE_H_
+#ifndef TRAACT_CORE_SRC_TRAACT_COMPONENT_GENERIC_APPLICATIONASYNCSOURCE_H_
+#define TRAACT_CORE_SRC_TRAACT_COMPONENT_GENERIC_APPLICATIONASYNCSOURCE_H_
 
 #include "traact/component/Component.h"
 #include "traact/traact_plugins.h"
@@ -13,19 +13,27 @@ namespace traact::component::facade {
 template<typename HeaderType>
 class ApplicationAsyncSource : public Component {
  public:
-    typedef typename std::shared_ptr<ApplicationAsyncSource<HeaderType> > Ptr;
-    typedef typename HeaderType::NativeType NativeType;
+    using Ptr = typename std::shared_ptr<ApplicationAsyncSource<HeaderType>>;
+    using NativeType = typename HeaderType::NativeType;
 
     explicit ApplicationAsyncSource(const std::string &name) : Component(name) {
 
     }
 
     static pattern::Pattern::Ptr GetPattern() {
-        std::string pattern_name = "ApplicationAsyncSource_" + std::string(HeaderType::NativeTypeName);
+        static const std::string base_name = "ApplicationAsyncSource";
+        std::string pattern_name = base_name + "_" + std::string(HeaderType::NativeTypeName);
+        auto display_name = fmt::format("{0} ({1})","Application Source (async)", HeaderType::MetaType);
         pattern::Pattern::Ptr
             pattern = std::make_shared<pattern::Pattern>(pattern_name, Concurrency::SERIAL, ComponentType::ASYNC_SOURCE);
-        pattern->addProducerPort("output", HeaderType::NativeTypeName);
-        pattern->addCoordinateSystem("A").addCoordinateSystem("B").addEdge("A", "B", "output");
+        pattern->addProducerPort("output", HeaderType::NativeTypeName)
+            .setDisplayName(display_name)
+            .setDescription("Provide data from the user application to the dataflow network")
+            .addTag(pattern::tags::kApplication)
+            .addTag(pattern::tags::kTemplated)
+            .addCoordinateSystem("A")
+            .addCoordinateSystem("B")
+            .addEdge("A", "B", "output");
         return pattern;
     }
 
@@ -64,4 +72,4 @@ class ApplicationAsyncSource : public Component {
 };
 }
 
-#endif //TRAACT_CORE_SRC_TRAACT_COMPONENT_FACADE_APPLICATIONASYNCSOURCE_H_
+#endif //TRAACT_CORE_SRC_TRAACT_COMPONENT_GENERIC_APPLICATIONASYNCSOURCE_H_

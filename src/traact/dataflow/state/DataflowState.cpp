@@ -3,7 +3,19 @@
 #include "DataflowState.h"
 
 namespace traact::dataflow {
-TaskState &DataflowState::getTaskState(const std::string &task_id) {
-    return task_states_[task_id];
+
+void DataflowState::init(int time_domain_count) {
+    time_domain_states_.reserve(time_domain_count);
+    for (int i = 0; i < time_domain_count; ++i) {
+        time_domain_states_.emplace_back(std::make_shared<TimeDomainState>());
+    }
+
 }
+const std::shared_ptr<TimeDomainState> &DataflowState::getState(int time_domain) {
+    return time_domain_states_[time_domain];
+}
+size_t DataflowState::getTimeDomainCount() const {
+    return time_domain_states_.size();
+}
+
 } // traact

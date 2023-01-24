@@ -50,5 +50,8 @@ void TraactTask::clear() {
     predecessors_inter_time_step_.clear();
 
 }
+bool TraactTask::isSource() const {
+    return false;
+}
 
 } // traact

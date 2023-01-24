@@ -8,6 +8,7 @@
 
 #include <traact/component/ComponentTypes.h>
 #include <traact/pattern/Pattern.h>
+#include <traact/pattern/PatternTags.h>
 #include <traact/pattern/instance/PatternInstance.h>
 #include <traact/datatypes.h>
 #include <traact/traact_core_export.h>

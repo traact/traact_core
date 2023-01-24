@@ -2,8 +2,7 @@
 
 #include "TraactGpuGraph.cuh"
 #include <taskflow/cuda/cudaflow.hpp>
-#include <fmt/format.h>
-
+#include "traact/dataflow/graph/task/TraactTaskId.h"
 
 
 namespace traact {
@@ -19,9 +18,9 @@ tf::Task createTraactGpuGraph(const std::string &cuda_graph_name,
         std::vector<tf::cudaTask> component_to_task;
         component_to_task.resize(components.size());
         for(auto i=0;i<components.size();++i){
-            auto& component = components[i];
+            const auto& component = components[i];
             component_to_task[i] = capturer.on(component->createGpuTask(buffer[i]))
-                .name(fmt::format("{0}_task{1}", i, time_step_index));
+                .name(dataflow::task_util::getTaskId(dataflow::task_util::kCudaComponent, component->getName().c_str(), time_step_index));
 
         }
         for(auto i=0;i<components.size();++i){
@@ -30,8 +29,7 @@ tf::Task createTraactGpuGraph(const std::string &cuda_graph_name,
                 current_task.precede(component_to_task[successor_index]);
             }
         }
-    }).name(fmt::format("{0}_task{1}", cuda_graph_name, time_step_index)
-    );
+    }).name(dataflow::task_util::getTaskId(dataflow::task_util::kCudaFlow, cuda_graph_name.c_str(), time_step_index));
 }
 
 } // traact

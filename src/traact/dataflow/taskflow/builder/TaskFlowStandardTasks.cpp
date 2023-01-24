@@ -5,7 +5,7 @@
 #include "tasks/TaskFlowComponentTask.h"
 #include "tasks/TaskFlowSourceTask.h"
 #include "tasks/TaskFlowModuleTask.h"
-
+#include "traact/dataflow/graph/task/TraactTaskId.h"
 namespace traact::dataflow {
 
 TaskFlowStandardTasks::TaskFlowStandardTasks(TraactTaskFlowGraph &task_flow_graph) : TaskFlowGraphBuilder(
@@ -29,24 +29,31 @@ void TaskFlowStandardTasks::createTimeStep(int time_step, const TraactGraph::Sha
         auto component_task = std::dynamic_pointer_cast<ComponentTask>(traact_task);
         if(component_task){
             task = createTask(component_task, data_pointer);
+            task.name(task_util::getTaskId(task_util::kComponent, id.c_str(), time_step));
         }
 
         auto source_task = std::dynamic_pointer_cast<SourceTask>(traact_task);
         if(source_task){
             task = createTask(source_task, data_pointer);
+            task.name(task_util::getTaskId(task_util::kSource, id.c_str(), time_step));
         }
 
         auto module_task = std::dynamic_pointer_cast<ModuleTask>(traact_task);
         if(module_task){
             task = createTask(module_task, data_pointer);
+            task.name(task_util::getTaskId(task_util::kModule, id.c_str(), time_step));
         }
 
         auto control_task = std::dynamic_pointer_cast<ControlFlowTask>(traact_task);
         if(control_task){
             task = createTask(control_task, data_pointer);
+            task.name(task_util::getTaskId(task_util::kControlFlow, id.c_str(), time_step));
         }
 
+
+
         if(!task.empty()) {
+
             task_flow_tasks.emplace(id, task);
         }
 

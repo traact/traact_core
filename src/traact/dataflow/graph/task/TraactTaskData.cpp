@@ -5,7 +5,6 @@
 namespace traact {
 dataflow::TraactTaskData::TraactTaskData(buffer::TimeStepBuffer &time_step_buffer,
                                          buffer::ComponentBuffer &buffer,
-                                         dataflow::TaskState &task_state,
                                          int component_index)
-    : time_step_buffer(time_step_buffer), buffer(buffer), task_state(task_state), component_index(component_index) {}
+    : time_step_buffer(time_step_buffer), buffer(buffer), component_index(component_index) {}
 } // traact

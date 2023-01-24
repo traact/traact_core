@@ -1,5 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 #include "JsonTimeDomainManagerConfig.h"
+#include <spdlog/spdlog.h>
 namespace ns {
 
 using nlohmann::json;
@@ -13,6 +14,7 @@ void to_json(json &jobj, const traact::buffer::TimeDomainManagerConfig &obj) {
     jobj["source_mode"] = static_cast<int>(obj.source_mode);
     jobj["missing_source_event_mode"] = static_cast<int>(obj.missing_source_event_mode);
     jobj["cpu_count"] = obj.cpu_count;
+    jobj["profile"] = obj.profile;
 }
 
 void from_json(const json &jobj, traact::buffer::TimeDomainManagerConfig &obj) {
@@ -24,6 +26,12 @@ void from_json(const json &jobj, traact::buffer::TimeDomainManagerConfig &obj) {
     jobj.at("source_mode").get_to(obj.source_mode);
     jobj.at("missing_source_event_mode").get_to(obj.missing_source_event_mode);
     jobj.at("cpu_count").get_to(obj.cpu_count);
+    if(jobj.find("profile") == jobj.end()) {
+        obj.profile = false;
+        SPDLOG_WARN("dataflow time domain configuration is missing the profile property, setting to false");
+    } else {
+        jobj.at("profile").get_to(obj.profile);
+    }
 
 
 

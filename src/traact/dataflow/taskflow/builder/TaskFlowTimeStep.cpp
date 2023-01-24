@@ -1,17 +1,9 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #include "TaskFlowTimeStep.h"
-
+#include "traact/dataflow/graph/task/TraactTaskId.h"
 namespace traact::dataflow {
 
-
-
-std::string timeStepStartTaskName(int index) {
-    return fmt::format("TIME_STEP_START_{0}", index);
-}
-std::string timeStepEndTaskName(int index) {
-    return fmt::format("TIME_STEP_END_{0}", index);
-}
 
 TaskFlowTimeStep::TaskFlowTimeStep(TraactTaskFlowGraph &task_flow_graph) : TaskFlowGraphBuilder(task_flow_graph) {}
 
@@ -26,24 +18,24 @@ void TaskFlowTimeStep::buildGraph(const TraactGraph::SharedPtr &traact_graph) {
 void TaskFlowTimeStep::createStartStopTasks(const TraactGraph &traact_graph, int time_step_index) {
 
     auto& task_flow_tasks = task_flow_graph_.task_flow_tasks.at(time_step_index);
-    auto start_task = createLocalStartTask(time_step_index, timeStepStartTaskName(time_step_index));
+    auto start_task = createLocalStartTask(time_step_index,  task_util::getTaskId(task_util::kControlFlow, task_util::kTimeStepStart, time_step_index));
     for (const auto &[id, traact_task] : traact_graph.tasks) {
         if(traact_task->isStartPoint()){
             auto task = task_flow_tasks.at(id);
             start_task.precede(task);
         }
     }
-    task_flow_tasks.emplace(kTimeStepStart, start_task);
+    task_flow_tasks.emplace(task_util::kTimeStepStart, start_task);
 
 
-    auto end_task = createLocalEndTask(time_step_index, timeStepEndTaskName(time_step_index));
+    auto end_task = createLocalEndTask(time_step_index, task_util::getTaskId(task_util::kControlFlow, task_util::kTimeStepEnd, time_step_index));
     for (const auto &[id, traact_task] : traact_graph.tasks) {
         if(traact_task->isEndPoint()){
             auto task = task_flow_tasks.at(id);
             end_task.succeed(task);
         }
     }
-    task_flow_tasks.emplace(kTimeStepEnd, end_task);
+    task_flow_tasks.emplace(task_util::kTimeStepEnd, end_task);
 
 }
 tf::Task TaskFlowTimeStep::createLocalStartTask(int time_step_index, const std::string &name) {

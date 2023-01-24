@@ -32,6 +32,7 @@ class TraactTask : public std::enable_shared_from_this<TraactTask> {
 
     bool isStartPoint() const;
     bool isEndPoint() const;
+    virtual bool isSource() const;
 
     void clear();
 

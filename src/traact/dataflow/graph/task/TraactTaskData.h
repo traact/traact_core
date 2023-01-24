@@ -5,7 +5,6 @@
 
 #include <memory>
 #include "traact/buffer/TimeStepBuffer.h"
-#include "traact/dataflow/state/TaskState.h"
 
 namespace traact::dataflow {
 
@@ -14,12 +13,10 @@ struct TraactTaskData {
 
     TraactTaskData(buffer::TimeStepBuffer &time_step_buffer,
                    buffer::ComponentBuffer &buffer,
-                   TaskState &task_state,
                    int component_index);
 
     buffer::TimeStepBuffer &time_step_buffer;
     buffer::ComponentBuffer &buffer;
-    TaskState &task_state;
     int component_index;
 
     std::vector<std::atomic_bool *> predecessors_valid{};

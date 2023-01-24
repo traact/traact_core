@@ -7,6 +7,7 @@
 #include <traact/dataflow/Network.h>
 #include <traact/component/ComponentGraph.h>
 #include <traact/facade/PluginFactory.h>
+#include <traact/dataflow/state/DataflowState.h>
 #include <future>
 
 namespace traact::facade {

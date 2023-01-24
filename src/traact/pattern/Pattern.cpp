@@ -2,16 +2,76 @@
 
 #include "traact/pattern/Pattern.h"
 #include "traact/util/Utils.h"
-
+#include "PatternTags.h"
 namespace traact::pattern {
+
+Pattern::Pattern() : display_name{name} {
+    port_groups.emplace_back("Default", 0, 1, 1);
+}
 
 Pattern::Pattern(std::string name,
                  Concurrency t_concurrency,
                  component::ComponentType component_type)
-    : name(std::move(name)) {
+    : name(std::move(name)),
+      display_name{this->name} {
     concurrency.emplace_back(t_concurrency);
     time_domain_component_type.emplace_back(component_type);
     port_groups.emplace_back(kDefaultPortGroupName, kDefaultPortGroupIndex, 1, 1);
+    if(t_concurrency == Concurrency::SERIAL) {
+        addTag(tags::kSerial);
+    } else {
+        addTag(tags::kUnlimited);
+    }
+    switch (component_type) {
+        case component::ComponentType::ASYNC_SINK:
+        case component::ComponentType::ASYNC_FUNCTIONAL:
+        case component::ComponentType::ASYNC_SOURCE:
+        case component::ComponentType::INTERNAL_SYNC_SOURCE:
+        {
+            addTag(tags::kAsynchronous);
+            break;
+        }
+
+        case component::ComponentType::SYNC_SOURCE:
+        case component::ComponentType::SYNC_FUNCTIONAL:
+        case component::ComponentType::SYNC_SINK:
+        {
+            addTag(tags::kSynchronous);
+            break;
+        }
+
+        case component::ComponentType::INVALID:
+        default: {
+            throw std::invalid_argument("invalid component type");
+        }
+    }
+
+    switch (component_type) {
+        case component::ComponentType::SYNC_SOURCE:
+        case component::ComponentType::ASYNC_SOURCE:
+        case component::ComponentType::INTERNAL_SYNC_SOURCE:
+        {
+            addTag(tags::kSource);
+            break;
+        }
+
+        case component::ComponentType::ASYNC_FUNCTIONAL:
+        case component::ComponentType::SYNC_FUNCTIONAL:{
+            addTag(tags::kFunction);
+            break;
+        }
+        case component::ComponentType::SYNC_SINK:
+        case component::ComponentType::ASYNC_SINK:
+        {
+            addTag(tags::kSink);
+            break;
+        }
+
+        case component::ComponentType::INVALID:
+        default: {
+            throw std::invalid_argument("invalid component type");
+        }
+    }
 }
 
 Pattern &Pattern::addPort(std::string port_name,
@@ -37,7 +97,6 @@ Pattern &Pattern::addPort(std::string port_name,
     }
     return *this;
 }
-
 Pattern &Pattern::addProducerPort(const std::string &port_name,
                                   const std::string &data_type_name,
                                   int port_index, int time_domain) {
@@ -49,6 +108,7 @@ Pattern &Pattern::addProducerPort(const std::string &port_name,
         return addPort(port_name, time_domain, PortType::PRODUCER, data_type_name, port_group);
     }
 }
+
 Pattern &Pattern::addConsumerPort(const std::string &port_name,
                                   const std::string &data_type_name,
                                   int port_index,
@@ -61,7 +121,6 @@ Pattern &Pattern::addConsumerPort(const std::string &port_name,
         return addPort(port_name, time_domain, PortType::CONSUMER, data_type_name, port_group);
     }
 }
-
 Pattern &Pattern::addStringParameter(const std::string &parameter_name,
                                      const std::string &default_value) {
     nlohmann::json *parameter;
@@ -91,6 +150,7 @@ Pattern &Pattern::addParameter(const std::string &parameter_name,
 
     return *this;
 }
+
 Pattern &Pattern::addParameter(const std::string &parameter_name,
                                const nlohmann::json &json_value) {
 
@@ -104,7 +164,6 @@ Pattern &Pattern::addParameter(const std::string &parameter_name,
 
     return *this;
 }
-
 Pattern &Pattern::addCoordinateSystem(const std::string &coordinate_system_name,
                                       bool is_multi) {
     spatial::CoordinateSystem newCoord(coordinate_system_name, is_multi);
@@ -116,6 +175,7 @@ Pattern &Pattern::addCoordinateSystem(const std::string &coordinate_system_name,
 
     return *this;
 }
+
 Pattern &Pattern::addEdge(const std::string &source,
                           const std::string &destination,
                           const std::string &port) {
@@ -138,7 +198,6 @@ Pattern &Pattern::beginPortGroup(const std::string &port_group_name,
     port_groups.emplace_back(port_group_name, group_index, min, max);
     return *this;
 }
-
 Pattern &Pattern::endPortGroup() {
     is_group_port = false;
     return *this;
@@ -153,8 +212,34 @@ void Pattern::checkName(const std::string &name, const PortGroup &port_group) co
     if (util::vectorContainsName(port_group.consumer_ports, name))
         throw std::invalid_argument("Name of port already in use, Component: " + name + " Port: " + name);
 }
-Pattern::Pattern() {
-    port_groups.emplace_back("Default", 0, 1, 1);
+Pattern &Pattern::setDisplayName(std::string display_name) {
+    this->display_name = std::move(display_name);
+    return *this;
+}
+Pattern &Pattern::setDescription(std::string description) {
+    this->description = std::move(description);
+    return *this;
+}
+Pattern &Pattern::addTag(std::string tag) {
+    tags.emplace_back(std::move(tag));
+    return *this;
+}
+bool Pattern::hasProducerPorts() const {
+    for(const auto& group : port_groups){
+        if(!group.producer_ports.empty()){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Pattern::hasConsumerPorts() const {
+    for(const auto& group : port_groups){
+        if(!group.consumer_ports.empty()){
+            return true;
+        }
+    }
+    return false;
 }
 
 }

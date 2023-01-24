@@ -1,7 +1,7 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#ifndef TRAACT_INCLUDE_TRAACT_DATATYPES_H_
-#define TRAACT_INCLUDE_TRAACT_DATATYPES_H_
+#ifndef TRAACT_CORE_SRC_TRAACT_DATATYPES_H_
+#define TRAACT_CORE_SRC_TRAACT_DATATYPES_H_
 
 #include <chrono>
 #include <sstream>
@@ -12,6 +12,11 @@ using Scalar = float;
 
 using TimeDuration = std::chrono::duration<int64_t, std::nano>;
 using Timestamp = std::chrono::time_point<std::chrono::system_clock, TimeDuration>;
+
+using TimeDurationFloatNano = std::chrono::duration<float, std::nano>;
+using TimeDurationFloatMicro = std::chrono::duration<float, std::micro>;
+using TimeDurationFloatMilli = std::chrono::duration<float, std::milli>;
+using TimeDurationFloatSecond = std::chrono::duration<float>;
 
 static const constexpr Timestamp kTimestampZero(TimeDuration(0));
 
@@ -136,10 +141,11 @@ struct TRAACT_CORE_EXPORT TimeDomainManagerConfig {
     SourceMode source_mode{SourceMode::WAIT_FOR_BUFFER};
     MissingSourceEventMode missing_source_event_mode{MissingSourceEventMode::WAIT_FOR_EVENT};
     int cpu_count{0};
+    bool profile{false};
 };
 }
 
 }
 
-#endif //TRAACT_INCLUDE_TRAACT_DATATYPES_H_
+#endif //TRAACT_CORE_SRC_TRAACT_DATATYPES_H_
 

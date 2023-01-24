@@ -14,10 +14,6 @@ TaskFlowComponentTask::TaskFlowComponentTask(std::shared_ptr<traact::dataflow::C
 void TaskFlowComponentTask::process() {
 
     try {
-        data_->task_state.begin();
-
-
-
         bool all_input_valid = true;
 
         for (auto *valid : data_->predecessors_valid) {
@@ -36,7 +32,6 @@ void TaskFlowComponentTask::process() {
 //        }
 
         auto event_type =data_->time_step_buffer.getEventType();
-        data_->task_state.process(event_type);
         bool component_result{false};
         switch (event_type) {
             case EventType::CONFIGURE: {
@@ -79,15 +74,12 @@ void TaskFlowComponentTask::process() {
             default:break;
         }
 
-        data_->task_state.end();
         // must be true right now or renderer will stop
         data_->valid_component_call.store(true, std::memory_order_release);
         return;
     } catch (const std::exception& e) {
-        data_->task_state.error(e.what());
         SPDLOG_ERROR("{0}, {1}, components must not throw exceptions ", e.what(),pattern_->instance_id);
     } catch (...) {
-        data_->task_state.error();
         SPDLOG_ERROR("unknown throw in source component, components must not throw exceptions");
     }
 

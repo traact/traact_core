@@ -2,21 +2,8 @@
 
 #include "TaskFlowConnections.h"
 #include "TaskFlowTimeStep.h"
-
+#include "traact/dataflow/graph/task/TraactTaskId.h"
 namespace traact::dataflow {
-
-static const constexpr char *kSeamEntryFormat{"{0}_SEAM_{1}"};
-static const constexpr char *kSeamStartFormat{"{0}_SEAM_START_{1}"};
-static const constexpr char *kSeamEndFormat{"{0}_SEAM_END_{1}"};
-
-
-
-std::string getTaskName(const int time_step_index,
-                                            const std::string &instance_id) {
-    return fmt::format("{0}_task{1}",
-                       instance_id,
-                       time_step_index);
-}
 
 
 
@@ -63,7 +50,7 @@ void TaskFlowConnections::createInterTimeStepDependencies(const TraactGraph::Sha
     auto start_entry = task_flow_graph_.taskflow->emplace([&]() -> tf::SmallVector<int, kStartEntries> {
         SPDLOG_TRACE("start entry is running");
         return start_entries_;
-    }).name("start_entry");
+    }).name( task_util::getTaskId(task_util::kSeamStart, task_util::kGlobalStart, 0));
     start_entry.succeed(start_task);
     start_entry.precede(end_task);
 
@@ -71,16 +58,16 @@ void TaskFlowConnections::createInterTimeStepDependencies(const TraactGraph::Sha
 
     auto connect_time_step_end_to_start = [&](int time_step_index) {
         auto &id_tasks = task_flow_graph_.task_flow_tasks[time_step_index];
-        auto seam_entry_name = fmt::format(kSeamEntryFormat, "TIME_STEP", time_step_index);
-        auto seam_start_name = fmt::format(kSeamStartFormat, "TIME_STEP", time_step_index);
-        auto seam_end_name = fmt::format(kSeamEndFormat, "TIME_STEP", time_step_index);
+        auto seam_entry_name = task_util::getTaskId(task_util::kSeamEntry, task_util::kTimeStepSelf, time_step_index);
+        auto seam_start_name = task_util::getTaskId(task_util::kSeamStart, task_util::kTimeStepSelf, time_step_index);
+        auto seam_end_name = task_util::getTaskId(task_util::kSeamEnd, task_util::kTimeStepSelf, time_step_index);
 
         auto seam_entry = createSeamEntryTask(time_step_index, seam_entry_name);
         auto seam_start = task_flow_graph_.taskflow->emplace([]() {}).name(seam_start_name);
         auto seam_end = task_flow_graph_.taskflow->emplace([]() {}).name(seam_end_name);
 
-        auto &time_step_start = id_tasks.at(kTimeStepStart);
-        auto &time_step_end = id_tasks.at(kTimeStepEnd);
+        auto &time_step_start = id_tasks.at(task_util::kTimeStepStart);
+        auto &time_step_end = id_tasks.at(task_util::kTimeStepEnd);
         time_step_end.precede(seam_entry);
         seam_entry.precede(seam_start, seam_end);
         seam_start.precede(time_step_start);
@@ -89,11 +76,11 @@ void TaskFlowConnections::createInterTimeStepDependencies(const TraactGraph::Sha
         start_entries_.push_back(static_cast<int>(start_entries_.size()) + 1);
     };
 
-    auto connect_end_to_next_start = [&](std::string start_name, std::string end_name) {
+    auto connect_end_to_next_start = [&](const std::string& start_name, const std::string& end_name) {
 
-        auto seam_entry_name = fmt::format(kSeamEntryFormat, start_name, 0);
-        auto seam_start_name = fmt::format(kSeamStartFormat, start_name, 0);
-        auto seam_end_name = fmt::format(kSeamEndFormat, start_name, 0);
+        auto seam_entry_name = task_util::getTaskId(task_util::kSeamEntry, start_name.c_str(), 0);
+        auto seam_start_name = task_util::getTaskId(task_util::kSeamStart, start_name.c_str(), 0);
+        auto seam_end_name = task_util::getTaskId(task_util::kSeamEnd, start_name.c_str(), 0);
 
         auto seam_entry = createSeamEntryTask(0, seam_entry_name);
         auto seam_start = task_flow_graph_.taskflow->emplace([]() {}).name(seam_start_name);
@@ -106,13 +93,13 @@ void TaskFlowConnections::createInterTimeStepDependencies(const TraactGraph::Sha
             auto &next_start_tasks = task_flow_graph_.task_flow_tasks[current_time_step_index].at(start_name);
             current_end_tasks.precede(next_start_tasks);
 
-            auto time_step_end_task = task_flow_graph_.task_flow_tasks[current_time_step_index].at(kTimeStepEnd);
+            auto time_step_end_task = task_flow_graph_.task_flow_tasks[current_time_step_index].at(task_util::kTimeStepEnd);
             current_end_tasks.precede(time_step_end_task);
         }
 
         auto &last_end_task = task_flow_graph_.task_flow_tasks.back().at(end_name);
         auto &fist_start_task = task_flow_graph_.task_flow_tasks.front().at(start_name);
-        auto last_time_step_end_task = task_flow_graph_.task_flow_tasks.back().at(kTimeStepEnd);
+        auto last_time_step_end_task = task_flow_graph_.task_flow_tasks.back().at(task_util::kTimeStepEnd);
 
         last_end_task.precede(seam_entry);
         seam_entry.precede(seam_start, seam_end);
@@ -126,9 +113,9 @@ void TaskFlowConnections::createInterTimeStepDependencies(const TraactGraph::Sha
 
     auto inter_connect_time_steps = [&](const std::string &instance_id) {
 
-        auto seam_entry_name = fmt::format(kSeamEntryFormat, instance_id, 0);
-        auto seam_start_name = fmt::format(kSeamStartFormat, instance_id, 0);
-        auto seam_end_name = fmt::format(kSeamEndFormat, instance_id, 0);
+        auto seam_entry_name = task_util::getTaskId(task_util::kSeamEntry, instance_id.c_str(), 0);
+        auto seam_start_name = task_util::getTaskId(task_util::kSeamStart, instance_id.c_str(), 0);
+        auto seam_end_name = task_util::getTaskId(task_util::kSeamEnd, instance_id.c_str(), 0);
 
         auto seam_entry = createSeamEntryTask(0, seam_entry_name);
         auto seam_start = task_flow_graph_.taskflow->emplace([]() {}).name(seam_start_name);
@@ -158,8 +145,8 @@ void TaskFlowConnections::createInterTimeStepDependencies(const TraactGraph::Sha
 
     }
 
-    inter_connect_time_steps(kTimeStepStart);
-    inter_connect_time_steps(kTimeStepEnd);
+    inter_connect_time_steps(task_util::kTimeStepStart);
+    inter_connect_time_steps(task_util::kTimeStepEnd);
 
     for (const auto &[id, current_task] : traact_graph->tasks) {
 
@@ -194,14 +181,14 @@ tf::Task TaskFlowConnections::createGlobalStartTask() {
     return task_flow_graph_.taskflow->emplace([scheduler = task_flow_graph_.scheduler, time_domain = task_flow_graph_.time_domain]() mutable {
         SPDLOG_TRACE("start time domain: {0}", time_domain);
         scheduler->globalTaskFlowStart();
-    }).name("start");
+    }).name(task_util::getTaskId(task_util::kSeamEntry, task_util::kGlobalStart, 0));
 
 
 }
 tf::Task TaskFlowConnections::createGlobalEndTask() {
     return task_flow_graph_.taskflow->emplace([scheduler = task_flow_graph_.scheduler, time_domain = task_flow_graph_.time_domain]() mutable {
-        SPDLOG_TRACE("End time domain {0}", time_domain);
-    }).name("end");
+        SPDLOG_INFO("End time domain {0}", time_domain);
+    }).name(task_util::getTaskId(task_util::kSeamEnd, task_util::kGlobalStart, 0));
 }
 
 } // traact

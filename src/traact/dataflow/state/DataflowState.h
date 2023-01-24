@@ -5,7 +5,7 @@
 
 #include <memory>
 #include <map>
-#include "TaskState.h"
+#include "TimeDomainState.h"
 namespace traact::dataflow {
 
 class DataflowState {
@@ -13,9 +13,15 @@ class DataflowState {
     using SharedPtr = std::shared_ptr<DataflowState>;
     using ConstSharedPtr = std::shared_ptr<const DataflowState>;
 
-    TaskState& getTaskState(const std::string& task_id);
+
+    void init(int time_domain_count);
+
+    size_t getTimeDomainCount() const;
+    const std::shared_ptr<TimeDomainState>& getState(int time_domain);
+
  private:
-    std::map<std::string, TaskState> task_states_;
+    
+    std::vector<std::shared_ptr<TimeDomainState>> time_domain_states_;
 
 
 };

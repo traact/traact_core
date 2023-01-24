@@ -40,3 +40,4 @@ traact::util::initLogging(spdlog::level::level_enum log_level,
         std::cout << "Log initialization failed: " << ex.what() << std::endl;
     }
 }
+

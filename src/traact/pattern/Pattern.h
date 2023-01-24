@@ -132,11 +132,20 @@ struct TRAACT_CORE_EXPORT Pattern {
 
     Pattern &addTimeDomain(component::ComponentType component_type);
 
+    Pattern &setDisplayName(std::string display_name);
+    Pattern &setDescription(std::string description);
+    Pattern &addTag(std::string tag);
+
     std::string name{"invalid"};
+    std::string display_name;
+    std::string description{};
+    std::vector<std::string> tags{};
     std::vector<Concurrency> concurrency{};
     std::vector<component::ComponentType> time_domain_component_type{};
     std::vector<PortGroup> port_groups{};
 
+    bool hasProducerPorts() const;
+    bool hasConsumerPorts() const;
  private:
     bool is_group_port{false};
     void checkName(const std::string &name, const PortGroup &port_group) const;

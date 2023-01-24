@@ -16,4 +16,7 @@ const component::ComponentGraph::PatternPtr &SourceTask::getPattern() const {
 const component::ComponentGraph::ComponentPtr &SourceTask::getComponent() const {
     return component_;
 }
+bool SourceTask::isSource() const {
+    return true;
+}
 } // traact

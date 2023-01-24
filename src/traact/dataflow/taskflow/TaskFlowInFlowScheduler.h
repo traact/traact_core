@@ -10,7 +10,7 @@
 #include <taskflow/taskflow.hpp>
 #include "TimeDomainClock.h"
 #include "TaskFlowTaskFunctions.h"
-
+#include "traact/dataflow/state/TimeDomainState.h"
 namespace traact::dataflow {
 class TaskFlowInFlowScheduler {
  public:
@@ -20,7 +20,8 @@ class TaskFlowInFlowScheduler {
                             std::string graph_name,
                             int time_domain,
                             tf::Taskflow *taskflow,
-                            std::function<void(void)> on_timeout);
+                            std::function<void(void)> on_timeout,
+                            std::shared_ptr<TimeDomainState> time_domain_state);
     ~TaskFlowInFlowScheduler();
     void start();
     void globalTaskFlowStart();
@@ -79,6 +80,7 @@ class TaskFlowInFlowScheduler {
     TimeDomainClock time_domain_clock_;
     bool stop_scheduled_{false};
     std::function<void(void)> on_timeout_;
+    std::shared_ptr<TimeDomainState> time_domain_state_;
 
 
 

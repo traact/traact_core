@@ -14,6 +14,7 @@ class SourceTask : public TraactTask{
     virtual const std::string &getId() override;
     const component::ComponentGraph::PatternPtr &getPattern() const;
     const component::ComponentGraph::ComponentPtr &getComponent() const;
+    virtual bool isSource() const override;
  private:
     component::ComponentGraph::PatternPtr pattern_;
     component::ComponentGraph::ComponentPtr component_;

@@ -3,6 +3,7 @@
 #include "TaskFlowCudaGraphBuilder.h"
 #include "TraactGpuGraph.cuh"
 
+
 namespace traact::dataflow {
 TaskFlowCudaGraphBuilder::TaskFlowCudaGraphBuilder(TraactTaskFlowGraph &task_flow_graph) : TaskFlowGraphBuilder(
     task_flow_graph) {}

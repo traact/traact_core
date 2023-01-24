@@ -8,7 +8,9 @@ TaskFlowNetwork::~TaskFlowNetwork() {
 }
 
 void TaskFlowNetwork::init() {
+    auto time_domain_count = component_graph_->getTimeDomains().size();
     dataflow_state_ = std::make_shared<DataflowState>();
+    dataflow_state_->init(time_domain_count);
     for (const auto &time_domain : component_graph_->getTimeDomains()) {
         auto task_flow_time_domain = std::make_unique<TaskFlowTimeDomain>(time_domain, component_graph_, generic_factory_objects_, master_source_finished_callback_, dataflow_state_);
         task_flow_time_domains_.emplace_back(std::move(task_flow_time_domain));

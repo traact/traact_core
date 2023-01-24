@@ -1,9 +1,8 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 #include "TaskFlowInFlowScheduler.h"
-
 #include <utility>
-
+#include "TaskFlowProfiler.h"
 namespace traact::dataflow {
 TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManagerConfig &config,
                                                  std::shared_ptr<
@@ -11,7 +10,8 @@ TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManager
                                                  std::string graph_name,
                                                  int time_domain,
                                                  tf::Taskflow *taskflow,
-                                                 std::function<void(void)> on_timeout)
+                                                 std::function<void(void)> on_timeout,
+                                                 std::shared_ptr<TimeDomainState> time_domain_state)
     : config_(config),
       time_domain_buffer_(std::move(time_domain_buffer)),
       executor_(config_.cpu_count > 0 ? config_.cpu_count : std::thread::hardware_concurrency() - config_.cpu_count),
@@ -25,14 +25,13 @@ TaskFlowInFlowScheduler::TaskFlowInFlowScheduler(const buffer::TimeDomainManager
       time_domain_(time_domain),
       taskflow_(taskflow),
       time_domain_clock_(config_.sensor_frequency, config_.max_offset, 1.0),
-      on_timeout_(std::move(on_timeout)) {
+      on_timeout_(std::move(on_timeout)), time_domain_state_(time_domain_state) {
 
     running_taskflows_.resize(time_step_count_, false);
     running_timestamps_.resize(time_step_count_, kTimestampZero);
     latest_scheduled_component_timestamp_.resize(time_domain_buffer_->getCountSources(), kTimestampZero);
 
-    //
-    //tmp.resize(time_step_count_, std::atomic_bool(false));
+
     for (int i = 0; i < time_domain_buffer_->getCountSources(); ++i) {
         std::vector<std::unique_ptr<std::atomic_bool>> tmp;
         for (int j = 0; j < time_step_count_; ++j) {
@@ -69,6 +68,12 @@ void TaskFlowInFlowScheduler::start() {
         time_domain_buffer_->getTimeStepBuffer(time_step_index).resetNewEvent();
     }
 
+    if(config_.profile){
+        time_domain_state_->init(executor_.num_workers(), config_.ringbuffer_size);
+        executor_.make_observer<TaskFlowProfiler>(time_domain_state_, *taskflow_);
+    }
+
+
     taskflow_future_ = executor_.run(*taskflow_);
 
     while (!taskflow_started_.try_wait(kDataflowStopTimeout)) {
@@ -89,11 +94,16 @@ void TaskFlowInFlowScheduler::timeStepEnded(int time_step_index) {
     SPDLOG_TRACE("timeStepEnded: {0} timestamp: {1} start",
                  time_step_index,
                  time_domain_buffer_->getTimeStepBuffer(time_step_index).getTimestamp());
+
     std::unique_lock guard(request_mutex_);
     SPDLOG_DEBUG("timeStepEnded: {0} timestamp: {1} has lock",
                  time_step_index,
                  time_domain_buffer_->getTimeStepBuffer(time_step_index).getTimestamp());
+
+
+
     freeTimeStep(time_step_index);
+
     switch (time_domain_buffer_->getTimeStepBuffer(time_step_index).getEventType()) {
         case EventType::CONFIGURE:configure_finished_.SetInit(true);
             break;
@@ -113,6 +123,8 @@ void TaskFlowInFlowScheduler::timeStepEnded(int time_step_index) {
             break;
 
     }
+
+
 }
 void TaskFlowInFlowScheduler::stop() {
 

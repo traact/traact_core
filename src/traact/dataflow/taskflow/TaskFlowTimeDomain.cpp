@@ -27,7 +27,7 @@ TaskFlowTimeDomain::TaskFlowTimeDomain(int time_domain,
                                                     time_domain_,
                                                     &taskflow_, [&]() {
             printState();
-        });
+        }, dataflow_state->getState(time_domain_));
 
     auto create_buffer_callback = [scheduler = scheduler_.get()](int component_index) {
         return [scheduler, component_index](Timestamp timestamp) {
@@ -55,6 +55,8 @@ void TaskFlowTimeDomain::init() {
     auto traact_graph = graph_builder_->build();
 
     task_flow_builder_->build(traact_graph);
+
+
 
     SPDLOG_TRACE("dump of task flow \n{0}", taskflow_.dump());
 

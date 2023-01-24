@@ -8,7 +8,9 @@ using nlohmann::json;
 
 void to_json(json &jobj, const traact::pattern::Pattern &obj) {
     jobj["pattern_name"] = obj.name;
-
+    jobj["display_name"] = obj.display_name;
+    jobj["description"] = obj.description;
+    jobj["tags"] = obj.tags;
 
     auto& json_concurrency = jobj["time_domains"];
 
@@ -28,6 +30,9 @@ void to_json(json &jobj, const traact::pattern::Pattern &obj) {
 }
 void from_json(const json &jobj, traact::pattern::Pattern &obj) {
     jobj["pattern_name"].get_to(obj.name);
+    jobj["display_name"].get_to(obj.display_name);
+    jobj["description"].get_to(obj.description);
+    jobj["tags"].get_to(obj.tags);
 
     auto find_it = jobj.find("time_domains");
     if (find_it != jobj.end()) {

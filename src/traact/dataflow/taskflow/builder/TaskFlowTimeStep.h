@@ -7,9 +7,6 @@
 
 namespace traact::dataflow {
 
-static const constexpr char *kTimeStepStart{"TIME_STEP_START"};
-static const constexpr char *kTimeStepEnd{"TIME_STEP_END"};
-
 class TaskFlowTimeStep : public TaskFlowGraphBuilder {
  public:
     TaskFlowTimeStep(TraactTaskFlowGraph &task_flow_graph);
