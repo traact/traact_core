@@ -1,7 +1,7 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "traact/pattern/instance/PatternInstance.h"
-#include "traact/util/Utils.h"
+#include <traact/pattern/instance/PatternInstance.h>
+#include <traact/util/Utils.h>
 
 namespace traact::pattern::instance {
 

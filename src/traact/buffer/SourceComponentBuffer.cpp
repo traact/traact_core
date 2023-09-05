@@ -1,7 +1,7 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
 
-#include "SourceComponentBuffer.h"
+#include <traact/buffer/SourceComponentBuffer.h>
 namespace traact::buffer {
 SourceComponentBuffer::SourceComponentBuffer(ComponentBuffer &output_buffer)
     : local_output_buffer_(output_buffer) {

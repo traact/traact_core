@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "TimeDomainBuffer.h"
+#include <traact/buffer/TimeDomainBuffer.h>
 
 #include <utility>
 

@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "TimeDomainState.h"
+#include <traact/dataflow/state/TimeDomainState.h>
 #include <spdlog/spdlog.h>
 
 #include <utility>

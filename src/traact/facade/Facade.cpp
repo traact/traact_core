@@ -1,9 +1,9 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "Facade.h"
-#include "traact/serialization/JsonGraphInstance.h"
+#include <traact/facade/Facade.h>
+#include <traact/serialization/JsonGraphInstance.h>
 
-#include "traact/util/Logging.h"
+#include <traact/util/Logging.h>
 #include <stdlib.h>
 #include <fstream>
 

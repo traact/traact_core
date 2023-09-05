@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "CudaComponent.h"
+#include <traact/component/CudaComponent.h>
 
 namespace traact::component {
 

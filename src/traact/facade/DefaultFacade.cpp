@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "DefaultFacade.h"
+#include "traact/facade/DefaultFacade.h"
 
 #include "traact/facade/rttr/RTTRPluginFactory.h"
 //#include <traact/dataflow/tbb/TBBNetwork.h>

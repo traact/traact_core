@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "UserEvent.h"
+#include <traact/userEvent/UserEvent.h>
 #include "traact/component/generic_components.h"
 
 namespace traact::userEvent {

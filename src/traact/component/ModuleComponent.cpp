@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
-#include "traact/util/Logging.h"
-#include "ModuleComponent.h"
+#include <traact/util/Logging.h>
+#include <traact/component/ModuleComponent.h>
 
 #include <utility>
 

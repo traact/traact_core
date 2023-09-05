@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "FpsCounter.h"
+#include <traact/util/FpsCounter.h>
 
 namespace traact {
 void util::FpsCounter::event() noexcept {

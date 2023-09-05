@@ -28,12 +28,14 @@ bool TaskFlowNetwork::start() {
     for (auto &task_flow_time_domain : task_flow_time_domains_) {
         task_flow_time_domain->start();
     }
+    return true;
 }
 
 bool TaskFlowNetwork::stop() {
     for (auto &task_flow_time_domain : task_flow_time_domains_) {
         task_flow_time_domain->stop();
     }
+    return true;
 
 }
 void TaskFlowNetwork::parameterChanged(const std::string &instance_id) {

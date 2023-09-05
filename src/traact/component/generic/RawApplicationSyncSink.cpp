@@ -1,7 +1,7 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "RawApplicationSyncSink.h"
-#include "traact/traact.h"
+#include <traact/component/generic/RawApplicationSyncSink.h>
+#include <traact/traact.h>
 
 namespace traact::component::facade {
 

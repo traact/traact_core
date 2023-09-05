@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "JsonPattern.h"
+#include <traact/serialization/JsonPattern.h>
 
 namespace ns {
 

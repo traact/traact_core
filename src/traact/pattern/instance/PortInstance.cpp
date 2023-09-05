@@ -5,7 +5,7 @@
 #include "traact/util/Logging.h"
 #include "traact/pattern/instance/PortInstance.h"
 #include "traact/pattern/instance/PatternInstance.h"
-#include "GraphInstance.h"
+#include "traact/pattern/instance/GraphInstance.h"
 
 namespace traact::pattern::instance {
 

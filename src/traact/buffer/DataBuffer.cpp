@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "DataBuffer.h"
+#include <traact/buffer/DataBuffer.h>
 #include <spdlog/spdlog.h>
 namespace traact::buffer {
 DataBuffer::DataBuffer(const std::set<DataFactory::Ptr> &data_factories) {

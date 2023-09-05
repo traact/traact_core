@@ -1,5 +1,5 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
-#include "JsonTimeDomainManagerConfig.h"
+#include <traact/serialization/JsonTimeDomainManagerConfig.h>
 #include <spdlog/spdlog.h>
 namespace ns {
 

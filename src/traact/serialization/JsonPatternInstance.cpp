@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "JsonPatternInstance.h"
+#include <traact/serialization/JsonPatternInstance.h>
 #include <traact/serialization/JsonPattern.h>
 #include <traact/serialization/JsonPortInstance.h>
 

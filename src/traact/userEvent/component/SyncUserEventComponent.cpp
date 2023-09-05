@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "SyncUserEventComponent.h"
+#include <traact/userEvent/component/SyncUserEventComponent.h>
 
 namespace traact::component {
 

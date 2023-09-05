@@ -2,7 +2,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <iostream>
-#include "Logging.h"
+#include <traact/util/Logging.h>
 
 void TRAACT_CORE_EXPORT
 traact::util::initLogging(spdlog::level::level_enum log_level,

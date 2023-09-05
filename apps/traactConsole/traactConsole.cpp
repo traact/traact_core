@@ -84,10 +84,10 @@ int main(int argc, char **argv) {
     }
 
 
-    if (!util::fileExists(dataflow_file, "Facade")) {
-        SPDLOG_ERROR("traactConsole: error: - invalid dataflow file: {0}", dataflow_file);
-        return 1;
-    }
+//    if (!util::fileExists(dataflow_file, "Facade")) {
+//        SPDLOG_ERROR("traactConsole: error: - invalid dataflow file: {0}", dataflow_file);
+//        return 1;
+//    }
 
     SPDLOG_INFO("using plugin directories: {0}", plugin_dirs);
 

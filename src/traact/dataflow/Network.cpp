@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "Network.h"
+#include <traact/dataflow/Network.h>
 
 #include <utility>
 

@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "JsonPortInstance.h"
+#include <traact/serialization/JsonPortInstance.h>
 namespace ns {
 
 using nlohmann::json;

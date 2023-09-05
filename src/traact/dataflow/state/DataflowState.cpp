@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "DataflowState.h"
+#include <traact/dataflow/state/DataflowState.h>
 
 namespace traact::dataflow {
 

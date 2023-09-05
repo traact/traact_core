@@ -5,6 +5,7 @@
 #include <regex>
 #include <utility>
 #include "traact/util/FileUtil.h"
+#include <filesystem>
 
 bool traact::facade::RTTRPluginFactory::addLibrary(const std::string &filename) {
     PluginPtr new_plugin;
@@ -43,10 +44,11 @@ bool traact::facade::RTTRPluginFactory::init() {
         std::sregex_token_iterator{}
     );
     for (const auto &plugin_dir : kPluginDirs) {
+        std::filesystem::path pluginDirPath(plugin_dir);
         SPDLOG_INFO("attempting to load plugin directory: {0}", plugin_dir);
         std::vector<std::string> files = util::globFiles(plugin_dir, kFileEnding);
         for (const auto &file : files) {
-            addLibrary(file);
+            addLibrary(pluginDirPath / file);
         }
     }
 

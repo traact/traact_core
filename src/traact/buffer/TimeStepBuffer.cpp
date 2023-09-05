@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "TimeStepBuffer.h"
+#include <traact/buffer/TimeStepBuffer.h>
 #include <fmt/format.h>
 
 namespace traact::buffer {

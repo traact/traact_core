@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "TimeDomainStateResult.h"
+#include <traact/dataflow/state/TimeDomainStateResult.h>
 
 #include <utility>
 #include <cmath>

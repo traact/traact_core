@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "ParameterUtils.h"
+#include <traact/pattern/ParameterUtils.h>
 
 namespace traact::pattern {
 

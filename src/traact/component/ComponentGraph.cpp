@@ -1,7 +1,7 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "ComponentGraph.h"
-#include "traact/util/Logging.h"
+#include <traact/component/ComponentGraph.h>
+#include <traact/util/Logging.h>
 
 #include <exception>
 

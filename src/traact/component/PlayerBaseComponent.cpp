@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "PlayerBaseComponent.h"
+#include <traact/component/PlayerBaseComponent.h>
 std::string traact::component::PlayerBaseComponent::getModuleKey() {
     return "GlobalPlayer";
 }

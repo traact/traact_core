@@ -3,4 +3,5 @@ cmake-build-debug/
 cmake-build-release/
 cmake-build-relwithdebinfo/
 .idea
-src/traact/traact_export.h
+include/traact/traact_export.h
+CMakeUserPresets.json

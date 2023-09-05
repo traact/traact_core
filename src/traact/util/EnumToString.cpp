@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "EnumToString.h"
+#include <traact/util/EnumToString.h>
 #include <traact/datatypes.h>
 #include <traact/component/ComponentTypes.h>
 

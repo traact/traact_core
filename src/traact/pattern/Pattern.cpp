@@ -2,7 +2,7 @@
 
 #include "traact/pattern/Pattern.h"
 #include "traact/util/Utils.h"
-#include "PatternTags.h"
+#include <traact/pattern/PatternTags.h>
 namespace traact::pattern {
 
 Pattern::Pattern() : display_name{name} {

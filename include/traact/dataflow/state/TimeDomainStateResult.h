@@ -115,4 +115,31 @@ class TimeDomainStateProcessing {
 
 } // dataflow
 
+
+template <> struct fmt::formatter<traact::dataflow::TimeDomainTaskState> {
+
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        return ctx.end();
+    }
+    template <typename FormatContext>
+    auto format(const traact::dataflow::TimeDomainTaskState& value, FormatContext& ctx) -> decltype(ctx.out()) {
+        switch(value){
+        case traact::dataflow::TimeDomainTaskState::IDLE: {
+            return format_to(ctx.out(), "{}", "IDLE");    
+        }
+        case traact::dataflow::TimeDomainTaskState::STARTED: {
+            return format_to(ctx.out(), "{}", "STARTED");    
+        }
+        case traact::dataflow::TimeDomainTaskState::FINISHED: {
+            return format_to(ctx.out(), "{}", "FINISHED");    
+        }
+        default:
+        case traact::dataflow::TimeDomainTaskState::INVALID: {
+            return format_to(ctx.out(), "{}", "INVALID");    
+        }
+        }
+        
+    }
+};
+
 #endif //TRAACT_CORE_SRC_TRAACT_DATAFLOW_STATE_TIMEDOMAINSTATERESULT_H_

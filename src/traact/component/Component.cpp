@@ -1,6 +1,6 @@
 /** Copyright (C) 2022  Frieder Pankratz <frieder.pankratz@gmail.com> **/
 
-#include "Component.h"
+#include <traact/component/Component.h>
 #include <spdlog/spdlog.h>
 
 namespace traact::component {
